@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/* ── GRID CONTROL Design System — Slate Command ─────────────────────────────
+   Palette: Deep blue-charcoal + warm gold. High contrast. Fully readable.
+   Inspired by GitHub dark mode — the most proven dark palette in the world.
+   Typography: Inter. 15px base. Generous line-height.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds — deep blue-charcoal, easy on the eyes */
+  --background:          222 28% 8%;         /* #0D1117 */
+  --gc-surface:          221 24% 12%;        /* #161B22 */
+  --gc-surface2:         218 20% 16%;        /* #1F2733 */
+  --gc-sidebar:          224 32% 6%;         /* #0A0D14 — darker sidebar strip */
+
+  /* Gold accent — slightly more vibrant than before */
+  --primary:             42 78% 56%;         /* #D4A843 */
+  --primary-foreground:  0 0% 5%;
+  --gc-gold:             42 78% 56%;
+  --gc-gold-dim:         42 78% 56%;
+
+  /* Text — high contrast, clearly tiered */
+  --foreground:          210 40% 92%;        /* #E2E8F0 — clean bright white */
+  --gc-text-1:           210 40% 92%;        /* #E2E8F0 — primary text */
+  --gc-text-2:           213 15% 62%;        /* #8B9AB0 — secondary, always readable */
+  --gc-text-3:           215 12% 42%;        /* #5E6E84 — muted, still visible */
+  --muted-foreground:    213 15% 62%;
+
+  /* Status */
+  --gc-green:            152 68% 50%;        /* #27CC71 */
+  --gc-amber:            38 95% 53%;         /* #F5A623 */
+  --gc-red:              4 74% 57%;          /* #E84040 */
+
+  /* Surfaces / borders — clearly visible */
+  --card:                221 24% 12%;
+  --card-foreground:     210 40% 92%;
+  --border:              218 20% 22%;        /* #2D3748 — sharp, clear borders */
+  --input:               221 24% 12%;
+  --muted:               221 24% 12%;
+  --accent:              218 20% 16%;
+  --accent-foreground:   210 40% 92%;
+  --secondary:           218 20% 16%;
+  --secondary-foreground: 210 40% 92%;
+  --popover:             221 24% 12%;
+  --popover-foreground:  210 40% 92%;
+  --destructive:         4 74% 57%;
+  --destructive-foreground: 210 40% 92%;
+  --ring:                42 78% 56%;
+  --radius:              0.5rem;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────────── */
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar         { width: 4px; height: 4px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: hsl(var(--border)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--gc-text-3)); }
+
+/* ── Typography scale ────────────────────────────────────────────────────────── */
+
+.gc-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: hsl(var(--gc-text-2));
+}
+
+.gc-muted  { color: hsl(var(--gc-text-2)); }
+.gc-dimmed { color: hsl(var(--gc-text-3)); }
+
+/* ── Gold utilities ──────────────────────────────────────────────────────────── */
+
+.gc-gold         { color: hsl(var(--gc-gold)); }
+.gc-gold-bg      { background: rgba(212, 168, 67, 0.10); }
+.gc-gold-border  { border-color: rgba(212, 168, 67, 0.28); }
+
+/* ── Status dots ─────────────────────────────────────────────────────────────── */
+
+.status-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.status-dot.online  { background: hsl(var(--gc-green));  box-shadow: 0 0 7px hsl(var(--gc-green) / 55%); }
+.status-dot.running { background: hsl(var(--gc-amber));  box-shadow: 0 0 7px hsl(var(--gc-amber) / 55%); animation: gc-pulse 1.8s ease-in-out infinite; }
+.status-dot.idle    { background: hsl(var(--gc-text-3)); }
+
+@keyframes gc-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Card surface ────────────────────────────────────────────────────────────── */
+
+.gc-card {
+  background: hsl(var(--gc-surface));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+}
+
+.gc-card-hover {
+  transition: border-color 0.15s, background 0.15s;
+}
+.gc-card-hover:hover {
+  border-color: hsl(218 20% 30%);
+  background: hsl(var(--gc-surface2));
+}
+
+/* ── Verified / data badge ──────────────────────────────────────────────────── */
+
+.gc-verified {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(39, 204, 113, 0.10);
+  border: 1px solid rgba(39, 204, 113, 0.22);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: hsl(var(--gc-green));
+}
+
+.gc-stale {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(245, 166, 35, 0.10);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: hsl(var(--gc-amber));
+}
+
+/* ── Input overrides ─────────────────────────────────────────────────────────── */
+
+input, textarea, select {
+  font-size: 14px;
+  color: hsl(var(--foreground));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--gc-text-3));
+}
+
+/* ── Button base readability ─────────────────────────────────────────────────── */
+
+button {
+  font-size: 13px;
+}
+
+/* ── Sidebar nav item text ───────────────────────────────────────────────────── */
+
+.gc-nav-item {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ── Section heading ─────────────────────────────────────────────────────────── */
+
+.gc-section-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: hsl(var(--gc-text-3));
+}
+
+/* ── Glows & focus rings ─────────────────────────────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--gc-gold) / 60%);
+  outline-offset: 2px;
+}
+
+/* ── Selection ───────────────────────────────────────────────────────────────── */
+
+::selection {
+  background: hsl(var(--gc-gold) / 22%);
+  color: hsl(var(--foreground));
+}

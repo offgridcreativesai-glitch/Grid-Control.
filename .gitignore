@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Brand data (contains scraped content + outputs — keep local)
+brands/*/outputs/
+brands/*/trends_live.json
+brands/*/strategy_90day.json
+brands/*/content_calendar.json
+brands/*/performance_history.json
+brands/*/performance_inbox.json
+brands/*/contradictions.json
+brands/*/pivot_decision.json
+brands/*/pivot_impact.json
+brands/*/trend_sentinel_watchlist.json
+brands/*/session_state.json
+brands/*/voice_profile.json
+brands/*/competitors_db.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Node / dashboard
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.env
+dashboard/.env.local
+
+# Logs + temp
+*.log
+/tmp/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Managed agents registry (contains agent IDs — sensitive)
+managed_agents/registry.json
