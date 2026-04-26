@@ -7,6 +7,7 @@ import { ReviewSpace }  from "@/spaces/ReviewSpace"
 import { AgentsSpace }  from "@/spaces/AgentsSpace"
 import { BrandSpace }   from "@/spaces/BrandSpace"
 import { SystemSpace }  from "@/spaces/SystemSpace"
+import { InsightsSpace } from "@/spaces/InsightsSpace"
 import { useBrandStore } from "@/store/brandStore"
 
 // ── Phase 5 Step 1 — Error Boundary ───────────────────────────────────────────
@@ -68,11 +69,12 @@ const queryClient = new QueryClient({
 })
 
 const SCREENS: Record<number, ReactNode> = {
-  1: <CommandSpace />,
-  2: <ReviewSpace  />,
-  3: <AgentsSpace  />,
-  4: <BrandSpace   />,
-  5: <SystemSpace  />,
+  1: <CommandSpace  />,
+  2: <ReviewSpace   />,
+  3: <AgentsSpace   />,
+  4: <BrandSpace    />,
+  5: <SystemSpace   />,
+  6: <InsightsSpace />,
 }
 
 function AppLayout() {

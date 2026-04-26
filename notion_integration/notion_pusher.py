@@ -24,10 +24,18 @@ HEADERS = {
 }
 
 
+class NotionAuthError(Exception):
+    """Raised when Notion API returns 401 unauthorized — token invalid/expired."""
+    pass
+
+
 def _get_or_create_database() -> str:
     """
     Check if OffGrid Approvals database exists under the page.
     If not, create it. Return the database ID.
+
+    Raises NotionAuthError(401) with a clear message if token is bad —
+    so callers can distinguish "token expired" from "transient API error".
     """
     # Search for existing database
     search_url = "https://api.notion.com/v1/search"
@@ -36,6 +44,17 @@ def _get_or_create_database() -> str:
         "filter": {"value": "database", "property": "object"}
     }
     response = requests.post(search_url, headers=HEADERS, json=payload, timeout=10)
+
+    # HARD ERROR CHECK — fail loud, not silent
+    if response.status_code == 401:
+        raise NotionAuthError(
+            "Notion API token is INVALID or EXPIRED (401). "
+            "Fix: go to https://notion.so/my-integrations, regenerate the token for the 'Social media Agents' integration, "
+            "and paste the new token into .env as NOTION_API_KEY=..."
+        )
+    if response.status_code != 200:
+        raise Exception(f"Notion search failed ({response.status_code}): {response.json().get('message', 'unknown')}")
+
     results = response.json().get("results", [])
 
     if results:
@@ -83,7 +102,17 @@ def _get_or_create_database() -> str:
     }
 
     create_response = requests.post(create_url, headers=HEADERS, json=db_payload, timeout=10)
-    db_id = create_response.json()["id"]
+    if create_response.status_code == 401:
+        raise NotionAuthError(
+            "Notion API token is INVALID or EXPIRED (401). "
+            "Fix: regenerate at https://notion.so/my-integrations and update NOTION_API_KEY in .env."
+        )
+    create_data = create_response.json()
+    if "id" not in create_data:
+        raise Exception(
+            f"Notion database create failed ({create_response.status_code}): {create_data.get('message', create_data)}"
+        )
+    db_id = create_data["id"]
     print(f"[NotionPusher] Created new database: {db_id}")
     return db_id
 
@@ -233,10 +262,16 @@ def push_to_notion(
                 "status_code": response.status_code
             }
 
+    except NotionAuthError as e:
+        return {
+            "success": False,
+            "error": f"NOTION_AUTH_ERROR: {e}",
+            "auth_error": True,
+        }
     except Exception as e:
         return {
             "success": False,
-            "error": str(e)
+            "error": f"NOTION_PUSH_FAILED: {type(e).__name__}: {e}"
         }
 
 

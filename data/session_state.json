@@ -1,0 +1,19 @@
+{
+  "session_id": "",
+  "brand": "OffGrid Creatives AI",
+  "agents_run": [],
+  "agents_approved": [],
+  "agents_pending": [],
+  "last_run": null,
+  "current_phase": "beta",
+  "trend_data_available": false,
+  "competitor_data_available": false,
+  "accounts_connected": {
+    "instagram": false,
+    "linkedin": false,
+    "meta_ads": false,
+    "ga4": false,
+    "search_console": false
+  },
+  "notes": ""
+}

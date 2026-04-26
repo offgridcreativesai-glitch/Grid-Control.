@@ -40,14 +40,24 @@ const Icons = {
       <path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3"/>
     </svg>
   ),
+  insights: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M2 13l4-6 3 4 5-7"/>
+      <circle cx="2" cy="13" r="1" fill="currentColor"/>
+      <circle cx="6" cy="7" r="1" fill="currentColor"/>
+      <circle cx="9" cy="11" r="1" fill="currentColor"/>
+      <circle cx="14" cy="4" r="1" fill="currentColor"/>
+    </svg>
+  ),
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "command", label: "Command",  icon: Icons.command, screen: 1 },
-  { id: "review",  label: "Review",   icon: Icons.review,  screen: 2 },
-  { id: "agents",  label: "Agents",   icon: Icons.agents,  screen: 3 },
-  { id: "brand",   label: "Brand",    icon: Icons.brand,   screen: 4 },
-  { id: "system",  label: "System",   icon: Icons.system,  screen: 5 },
+  { id: "command",  label: "Command",  icon: Icons.command,  screen: 1 },
+  { id: "review",   label: "Review",   icon: Icons.review,   screen: 2 },
+  { id: "agents",   label: "Agents",   icon: Icons.agents,   screen: 3 },
+  { id: "brand",    label: "Brand",    icon: Icons.brand,    screen: 4 },
+  { id: "system",   label: "System",   icon: Icons.system,   screen: 5 },
+  { id: "insights", label: "Insights", icon: Icons.insights, screen: 6 },
 ]
 
 interface SidebarProps {

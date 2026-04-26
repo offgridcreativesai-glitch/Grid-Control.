@@ -186,6 +186,7 @@ AGENT_SCRIPTS: dict[str, Any] = {
     "Ad Strategist":       {"coming_soon": True},
     "Data Analyst":        "agents/data_analyst.py",
     "Performance Tracker": "agents/performance_tracker.py",
+    "Brand Guardian":      "agents/brand_guardian.py",
     "Funnel Specialist":   "agents/funnel_specialist.py",
     "Website Agent":       "agents/website_agent.py",
     "Cost Tracker":        "agents/cost_tracker.py",
@@ -216,6 +217,7 @@ _FOLDER_TO_SLUG: dict[str, str] = {
     "Creative Director":   "creative-director",
     "Data Analyst":        "data-analyst",
     "Performance Tracker": "performance-tracker",
+    "Brand Guardian":      "brand-guardian",
     "Funnel Specialist":   "funnel-specialist",
     "Website Agent":       "website-agent",
     "Cost Tracker":        "cost-tracker",
@@ -1018,6 +1020,17 @@ def daily_pipeline_run():
             _run_agent_subprocess(str(script_path), brand_slug, agent_name, None)
             print(f"[daily-run] Completed: {agent_name}")
 
+        # BUILD D — Auto-run contradiction detector at end of pipeline
+        try:
+            sys.path.insert(0, str(BASE_DIR / "ceo_brain"))
+            from contradiction_detector import detect_contradictions, save_contradictions_report
+            print(f"[daily-run] Running contradiction detector for {brand_slug}...")
+            report = detect_contradictions(brand_slug, project_root=BASE_DIR)
+            save_contradictions_report(brand_slug, report, project_root=BASE_DIR)
+            print(f"[daily-run] Contradictions: {report.get('counts', {})} | blocking: {report.get('blocking', False)}")
+        except Exception as e:
+            print(f"[daily-run] Contradiction check failed: {e}")
+
     t = threading.Thread(target=_run_pipeline, daemon=True)
     t.start()
 
@@ -1340,6 +1353,42 @@ def performance_history():
         with open(history_path) as f:
             data = json.load(f)
         return jsonify({"success": True, "data": {"exists": True, **data}})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── BRAND FILE READER (used by InsightsSpace provenance audit) ───────────────
+
+@app.route("/api/brand/file", methods=["GET"])
+def brand_file():
+    """
+    Read a single JSON file from a brand's directory (whitelisted set only).
+    Used by InsightsSpace to render data_provenance + provenance_validation blocks.
+    """
+    brand_slug = request.args.get("brand_slug", "").strip()
+    file_arg   = request.args.get("file", "").strip()
+    if not brand_slug:
+        return jsonify({"success": False, "error": "brand_slug required"}), 400
+    if not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+
+    # Whitelist — only specific brand-output JSON files allowed
+    ALLOWED = {
+        "strategy_90day.json", "content_calendar.json", "trends_live.json",
+        "performance_history.json", "performance_inbox.json",
+        "contradictions.json", "pivot_decision.json", "pivot_impact.json",
+        "brand_consistency_report.json", "trend_sentinel_watchlist.json",
+        "voice_profile.json", "competitors_db.json",
+    }
+    if file_arg not in ALLOWED:
+        return jsonify({"success": False, "error": f"File '{file_arg}' not in whitelist"}), 400
+
+    fpath = BRANDS_DIR / brand_slug / file_arg
+    if not fpath.exists():
+        return jsonify({"success": True, "data": None})
+    try:
+        with open(fpath) as f:
+            return jsonify({"success": True, "data": json.load(f)})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

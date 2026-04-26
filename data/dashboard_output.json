@@ -1,0 +1,1417 @@
+{
+  "scripts": {
+    "created_at": "2026-04-04T07:45:00.947220+00:00",
+    "brand": "offgrid-creatives-ai",
+    "weeks_scripted": 1,
+    "total_posts_scripted": 9,
+    "human_face_required_count": 0,
+    "human_face_flags": [],
+    "scripts": [
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Text Post Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first framing mirrors the exact emotional state of the target audience (isolated, optimizing blind), creating the strongest felt-recognition response on LinkedIn where founders scroll to feel understood, not just informed; highest predicted DM inquiry rate because the shame-to-solution arc creates urgency to act before competitors do"
+        },
+        "variants_tested": [
+          {
+            "variant": "A",
+            "label": "PAIN-FIRST",
+            "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you?",
+            "opening_lines": "You're tweaking your headline at 11pm. Testing a new creative. Adjusting your budget again. Meanwhile your top competitor ran 6 ad variations last week, found their winner on day 3, and scaled it. You have no idea. That's not a skills problem. That's an information problem.",
+            "predicted_save_rate": "High \u2014 founders bookmark content that names their exact silent frustration",
+            "predicted_dm_rate": "High \u2014 CTA targets a specific, low-friction next step that feels like intelligence, not a sales pitch"
+          },
+          {
+            "variant": "B",
+            "label": "RESULT-FIRST",
+            "hook": "In 10 minutes, you can know exactly what angles, hooks, and offers your top 3 competitors are running on Meta right now.",
+            "opening_lines": "Not a rough idea. A 17-section breakdown. Hook analysis. Offer structure. Ad format patterns. Creative angles. All pulled directly from the Meta Ad Library and organized by AI before your next coffee gets cold.",
+            "predicted_save_rate": "Medium \u2014 strong specificity but skips the emotional setup; LinkedIn audiences need to feel the pain before they value the cure",
+            "predicted_dm_rate": "Medium \u2014 outcome is compelling but may read as a product pitch too early, reducing comment and DM conversion on a cold post"
+          },
+          {
+            "variant": "C",
+            "label": "CURIOSITY / PATTERN INTERRUPT",
+            "hook": "The Meta Ad Library is public. Free. Updated in real time. And almost no one running Meta ads is actually using it.",
+            "opening_lines": "That's not an accident. It's uncomfortable to look at what your competitors are doing when you're not sure your own ads are working. But the founders who are looking \u2014 they're not guessing anymore. They're reading the market.",
+            "predicted_save_rate": "Medium-High \u2014 contrarian framing earns saves but may dilute urgency; works better as a follow-up post after pain has already been established",
+            "predicted_dm_rate": "Medium \u2014 curiosity gap is strong but lacks the direct mirror of audience pain needed to push a founder to comment or DM on day one"
+          }
+        ],
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The information vacuum every D2C founder is operating in right now",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you?",
+          "body": "You're tweaking your headline at 11pm.\nTesting a new creative.\nAdjusting your budget again.\n\nMeanwhile your top competitor ran 6 ad variations last week, found their winner on day 3, and scaled it hard.\n\nYou have no idea that happened.\n\nThat's not a skills problem.\nThat's not a budget problem.\nThat's an information problem.\n\nMost D2C founders are optimizing in complete isolation \u2014 running tests, burning spend, iterating on instinct \u2014 while the answers they're looking for are already sitting inside their competitors' active ad accounts.\n\nThere's a tool Meta built that shows you every ad any brand is running right now.\n\nIt's called the Meta Ad Library.\nIt's public.\nIt's free.\nAnd almost nobody in your space is actually using it strategically.\n\nNot because they don't know it exists.\nBecause pulling meaningful intelligence from it \u2014 angles, hooks, offer structures, creative patterns, what's scaling vs. what's being killed \u2014 takes hours of manual work most founders don't have.\n\nSo they skip it.\nAnd they keep optimizing blind.\n\nWe built a tool that does that work for you.\n\nFill out a Google Form with your competitor's brand name.\nOur system scrapes their Meta Ad Library data, runs it through AI analysis, and delivers a 17-section intelligence report to your inbox.\n\nIn under 10 minutes.\n\nNot a summary. Not a screenshot. A structured breakdown:\n\u2014 Active ad hooks and angles\n\u2014 Offer and CTA patterns\n\u2014 Creative format distribution\n\u2014 What they're testing vs. what they're scaling\n\u2014 Gaps in their strategy you can move into\n\nBefore you run your next test, it might be worth knowing what tests your competitor already ran.\n\nQuestion for the founders in the comments:\n\nHow many of you have actually pulled your top competitor's active ads this week?",
+          "cta": "Comment 'INTEL' and I'll show you what your competitor's ad strategy looks like right now.",
+          "caption": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you?\n\nMost D2C founders are optimizing in complete isolation \u2014 tweaking copy, testing creatives, adjusting budgets \u2014 while their competitors have already solved those exact problems and are scaling the winners.\n\nThe Meta Ad Library is public. Free. Updated in real time. And almost no one is using it the way they should.\n\nWe built a tool that scrapes it for you and delivers a 17-section AI-powered intelligence report on your top competitor's entire Meta ad strategy \u2014 in under 10 minutes.\n\nHooks. Angles. Offer structure. Creative patterns. What they're testing. What they're scaling. Where their gaps are.\n\nBefore you run your next test, know what tests your competitor already ran.\n\nHow many of you have actually pulled your top competitor's active ads this week?\n\nComment 'INTEL' and I'll show you what your competitor's ad strategy looks like right now.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2C",
+            "#EcommerceMarketing",
+            "#PaidSocial",
+            "#AdStrategy",
+            "#CompetitorAnalysis",
+            "#FounderMindset",
+            "#MarketingIntelligence",
+            "#FacebookAds",
+            "#EcommerceFounder"
+          ],
+          "production_notes": "LinkedIn native text post \u2014 no image required, no link in post body (add to first comment if sharing a URL to keep reach unpenalized by LinkedIn algorithm). Line breaks are intentional and load-bearing \u2014 preserve all single-line paragraph breaks as written; they control the scroll pace and create the staccato rhythm that signals credibility on LinkedIn. Do not compress into paragraphs. Post between 7:30\u20139:00am or 12:00\u20131:00pm in the founder's local time zone for maximum reach on LinkedIn. Founder or operator posting this should engage with every comment within the first 60 minutes to trigger LinkedIn's engagement boost window. The closing question is the activation mechanism \u2014 do not cut it. The CTA goes as the final line, separated by a line break. No emoji needed; tone is credibility-first, not warmth-first."
+        },
+        "original_post": {
+          "day": 1,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The information vacuum every D2C founder is operating in right now",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you?",
+          "caption_direction": "Open with the hook as a standalone line. Then pivot: most founders are optimizing their own ads in complete isolation \u2014 tweaking copy, testing creatives, adjusting budgets \u2014 while their competitors are running ads that have already solved those exact problems. Name the Meta Ad Library as a public, underused intelligence source. Close with a teaser: we built a tool that reads it for you and delivers a 17-section report in under 10 minutes. Drop a single question at the end: 'How many of you have actually pulled your top competitor's active ads this week?' Let the comments do the awareness work.",
+          "cta": "Comment 'INTEL' and I'll show you what your competitor's ad strategy looks like right now.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "GAP ANGLE + top Instagram hook repurposed for LinkedIn native format"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Static Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant C \u2014 Pattern interrupt creates the sharpest scroll-stop on a static format, triggers immediate cognitive dissonance, and opens a gap the founder must close by tapping the link \u2014 highest predicted DM inquiry rate given launch-day FOMO context and current STRUCTURAL_SHIFT trend signals"
+        },
+        "variants": {
+          "variant_a": {
+            "label": "PAIN-FIRST HOOK",
+            "hook": "You're running ads into a black box. Your competitor isn't.",
+            "body": "Most D2C founders are optimizing creatives, tweaking budgets, and testing copy \u2014 completely blind to what's actually working in their category right now. That's not a strategy problem. That's an information problem. Your competitors are live on Meta. Their hooks, angles, and offers are out there. You just don't have the system to see them. Until now.",
+            "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+            "caption": "Most D2C founders have zero visibility into what their competitors are actually running on Meta.\n\nThis isn't a strategy problem. It's an information problem.\n\nWe built the fix. \u2192 Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+            "predicted_save_rate": "High",
+            "predicted_dm_rate": "Medium-High",
+            "notes": "Strong resonance with founders mid-frustration. Slightly familiar pain framing may not scroll-stop as hard on launch day."
+          },
+          "variant_b": {
+            "label": "RESULT-FIRST HOOK",
+            "hook": "In under 10 minutes, you'll know exactly what hooks, angles, and offers your top competitors are running on Meta right now.",
+            "body": "A 17-section AI-powered report. Scraped live from the Meta Ad Library. Delivered to your inbox automatically. No agency. No manual research. No guessing. Fill a form. Get the intelligence. Start building from a position of knowledge \u2014 not assumption.",
+            "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+            "caption": "10 minutes from now, you could know exactly what your top 3 competitors are running on Meta.\n\nHooks. Angles. Offers. All of it.\n\nWe built the tool. \u2192 Link in bio.",
+            "predicted_save_rate": "Medium-High",
+            "predicted_dm_rate": "Medium",
+            "notes": "Clean and specific. Strong for warm audiences who already feel the pain. Less disruptive on a cold launch feed scroll."
+          },
+          "variant_c": {
+            "label": "CURIOSITY / PATTERN INTERRUPT",
+            "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it.",
+            "body": "While you're guessing \u2014 they're running tested hooks, dialed-in offers, and angles that are already converting. That information is not hidden. It's not proprietary. It's sitting in the Meta Ad Library right now. You just don't have the system to pull it, structure it, and turn it into strategy. That's what we built.",
+            "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+            "caption": "Your competitor's best-performing Meta ad is live right now. You just can't see it.\n\nThat's not a strategy problem. That's an information problem.\n\nWe built the fix. \u2192 Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+            "predicted_save_rate": "Highest",
+            "predicted_dm_rate": "Highest",
+            "notes": "Reframes competitors from a threat into accessible intelligence. Creates immediate FOMO + curiosity gap. Pattern interrupt performs strongest on static launch posts for this audience segment per current STRUCTURAL_SHIFT trend data."
+          }
+        },
+        "winning_variant": "C",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Launch post \u2014 planting the flag on competitor ad intelligence",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it.",
+          "body": "While you're guessing \u2014 they're running tested hooks, dialed-in offers, and angles that are already converting.\n\nThat information is not hidden. It's not proprietary. It's sitting in the Meta Ad Library right now.\n\nYou just don't have the system to pull it, structure it, and turn it into strategy.\n\nThat's what we built.",
+          "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+          "caption": "Your competitor's best-performing Meta ad is live right now. You just can't see it.\n\nThat's not a strategy problem. That's an information problem.\n\nWe built the fix. \u2192 Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2CMarketing",
+            "#EcommerceGrowth",
+            "#AdIntelligence",
+            "#CompetitorResearch",
+            "#PerformanceMarketing",
+            "#FounderMindset",
+            "#AIMarketing",
+            "#OffGridCreatives",
+            "#PaidSocial"
+          ],
+          "production_notes": "VISUAL DIRECTION: Bold white or acid-yellow headline typography on a near-black or deep charcoal background. No stock photography. No humans in frame. Hook line should dominate 60% of the visual real estate \u2014 set in a heavy sans-serif (e.g. Neue Haas Grotesk, Monument Extended, or similar). Body copy in a lighter weight below the fold or as a secondary text block. A single micro-detail element \u2014 such as a blurred Meta Ad Library screenshot fragment or a minimal data grid \u2014 can be used as a texture layer behind the type to reinforce credibility without cluttering the read. Brand wordmark bottom-right, small. Overall feeling: a Bloomberg terminal meets a founder's Notion doc. No gradients. No icons. No emoji in the visual itself. This is a flag-plant post \u2014 it should feel like a statement, not an announcement."
+        },
+        "original_post": {
+          "day": 1,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Launch post \u2014 planting the flag on competitor ad intelligence",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it.",
+          "caption_direction": "Short, punchy caption. Two to three lines max. State the problem in plain language: most D2C founders have zero visibility into what their competitors are actually running on Meta. This is not a strategy problem \u2014 it is an information problem. End with one line about OffGrid: we built the fix. Story swipe-up or link in bio directing to a Google Form waitlist or beta sign-up. Aesthetic should be bold typography on dark or high-contrast background \u2014 no stock photos, no generic imagery.",
+          "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "GAP ANGLE + pattern interrupt format"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Story \u2014 Poll Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first hook lands hardest in a Story poll format because it mirrors the exact frustration the founder felt the last time an ad flopped, priming emotional investment before the poll fires and making the Frame 3 DM CTA feel like relief, not a pitch"
+        },
+        "variants_tested": {
+          "variant_a": {
+            "label": "PAIN-FIRST",
+            "frame_1_hook": "You're testing ad after ad and nothing's sticking. Meanwhile your competitor just launched something that's clearly working. Quick question for every founder running Meta ads right now.",
+            "frame_2_poll_question": "Have you ever looked at your competitor's active ads in the Meta Ad Library?",
+            "frame_2_poll_options": [
+              "Yes \u2014 I check it regularly",
+              "No \u2014 I didn't know this existed"
+            ],
+            "frame_3_followup": "Most founders say no. We built something that does it for you \u2014 scrapes your competitors' live Meta ads and sends a 17-section analysis to your inbox in under 10 minutes. DM us INTEL to see a sample report.",
+            "predicted_strength": "Highest DM rate \u2014 pain is specific, relatable, and primes the CTA as a solution not a sell"
+          },
+          "variant_b": {
+            "label": "RESULT-FIRST",
+            "frame_1_hook": "In under 10 minutes you could know every angle, hook, and offer your top competitors are running on Meta right now. Quick question for every founder running Meta ads:",
+            "frame_2_poll_question": "Have you ever looked at your competitor's active ads in the Meta Ad Library?",
+            "frame_2_poll_options": [
+              "Yes \u2014 I check it regularly",
+              "No \u2014 I didn't know this existed"
+            ],
+            "frame_3_followup": "Whether you said yes or no \u2014 most founders are still missing 80% of what's in there. We built an AI report that does the full scrape and analysis for you. DM us INTEL to see a real sample.",
+            "predicted_strength": "Good save rate but slightly lower DM urgency \u2014 outcome-first works better in feed than Stories"
+          },
+          "variant_c": {
+            "label": "CURIOSITY / PATTERN INTERRUPT",
+            "frame_1_hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you? Quick question for every founder running Meta ads:",
+            "frame_2_poll_question": "Have you ever looked at your competitor's active ads in the Meta Ad Library?",
+            "frame_2_poll_options": [
+              "Yes \u2014 I check it regularly",
+              "No \u2014 I didn't know this existed"
+            ],
+            "frame_3_followup": "Spoiler: you absolutely can see them. Every active Meta ad is public. We built AI that scrapes and analyzes them for you in under 10 minutes. DM us INTEL to see what a full competitor report looks like.",
+            "predicted_strength": "Strong hook but pattern interrupt carries slightly higher drop-off risk on Frame 1 before poll fires \u2014 best reserved for feed Reels where the hook has more room"
+          }
+        },
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "Instagram",
+          "format": "Story \u2014 Poll",
+          "topic": "Audience qualification \u2014 do they know the Meta Ad Library exists?",
+          "hook": "You're testing ad after ad and nothing's sticking. Meanwhile your competitor just launched something that's clearly working. Quick question for every founder running Meta ads right now.",
+          "body": {
+            "frame_1": {
+              "type": "Text Slide",
+              "headline": "You're testing ad after ad and nothing's sticking.",
+              "subtext": "Meanwhile your competitor just launched something that's clearly working.",
+              "bottom_line": "Quick question for every founder running Meta ads right now \ud83d\udc47",
+              "design_notes": "Dark background \u2014 off-black (#0D0D0D). White headline in bold sans-serif. Subtext in medium weight. Bottom line in brand accent color (if applicable). No stock imagery. Minimal. High contrast. Add a subtle swipe-up tap prompt arrow at the bottom."
+            },
+            "frame_2": {
+              "type": "Poll Slide",
+              "poll_question": "Have you ever looked at your competitor's active ads in the Meta Ad Library?",
+              "poll_option_1": "Yes \u2014 I check it regularly \u2705",
+              "poll_option_2": "No \u2014 I didn't know this existed \ud83d\udc40",
+              "design_notes": "Same dark background. Poll sticker centered. Keep all other visual noise off this frame. The poll is the entire CTA of this slide \u2014 nothing should compete with it. Optionally add micro-copy above the poll sticker: 'Be honest \ud83d\udc47'"
+            },
+            "frame_3": {
+              "type": "Follow-Up Text Slide \u2014 Shown to ALL viewers regardless of poll answer",
+              "headline": "Most founders say no.",
+              "body_copy": "The Meta Ad Library is public. Every active competitor ad is sitting there \u2014 hooks, creatives, copy, offers, all of it. We built an AI that scrapes it and sends you a 17-section analysis report in under 10 minutes. No manual digging. Just intelligence, in your inbox.",
+              "cta_line": "DM us INTEL to see a real sample report \u2192",
+              "design_notes": "Same dark background. Headline large and punchy. Body copy in smaller weight \u2014 readable but not cramped. CTA line in accent color or underlined white. Add a DM button sticker or link sticker labeled 'DM us INTEL' directly on the frame to reduce friction. Consider a subtle pulsing tap animation on the CTA sticker if platform allows."
+            }
+          },
+          "cta": "DM us INTEL to see a sample report.",
+          "caption": "Most founders running Meta ads have never once looked at what their competitors are actively running. The Meta Ad Library is public. Every ad is sitting there \u2014 and almost nobody is using it. We built an AI that does the full scrape and analysis for you and delivers a 17-section competitor intelligence report to your inbox in under 10 minutes. DM us INTEL if you want to see exactly what's inside.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2CMarketing",
+            "#EcommerceFounder",
+            "#FacebookAds",
+            "#AdIntelligence",
+            "#CompetitorResearch",
+            "#MetaAdLibrary",
+            "#FounderMindset",
+            "#PerformanceMarketing",
+            "#OffGridCreativesAI"
+          ],
+          "production_notes": "NO human face required. NO human voice required. This is a fully text-and-design-based Story sequence \u2014 three frames total. Frame 1 plants the pain. Frame 2 fires the poll (this is the lead qualification engine \u2014 export poll responses weekly as a warm lead list). Frame 3 deploys regardless of poll answer and drives the DM CTA. Use Instagram's native poll sticker on Frame 2 \u2014 do not design a custom fake poll. Ensure the DM link sticker on Frame 3 is pre-filled with the keyword INTEL if using ManyChat or a similar DM automation tool so response triggers an automated sample report delivery. Post time recommendation: 8\u201310am or 7\u20139pm local to target audience timezone for maximum Story completion rate. Archive poll data weekly \u2014 'No I didn't know this existed' respondents are highest-intent prospects for retargeting."
+        },
+        "original_post": {
+          "day": 2,
+          "platform": "Instagram",
+          "format": "Story \u2014 Poll",
+          "topic": "Audience qualification \u2014 do they know the Meta Ad Library exists?",
+          "hook": "Quick question for every founder running Meta ads right now.",
+          "caption_direction": "Two-frame story. Frame 1: text slide \u2014 'Have you ever looked at your competitor's active ads in the Meta Ad Library?' Frame 2: poll \u2014 Yes, I check it regularly / No, I didn't know this existed. Follow up in Frame 3 regardless of answer: 'Most founders say no. We built something that does it for you in under 10 minutes. DM us INTEL to see a sample report.' Collect poll responses as warm lead signals.",
+          "cta": "DM us INTEL to see a sample report.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Audience segmentation + GAP ANGLE education"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Text Post Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first hook mirrors exact founder language from trend data, triggers immediate recognition, and sets up the contrarian argument with the highest credibility signal for a LinkedIn audience already primed to engage with diagnostic content"
+        },
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "variants": {
+          "variant_a": {
+            "hook": "We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.",
+            "opening_lines": "You blamed the creative. Then the copy. Then the targeting. Then the algorithm. You increased the budget to 'give it more data.' Nothing. Sound familiar? The problem probably wasn't any of those things.",
+            "predicted_save_rate": "high",
+            "predicted_dm_rate": "high",
+            "reason": "Mirrors the exact internal monologue of a founder mid-failed campaign. Creates immediate identification, then reframes blame \u2014 which is the core contrarian argument of the post."
+          },
+          "variant_b": {
+            "hook": "One D2C brand stopped testing new creatives. Their ROAS went up.",
+            "opening_lines": "Not because they got lucky. Because they finally looked at what the winning brands in their category had been running for months \u2014 and stopped reinventing the wheel every week.",
+            "predicted_save_rate": "medium",
+            "predicted_dm_rate": "medium",
+            "reason": "Result-first is strong for awareness content but on LinkedIn it risks feeling like a case study tease without enough credibility context upfront. Weaker emotional hook for founders currently in the pain phase."
+          },
+          "variant_c": {
+            "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. (Or can you?)",
+            "opening_lines": "The Meta Ad Library is public. Every active ad. Every brand. Every creative. The data isn't hidden \u2014 founders just aren't reading it. And the ones who are? They're not the ones complaining about CPAs.",
+            "predicted_save_rate": "medium-high",
+            "predicted_dm_rate": "medium",
+            "reason": "Strong pattern interrupt but slightly less visceral than Variant A for founders who are actively mid-struggle. Better suited for a cold audience or top-of-funnel awareness play. Loses the founder-to-founder intimacy the brand voice requires."
+          }
+        },
+        "script": {
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Contrarian take \u2014 why testing your own ads without competitor data is a trap",
+          "hook": "We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.",
+          "body": "You blamed the creative.\nThen the copy.\nThen the targeting.\nThen the algorithm.\nYou increased the budget to 'give it more data.'\n\nNothing converted.\n\nSo you launched another round of tests.\n\nThis is the trap.\n\nHere's what actually happened:\n\nWhile you were A/B testing headline variations, your top competitor was on week 14 of running the same UGC testimonial video.\n\nSame creative. 14 weeks straight.\n\nDo you know what it means when a brand runs the same ad for 14 weeks on Meta?\n\nIt converts. Consistently. At a margin that makes it worth every dollar of continued spend.\n\nThat's not luck. That's signal.\n\nA real scenario:\n\nA D2C skincare brand tests 6 creatives over 3 weeks. None of them hit. CPAs are brutal. The founder pulls the plug, blames iOS, and starts over.\n\nMeanwhile, their closest competitor \u2014 same price point, same target demo \u2014 has been running a single 47-second founder story video since January.\n\nThe founder story angle. Uncontested in that niche. Right there in the Meta Ad Library. Publicly visible. Free to observe.\n\nThe data was available the entire time.\n\nThis is the gap most founders are operating in:\n\nThey treat ad testing like it exists in a vacuum.\nLaunch. Measure. Kill. Repeat.\n\nBut testing without competitive context isn't optimization.\nIt's guessing with a budget.\n\nThe brands winning right now on Meta aren't just better at creative.\nThey know what's already working in their category.\nThey're not starting from zero.\n\nThe Meta Ad Library is public.\nEvery active ad.\nEvery competitor.\nEvery angle, offer, and hook they're currently scaling.\n\nThe information asymmetry isn't because the data doesn't exist.\nIt's because most founders aren't reading it \u2014 and definitely aren't reading it systematically.\n\nThat's the first fix.\n\nBefore you launch your next round of tests:\nKnow what the winners in your category are running right now.\n\nStop testing in the dark.",
+          "cta": "Drop your brand niche in the comments and I'll tell you what your competitors are likely running right now.",
+          "caption": "We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.\n\nYou blamed the creative.\nThen the copy.\nThen the targeting.\nThen the algorithm.\nYou increased the budget to 'give it more data.'\n\nNothing converted.\n\nSo you launched another round of tests.\n\nThis is the trap.\n\nHere's what actually happened:\n\nWhile you were A/B testing headline variations, your top competitor was on week 14 of running the same UGC testimonial video.\n\nSame creative. 14 weeks straight.\n\nDo you know what it means when a brand runs the same ad for 14 weeks on Meta?\n\nIt converts. Consistently. At a margin that makes it worth every dollar of continued spend.\n\nThat's not luck. That's signal.\n\nA real scenario:\n\nA D2C skincare brand tests 6 creatives over 3 weeks. None of them hit. CPAs are brutal. The founder pulls the plug, blames iOS, and starts over.\n\nMeanwhile, their closest competitor \u2014 same price point, same target demo \u2014 has been running a single 47-second founder story video since January.\n\nThe founder story angle. Uncontested in that niche. Right there in the Meta Ad Library. Publicly visible. Free to observe.\n\nThe data was available the entire time.\n\nThis is the gap most founders are operating in:\n\nThey treat ad testing like it exists in a vacuum.\nLaunch. Measure. Kill. Repeat.\n\nBut testing without competitive context isn't optimization.\nIt's guessing with a budget.\n\nThe brands winning right now on Meta aren't just better at creative.\nThey know what's already working in their category.\nThey're not starting from zero.\n\nThe Meta Ad Library is public.\nEvery active ad.\nEvery competitor.\nEvery angle, offer, and hook they're currently scaling.\n\nThe information asymmetry isn't because the data doesn't exist.\nIt's because most founders aren't reading it \u2014 and definitely aren't reading it systematically.\n\nThat's the first fix.\n\nBefore you launch your next round of tests:\nKnow what the winners in your category are running right now.\n\nStop testing in the dark.\n\nDrop your brand niche in the comments and I'll tell you what your competitors are likely running right now.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2CMarketing",
+            "#EcommerceGrowth",
+            "#PaidSocial",
+            "#AdStrategy",
+            "#FounderLife",
+            "#CompetitiveIntelligence",
+            "#PerformanceMarketing",
+            "#OffGridCreativesAI"
+          ],
+          "production_notes": "NO human face or voice required. Pure text post. Format with hard line breaks as written \u2014 do not collapse into paragraphs. The staggered single-line structure is intentional for LinkedIn scroll pacing and read-time. Bold the line 'Stop testing in the dark.' if LinkedIn formatting allows. Post between 7:30\u20139:00 AM or 12:00\u20131:00 PM in target timezone for peak founder feed activity. Monitor comments actively for the first 60 minutes \u2014 the CTA requires a live response to brand niche replies to drive engagement loop and DM conversions. Do not edit the hook \u2014 it is pulled directly from validated trend data with a relevance score of 9."
+        },
+        "original_post": {
+          "day": 3,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Contrarian take \u2014 why testing your own ads without competitor data is a trap",
+          "hook": "We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.",
+          "caption_direction": "Open with the hook. Then build the argument: when ads fail, founders default to blaming creative, copy, or targeting. But the real question is: what are the brands winning in your exact category running right now? The Meta Ad Library is public. It shows every active ad. The data is there \u2014 founders just aren't reading it systematically. Share a specific hypothetical or anonymised scenario: a D2C skincare brand tests 6 creatives over 3 weeks, none convert, they increase budget. Meanwhile their top competitor has been running a single UGC testimonial video for 4 months straight. What does 4 months of continuous running tell you? It converts. Frame OffGrid as the first step to escaping the testing trap. End with a direct CTA.",
+          "cta": "Drop your brand niche in the comments and I'll tell you what your competitors are likely running right now.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + mirrored founder language from trend data"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Carousel Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first hook wins because it mirrors the exact emotional state of a D2C founder who trusts their agency but quietly suspects they're missing something; creates the strongest save intent by validating a suspicion they've never seen named out loud"
+        },
+        "variants_considered": [
+          {
+            "id": "A",
+            "hook": "Your agency sends you performance reports. Here's what they never show you.",
+            "opening_slide_copy": "Your agency sends you performance reports. Here's what they never show you.",
+            "angle": "PAIN-FIRST",
+            "predicted_save_rate": "high \u2014 names a specific trust gap between founder and agency; founders save this to share with their team or to revisit before their next agency call",
+            "predicted_dm_rate": "high \u2014 creates urgency to act before next billing cycle; triggers the 'is this happening to me' response"
+          },
+          {
+            "id": "B",
+            "hook": "We pulled a 17-section competitor ad report in under 10 minutes. Here's what was inside.",
+            "opening_slide_copy": "We pulled a 17-section competitor ad report in under 10 minutes. Here's what was inside.",
+            "angle": "RESULT-FIRST",
+            "predicted_save_rate": "medium \u2014 the result is compelling but the audience hasn't felt the pain yet; skips the emotional hook that drives saves",
+            "predicted_dm_rate": "medium \u2014 curiosity about the report is there but founders who haven't felt the agency gap won't convert immediately"
+          },
+          {
+            "id": "C",
+            "hook": "The Meta Ad Library is public. Your agency has never mentioned it. That's not an accident.",
+            "opening_slide_copy": "The Meta Ad Library is public. Your agency has never mentioned it. That's not an accident.",
+            "angle": "CURIOSITY / PATTERN INTERRUPT",
+            "predicted_save_rate": "medium-high \u2014 contrarian and provocative but risks feeling conspiratorial; may attract shares but lower quality DM intent",
+            "predicted_dm_rate": "medium \u2014 anger at agency is a motivator but softer than personal pain recognition"
+          }
+        ],
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "Instagram",
+          "format": "Carousel",
+          "slide_count": 8,
+          "topic": "What the Meta Ad Library tells you that your agency won't",
+          "hook": "Your agency sends you performance reports. Here's what they never show you.",
+          "slides": [
+            {
+              "slide_number": 1,
+              "label": "HOOK",
+              "headline": "Your agency sends you performance reports.",
+              "subtext": "Here's what they never show you.",
+              "design_note": "Dark background. Large, bold white headline. Subtext in brand accent color. No imagery. Maximum contrast. This slide must work as a standalone screenshot."
+            },
+            {
+              "slide_number": 2,
+              "label": "CONTEXT \u2014 THE PUBLIC TRUTH",
+              "headline": "The Meta Ad Library is public.",
+              "subtext": "Every brand's active ads are visible to anyone. Right now. For free.",
+              "design_note": "Clean layout. Single stat or statement per visual zone. Brand colors. Bold typeface consistent with Slide 1."
+            },
+            {
+              "slide_number": 3,
+              "label": "WHAT YOU CAN SEE",
+              "headline": "Here's exactly what it shows you:",
+              "bullets": [
+                "\u2192 The exact creative and copy your competitor is running",
+                "\u2192 Every placement they're using",
+                "\u2192 How long each ad has been active",
+                "\u2192 All variations in a single campaign"
+              ],
+              "subtext": "No guesswork. No estimates. Real data.",
+              "design_note": "Use a clean list layout. Each bullet on its own visual line. Readable at thumbnail size."
+            },
+            {
+              "slide_number": 4,
+              "label": "THE SIGNAL MOST FOUNDERS MISS",
+              "headline": "An ad running for 90+ days is converting.",
+              "subtext": "That's not an opinion. That's the most reliable signal in paid media. No brand burns budget on a losing creative for three months.",
+              "design_note": "This is the insight slide. Make the headline the largest text on the page. Accent color on '90+ days'. High contrast."
+            },
+            {
+              "slide_number": 5,
+              "label": "WHY YOUR AGENCY STAYS QUIET",
+              "headline": "Most agencies don't show you this.",
+              "subtext": "Not because it's complicated. Because it exposes the gap between what they're testing and what's already proven to work in your market.",
+              "design_note": "Slightly warmer tone \u2014 this is the moment of tension. Consider a subtle background shift to differentiate from prior slides while staying on brand."
+            },
+            {
+              "slide_number": 6,
+              "label": "WHY FOUNDERS DON'T DO IT THEMSELVES",
+              "headline": "Most founders never check it either.",
+              "subtext": "Pulling competitor ads, organizing by format, filtering by run-length, and analyzing angles across 3 to 5 brands manually? That's 4 to 6 hours of work. Every time.",
+              "design_note": "Empathy slide. Keep tone direct, not condescending. This is the 'we see you' moment. Slightly softer visual weight than Slide 5."
+            },
+            {
+              "slide_number": 7,
+              "label": "THE SOLUTION",
+              "headline": "We built a pipeline that does it in under 10 minutes.",
+              "subtext": "17-section AI-generated PDF. Competitor ad analysis, hooks, formats, run-length signals, and creative patterns. Delivered to your inbox automatically.",
+              "design_note": "Reintroduce full brand energy here. Bold. Clean. The number '17' and '10 minutes' should be visually emphasized. This slide earns the CTA."
+            },
+            {
+              "slide_number": 8,
+              "label": "CTA",
+              "headline": "DM us INTEL.",
+              "subtext": "We'll send you your own competitor intelligence report.",
+              "micro_cta": "Save this post first. You'll want to come back to it.",
+              "design_note": "Darkest slide in the carousel. Single action. Brand logo in corner. Headline in the largest font used across all slides. No competing visual elements. This slide must convert cold traffic."
+            }
+          ],
+          "cta": "Save this. Then DM us INTEL to get your own competitor intelligence report delivered to your inbox in under 10 minutes.",
+          "caption": "Your agency sends you reports on your own ads.\n\nThey never show you what your competitors are running.\n\nThe Meta Ad Library is public. Every active ad from every brand is visible right now \u2014 the creative, the copy, the placements, and how long each ad has been live.\n\nAn ad running 90+ days is converting. That's not a theory. That's the most reliable signal in digital advertising.\n\nMost founders don't pull this data because doing it manually across 3 to 5 competitors takes hours.\n\nWe built a pipeline that does it in under 10 minutes.\n\n17-section PDF. AI-analyzed. Delivered automatically to your inbox.\n\nSave this post. Then DM us INTEL and we'll send you your own competitor intelligence report.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2CMarketing",
+            "#EcommerceGrowth",
+            "#FacebookAds",
+            "#AdIntelligence",
+            "#CompetitorAnalysis",
+            "#FounderMindset",
+            "#PaidSocial",
+            "#DigitalMarketing",
+            "#AgencyLife",
+            "#EcomFounder",
+            "#AIMarketing",
+            "#AdStrategy",
+            "#OffGridCreativesAI",
+            "#MarketingOS"
+          ],
+          "production_notes": "NO human face required. NO human voice required. This is a fully static carousel. All copy is text-on-design. Design specs: consistent sans-serif font across all 8 slides, brand color palette maintained throughout, dark backgrounds preferred for Slides 1 and 8, single dominant message per slide, all slides must be readable as standalone screenshots at 1080x1080px. Avoid gradients that reduce text contrast. No stock photography or clip art. The visual hierarchy rule for every slide: one headline, one supporting line, nothing else competes. Swipe prompt may be added as a small persistent element at bottom-right of Slides 1 through 7."
+        },
+        "original_post": {
+          "day": 4,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "What the Meta Ad Library tells you that your agency won't",
+          "hook": "Slide 1: Your agency sends you performance reports. Here's what they never show you.",
+          "caption_direction": "8-slide carousel. Slide 1: hook \u2014 bold text, dark background. Slide 2: 'The Meta Ad Library is public. Every brand's active ads are visible to anyone.' Slide 3: 'Here's what you can see: exact ad creative, copy, format, how long it's been running, all placements.' Slide 4: 'An ad running for 90+ days = it is converting. This is the most reliable signal in digital advertising.' Slide 5: 'Most agencies don't show you this because it exposes a gap in their strategy.' Slide 6: 'Most founders don't check it because pulling and analyzing it manually takes hours.' Slide 7: 'We built a pipeline that does it in under 10 minutes \u2014 17-section PDF, delivered to your inbox.' Slide 8: CTA slide \u2014 bold text, single action. Save this post. Design tip: consistent font, brand colors, no clip art. Each slide should be readable as a standalone screenshot.",
+          "cta": "Save this. Then DM us INTEL to get your own competitor intelligence report.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + educational carousel format optimized for saves"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Text Post Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first hook mirrors the exact emotional state of D2C founders losing money on ad tests, triggers immediate recognition, and makes the build-in-public narrative land harder because the reader already feels the problem before the solution is revealed; highest predicted DM inquiry rate on LinkedIn for a beta offer"
+        },
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Build in public \u2014 why I built this and what problem it actually solves",
+          "hook": "I built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes. Here's why I built it.",
+          "body": "VARIANT A \u2014 PAIN-FIRST [SELECTED WINNER]\n\n---\n\nI built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes.\n\nHere's why I built it.\n\n---\n\nI kept watching the same thing happen.\n\nA D2C founder spends \u20b980K testing creatives.\nNothing lands.\nThey kill the campaign.\nTry a new angle.\nSpend again.\n\nMeanwhile \u2014 their top competitor has been running the same ad for 63 days straight.\n\nSame hook. Same offer. Same visual structure.\n63 days.\n\nThat is not a coincidence. That is a winning ad.\nAnd it has been publicly visible in the Meta Ad Library the entire time.\n\nUnread.\n\n---\n\nHere's what most founders don't know:\n\nIf a brand is spending money to keep an ad live for 30, 60, 90 days \u2014 it is converting.\nMeta's own infrastructure is telling you what's working.\nYou just don't have a system to read it.\n\nThe intelligence was never hidden.\nThe process to extract it was just slow, manual, and inconsistent enough that nobody actually did it.\n\n---\n\nSo I built the process.\n\nYou fill a Google Form with your brand name and niche.\nA scraper pulls your top competitors' active Meta ads.\nClaude analyzes the output across 17 dimensions \u2014 hooks, offer structure, creative angles, ad longevity, emotional triggers, format patterns, and more.\nA structured PDF lands in your inbox.\n\nUnder 10 minutes. No agency. No waiting weeks for a competitive audit that's already outdated by the time it arrives.\n\n---\n\nThis is not a finished product.\n\nI'm going to say that clearly: this is in beta.\n\nI've run it internally. I know what it can do. But I want to pressure-test it against real brands, real niches, real competitors \u2014 before I scale it.\n\nSo here's what I'm doing:\n\nI'm giving it away free to 5 D2C founders.\n\nAll I ask in return is honest feedback.\nWhat was useful. What was missing. What you'd actually pay for.\n\n---\n\nIf you're running Meta ads right now and making creative decisions without knowing what your competitors are actively spending on \u2014\n\nThis post is the DM you were supposed to send.\n\n---\n\n\ud83d\udc47 DM me your brand name and niche.\nI'll run the report and send it to you free.\nFive spots. That's it.",
+          "cta": "DM me your brand name and niche. I'll run the report and send it to you free. Five spots. That's it.",
+          "caption": "I built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes.\n\nHere's why I built it.\n\n---\n\nI kept watching the same thing happen.\n\nA D2C founder spends \u20b980K testing creatives.\nNothing lands.\nThey kill the campaign.\nTry a new angle.\nSpend again.\n\nMeanwhile \u2014 their top competitor has been running the same ad for 63 days straight.\n\nSame hook. Same offer. Same visual structure.\n63 days.\n\nThat is not a coincidence. That is a winning ad.\nAnd it has been publicly visible in the Meta Ad Library the entire time.\n\nUnread.\n\n---\n\nHere's what most founders don't know:\n\nIf a brand is spending money to keep an ad live for 30, 60, 90 days \u2014 it is converting.\nMeta's own infrastructure is telling you what's working.\nYou just don't have a system to read it.\n\nThe intelligence was never hidden.\nThe process to extract it was just slow, manual, and inconsistent enough that nobody actually did it.\n\n---\n\nSo I built the process.\n\nYou fill a Google Form with your brand name and niche.\nA scraper pulls your top competitors' active Meta ads.\nClaude analyzes the output across 17 dimensions \u2014 hooks, offer structure, creative angles, ad longevity, emotional triggers, format patterns, and more.\nA structured PDF lands in your inbox.\n\nUnder 10 minutes. No agency. No waiting weeks for a competitive audit that's already outdated by the time it arrives.\n\n---\n\nThis is not a finished product.\n\nI'm going to say that clearly: this is in beta.\n\nI've run it internally. I know what it can do. But I want to pressure-test it against real brands, real niches, real competitors \u2014 before I scale it.\n\nSo here's what I'm doing:\n\nI'm giving it away free to 5 D2C founders.\n\nAll I ask in return is honest feedback.\nWhat was useful. What was missing. What you'd actually pay for.\n\n---\n\nIf you're running Meta ads right now and making creative decisions without knowing what your competitors are actively spending on \u2014\n\nThis post is the DM you were supposed to send.\n\n---\n\n\ud83d\udc47 DM me your brand name and niche.\nI'll run the report and send it to you free.\nFive spots. That's it.",
+          "hashtags": [
+            "#BuildInPublic",
+            "#D2C",
+            "#MetaAds",
+            "#EcommerceMarketing",
+            "#AITools",
+            "#CompetitorIntelligence",
+            "#AdStrategy",
+            "#FounderLife",
+            "#AgencyOwners",
+            "#PerformanceMarketing"
+          ],
+          "production_notes": "VARIANT REFERENCE LOG \u2014 for internal review:\n\nVARIANT A (WINNER \u2014 Pain-First): Hook lands on the exact failure moment \u2014 founder bleeding ad spend while competitor's winning creative sits publicly visible and ignored. Origin story builds credibility. Beta framing increases trust, not doubt. Scarcity of 5 spots drives DM urgency. Predicted highest DM inquiry rate.\n\nVARIANT B (Result-First \u2014 Not Selected): Would open with 'In under 10 minutes, you'll know every hook, angle, and offer your top 3 competitors are running on Meta right now.' Then explain the pipeline and the beta offer. Strong on LinkedIn for awareness, but on a build-in-public post the narrative journey outperforms the result-first lead \u2014 founders want to understand why you built it before they trust the outcome claim. Lower predicted save rate than Variant A.\n\nVARIANT C (Pattern Interrupt \u2014 Not Selected): Would open with 'Your competitors are running the same ad they launched 60 days ago. That ad is still live. That means it's working. You just haven't looked.' Strong scroll-stop on LinkedIn, but slightly more appropriate for a standalone awareness post, not a build-in-public narrative. The curiosity gap closes too fast without enough founder empathy to drive DM action on this specific post type.\n\nFORMATTING NOTES: Use line breaks aggressively. LinkedIn's algorithm rewards dwell time \u2014 white space forces slower reading. The horizontal rule (---) acts as a visual pause and section separator, mimicking newsletter structure which performs well with the agency/founder audience on LinkedIn. Do not compress paragraphs. Each beat needs its own breathing room.\n\nNO human face or voice required. Pure text post. Zero production overhead."
+        },
+        "original_post": {
+          "day": 5,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Build in public \u2014 why I built this and what problem it actually solves",
+          "hook": "I built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes. Here's why I built it.",
+          "caption_direction": "Founder-voice narrative. Start with the origin moment: a specific frustration \u2014 watching D2C founders spend money testing ads while their competitors' winning creatives were sitting publicly visible in the Meta Ad Library, unread. Walk through the logic: if a brand is running the same ad for 60 days, it's converting. That is free intelligence. The problem is manual extraction is slow, inconsistent, and most founders don't have the process. So the pipeline was built: Google Form triggers a scrape, Claude analyzes the output, a 17-section PDF lands in the inbox in under 10 minutes. No agency needed. No weeks of waiting. State clearly: this is in beta. We are offering it free to five D2C founders right now in exchange for honest feedback. If you run Meta ads and want to see what your competitors are actually running \u2014 this post is the DM you were supposed to send.",
+          "cta": "DM me your brand name and niche. I'll send you a free beta report. All I ask for is honest feedback.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "AI + ads velocity signal + GAP ANGLE + build-in-public narrative"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Story \u2014 Behind the Scenes Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant C \u2014 Pattern interrupt + real-time process reveal creates the strongest scroll-stop in Story format, where curiosity gaps drive DM behavior faster than pain or outcome framing alone; aligns with build-in-public trend and the raw authenticity directive"
+        },
+        "variants": {
+          "variant_a": {
+            "label": "PAIN-FIRST HOOK",
+            "frame_1_overlay": "You're running blind. Your competitor isn't.",
+            "frame_1_subtext": "While you're guessing hooks, they're watching the data.",
+            "frame_2_overlay": "The pipeline runs. Claude analyzes. Report generates.",
+            "frame_2_subtext": "17 sections. Every angle they're testing. Every offer they're running. In your inbox.",
+            "frame_3_overlay": "Under 10 minutes. Zero guesswork.",
+            "frame_3_subtext": "DM INTEL for beta access.",
+            "predicted_save_rate": "Medium",
+            "predicted_dm_rate": "Medium-High",
+            "note": "Resonates but relies on pain that founders already know \u2014 doesn't introduce new information. Risk: feels like another problem post without strong enough proof payoff in a 3-frame Story sequence."
+          },
+          "variant_b": {
+            "label": "RESULT-FIRST HOOK",
+            "frame_1_overlay": "17 sections of competitor intelligence. Delivered in under 10 minutes.",
+            "frame_1_subtext": "No agency. No analyst. Just fill a form.",
+            "frame_2_overlay": "The pipeline runs. Claude analyzes. Report generates.",
+            "frame_2_subtext": "Meta Ad Library scraped. AI does the work. PDF hits your inbox.",
+            "frame_3_overlay": "This is what beta access looks like.",
+            "frame_3_subtext": "DM INTEL \u2014 spots are limited.",
+            "predicted_save_rate": "Medium-High",
+            "predicted_dm_rate": "Medium",
+            "note": "Strong outcome framing but risks feeling like a product pitch too early in the Story sequence. Saves are likely from curious founders, but DM urgency is softer without a curiosity gap to close."
+          },
+          "variant_c": {
+            "label": "CURIOSITY / PATTERN INTERRUPT",
+            "frame_1_overlay": "Watch a competitor intelligence report build itself.",
+            "frame_1_subtext": "Real pipeline. Real time. No edits.",
+            "frame_2_overlay": "The pipeline runs. Claude analyzes. Report generates.",
+            "frame_2_subtext": "Google Form \u2192 AI scrapes Meta Ad Library \u2192 17-section PDF \u2192 your inbox.",
+            "frame_3_overlay": "From form submission to full report: under 10 minutes.",
+            "frame_3_subtext": "DM INTEL \u2014 beta access is open now.",
+            "predicted_save_rate": "High",
+            "predicted_dm_rate": "High",
+            "note": "The 'watch it happen' framing makes the process itself the story \u2014 forces the viewer to stay for all 3 frames. Matches build-in-public trend perfectly. Pattern interrupt ('builds itself') triggers the curiosity gap that Stories are uniquely wired to close with a DM."
+          }
+        },
+        "winning_variant": "C",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "This Story sequence is 100% screen-recording and text-overlay driven. No face or voice required. Authenticity is delivered through raw, unpolished process footage \u2014 which is the directorial intent. If a founder wants to add a quick talking-head frame between Frame 1 and Frame 2 to say 'here's what you're about to see,' it would increase trust, but it is optional, not required for this script to convert.",
+        "script": {
+          "platform": "Instagram",
+          "format": "Story \u2014 Behind the Scenes",
+          "topic": "Showing the pipeline working in real time",
+          "hook": "Watch a competitor intelligence report build itself.",
+          "body": {
+            "frame_1": {
+              "visual": "Screen recording of the Google Form being filled out in real time. Raw, unpolished \u2014 phone screen or desktop capture. No transitions, no music cues needed. Let the realness breathe.",
+              "text_overlay_primary": "Watch a competitor intelligence report build itself.",
+              "text_overlay_secondary": "Real pipeline. Real time. No edits.",
+              "text_position": "Bottom third. White bold text on semi-transparent dark bar.",
+              "duration_seconds": 4,
+              "design_note": "Do NOT add branded templates or polish here. The rawness IS the credibility signal. A CapCut auto-font or native Instagram text tool is enough."
+            },
+            "frame_2": {
+              "visual": "Clean text-only slide. Dark background \u2014 near black (#0D0D0D) or deep navy. Single centered text block. No stock imagery. No icons.",
+              "text_overlay_primary": "The pipeline runs.\nClaude analyzes.\nReport generates.",
+              "text_overlay_secondary": "Google Form \u2192 AI scrapes Meta Ad Library \u2192 17-section PDF \u2192 your inbox.",
+              "text_position": "Center stack. Primary text large and bold. Secondary text smaller, muted white or light gray beneath.",
+              "duration_seconds": 5,
+              "design_note": "This is the 'exhale' frame. Let the copy do the work. Spacing matters. Do not crowd the frame. One breath of copy \u2014 that's the cadence."
+            },
+            "frame_3": {
+              "visual": "Screenshot of the PDF appearing in an email inbox. The cover page must be visible and clearly readable. The 17-section list must be visible either on the cover page or as a second screenshot stacked below. This is the proof frame \u2014 do not skip or obscure the detail.",
+              "text_overlay_primary": "From form to full report: under 10 minutes.",
+              "text_overlay_secondary": "DM INTEL \u2014 beta access is open now.",
+              "text_position": "Top third for primary. Bottom bar for CTA \u2014 make the CTA text bold, slightly larger, with a subtle contrast background if readability requires it.",
+              "duration_seconds": 5,
+              "design_note": "The PDF screenshot is the conversion moment. If the inbox screenshot feels too personal to share publicly, use a mock inbox view or blur the sender name only \u2014 keep the subject line and PDF thumbnail fully visible. Cropping the proof defeats the purpose of this frame."
+            }
+          },
+          "cta": "DM INTEL to get early access.",
+          "caption": "Most founders have no idea what their competitors are actually running on Meta right now.\n\nNot the ad. Not the angle. Not the offer.\n\nWe built a pipeline that changes that.\n\nFill a Google Form \u2192 AI scrapes the Meta Ad Library \u2192 Claude analyzes the data \u2192 a 17-section competitor intelligence report lands in your inbox.\n\nUnder 10 minutes. No agency. No analyst. No guesswork.\n\nThis is what beta access looks like.\n\nDM me the word INTEL if you want early access.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2CMarketing",
+            "#EcommerceGrowth",
+            "#AIMarketing",
+            "#AdIntelligence",
+            "#BuildInPublic",
+            "#PerformanceMarketing",
+            "#FounderLife",
+            "#AgencyOwner",
+            "#CompetitorAnalysis",
+            "#OffGridCreativesAI"
+          ],
+          "production_notes": "FRAME 1: Use a real screen recording \u2014 do not stage a fake form fill. If you are filling out a test submission, that is fine, but the motion must be genuine. Jittery mouse movement and real typing rhythm are trust signals here. Do not smooth it out. FRAME 2: Built natively in Instagram Stories text tool or Canva with zero decoration. The contrast between the raw Frame 1 and the clean Frame 2 is intentional \u2014 it signals system behind the chaos. FRAME 3: The inbox screenshot is the money frame. Capture it on a clean email client (Gmail preferred for recognizability). Subject line should be clearly visible. PDF thumbnail or cover page must show '17 sections' or the section list. If the PDF cover page does not currently show this, add it before shooting the screenshot. PACING: Post all 3 frames as consecutive Stories within the same session so Instagram serves them as a sequence. Do not break them across days. OPTIONAL UPGRADE: Add a 4th Story frame that is a poll \u2014 'Would you use this?' with Yes / Already running blind \u2014 drives engagement signal and extends reach without breaking the raw tone. NO MUSIC NEEDED unless founder chooses a low-key background track at 15 percent volume. Silence works here."
+        },
+        "original_post": {
+          "day": 5,
+          "platform": "Instagram",
+          "format": "Story \u2014 Behind the Scenes",
+          "topic": "Showing the pipeline working in real time",
+          "hook": "Watch a 17-section competitor intelligence report get generated in under 10 minutes.",
+          "caption_direction": "Three-frame story sequence. Frame 1: screen recording or screenshot of the Google Form being filled. Frame 2: text slide \u2014 'The pipeline runs. Claude analyzes. Report generates.' Frame 3: screenshot of the PDF appearing in an inbox \u2014 cover page visible, 17 sections listed. Add text overlay: 'Beta access open now. DM INTEL.' Keep it raw and real \u2014 no polished graphics needed here. Authenticity is the signal.",
+          "cta": "DM INTEL to get early access.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Build-in-public + process transparency for trust acceleration"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Story \u2014 Question Box Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant A \u2014 Pain-first hook mirrors the exact emotional state of a founder staring at a failing ad account, making the question box feel like a release valve rather than a survey, which maximises reply rate and qualitative DM follow-up."
+        },
+        "variants": [
+          {
+            "id": "A",
+            "type": "PAIN-FIRST HOOK",
+            "story_text_overlay": "Running Meta ads right now?\n\nIf they're not converting \u2014\nwhat's your biggest frustration?",
+            "question_box_prompt": "Tell me. I read every reply.",
+            "predicted_strength": "Highest \u2014 mirrors exact founder headspace; pain acknowledgement lowers resistance to engagement; question box feels like a safe vent, not a pitch.",
+            "weakness": "None significant for this format and audience."
+          },
+          {
+            "id": "B",
+            "type": "RESULT-FIRST HOOK",
+            "story_text_overlay": "Some brands crack Meta ads fast.\nMost don't.\n\nWhat's the one thing standing between you and a winning ad?",
+            "question_box_prompt": "Drop it below.",
+            "predicted_strength": "Medium \u2014 outcome framing works in feed posts but in Stories it can feel aspirational and distant; less likely to trigger an immediate emotional reply.",
+            "weakness": "Result-first hooks underperform in Story Q&A formats because the audience hasn't been warmed to the win yet \u2014 they are in problem mode."
+          },
+          {
+            "id": "C",
+            "type": "CURIOSITY / PATTERN INTERRUPT",
+            "story_text_overlay": "Your competitors are running ads right now.\n\nYou're optimising in the dark.\n\nWhat's killing your Meta ads?",
+            "question_box_prompt": "Be honest. I'm listening.",
+            "predicted_strength": "Medium-high \u2014 strong scroll-stop but slightly adversarial framing can cause pause before replying; works better in feed than in a Story Q&A context.",
+            "weakness": "Pattern interrupt hooks optimise for curiosity clicks, not confession-style responses. For a question box, openness beats disruption."
+          }
+        ],
+        "winning_variant": "A",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "Instagram",
+          "format": "Story \u2014 Question Box",
+          "topic": "Collect audience pain points to fuel Week 2 content",
+          "hook": "Running Meta ads right now?",
+          "body": "If they're not converting \u2014 what's your biggest frustration?\n\n[QUESTION BOX STICKER PLACED HERE]\n\nAnswer below \u2014 I read every reply.",
+          "cta": "Answer below \u2014 I read every reply.",
+          "caption": "No caption required for Story format. Story is self-contained. All engagement happens inside the Story frame via the question box sticker.",
+          "hashtags": [],
+          "production_notes": "SINGLE STATIC STORY FRAME. No face required. No voiceover required. Design specs: Dark or brand-colour background (high contrast). Top text in bold \u2014 'Running Meta ads right now?' \u2014 large, punchy, centred or left-aligned. Middle text in slightly smaller weight \u2014 'If they're not converting \u2014 what's your biggest frustration?' \u2014 keep it to two lines max. Place the Instagram Question Box sticker below the middle text, centred. Bottom text below the sticker \u2014 'Answer below \u2014 I read every reply.' \u2014 in a lighter weight or secondary colour to signal authenticity, not polish. Font recommendation: A clean sans-serif (e.g. Helvetica Neue Bold or brand equivalent). Do NOT over-design. Rawness signals founder authenticity and increases reply rate. No logos needed on the frame itself \u2014 profile photo handles branding. AFTER COLLECTION: Screenshot anonymised replies (blur usernames). Use replies as direct fuel for Week 2 posts on Instagram and LinkedIn. Address specific pain points by name in subsequent content e.g. 'Three of you said your CPMs exploded in Q4 \u2014 here's why.' This closes the loop publicly, rewards responders, and signals community depth to new visitors."
+        },
+        "original_post": {
+          "day": 6,
+          "platform": "Instagram",
+          "format": "Story \u2014 Question Box",
+          "topic": "Collect audience pain points to fuel Week 2 content",
+          "hook": "If your Meta ads aren't converting \u2014 what's your biggest frustration right now?",
+          "caption_direction": "Single story frame with a question box sticker. Text above: 'Running Meta ads? Tell me your biggest frustration.' Use responses as content fuel for Week 2 posts \u2014 screenshot anonymised responses and address them directly in LinkedIn and Instagram posts. This also signals to the algorithm that the account is generating engagement, which amplifies reach on subsequent posts.",
+          "cta": "Answer below \u2014 I read every reply.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Audience intelligence gathering + community engagement signal"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      },
+      {
+        "loop_header": {
+          "agent": "Script Writer",
+          "output_type": "Text Post Script",
+          "goal": "Write the highest-converting script for this specific content piece",
+          "metric": "better = higher predicted save rate + DM inquiry rate vs alternatives",
+          "variants_tested": 3,
+          "winner": "Variant C \u2014 The contrarian reframe ('they handed you their best creative for free') creates the sharpest pattern interrupt on LinkedIn's founder feed, triggers immediate curiosity, and makes the educational logic feel like a revelation rather than a lecture, maximizing both save rate and DM intent."
+        },
+        "variants": [
+          {
+            "id": "A",
+            "label": "PAIN-FIRST HOOK",
+            "hook": "You're running Meta ads without knowing which of your competitor's ads are actually working. That's not a strategy problem. That's an information problem.",
+            "summary": "Opens on the feeling of flying blind. Validates the founder's frustration before presenting the intelligence angle. Solid but risks blending into generic 'you're missing out' LinkedIn content. Save rate moderate. DM rate moderate.",
+            "predicted_save_rate": "medium",
+            "predicted_dm_rate": "medium"
+          },
+          {
+            "id": "B",
+            "label": "RESULT-FIRST HOOK",
+            "hook": "One of our beta users identified their top competitor's winning ad angle in 10 minutes. They rebuilt their next creative around it. Their ROAS went up. Here's the exact signal they used.",
+            "summary": "Leads with the win and promises a payoff. Strong for LinkedIn's outcome-driven audience but requires social proof credibility this early in the product lifecycle. Risks feeling premature without validated case studies. Save rate high. DM rate medium-high.",
+            "predicted_save_rate": "high",
+            "predicted_dm_rate": "medium-high"
+          },
+          {
+            "id": "C",
+            "label": "CURIOSITY / PATTERN INTERRUPT",
+            "hook": "If your competitor has been running the same Meta ad for 90 days, congratulations. They just handed you their most profitable creative for free.",
+            "summary": "Reframes a familiar situation into an unexpected opportunity. The contrarian logic is immediately defensible and educational, which drives saves. The 'handed you for free' framing creates urgency and a knowledge gap the reader needs to close, which drives DMs. Highest alignment with week theme NAME THE PROBLEM and trend signals. Best fit for LinkedIn founder audience.",
+            "predicted_save_rate": "highest",
+            "predicted_dm_rate": "highest"
+          }
+        ],
+        "winning_variant": "C",
+        "requires_human_face": false,
+        "requires_human_voice": false,
+        "human_face_note": "",
+        "script": {
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Pattern interrupt \u2014 what 90 days of running the same ad actually means",
+          "hook": "If your competitor has been running the same Meta ad for 90 days, congratulations. They just handed you their most profitable creative for free.",
+          "body": "Here's a rule that every media buyer knows but most brand owners don't:\n\nNo one runs a losing ad for 90 days.\n\nIf a brand is keeping the same creative live for months, it's because that creative is converting. Profitably. Consistently.\n\nThat's not an assumption. That's how paid advertising works.\n\nAd spend is real money. Nobody burns it on something that isn't working.\n\nSo when you see a competitor running the same hook, the same offer, the same visual for 90+ days \u2014 you're not looking at stubbornness.\n\nYou're looking at their most profitable asset.\n\nAnd here's the part that should stop you mid-scroll:\n\nThe Meta Ad Library is public.\n\nEvery active ad. Every inactive ad. Launch dates. Run duration. The exact creative.\n\nAll of it. Free. Right now.\n\nYour competitor's best-performing ad is sitting there, visible to anyone who knows where to look.\n\nAlmost no D2C founder is checking this systematically.\n\nNot because it's hard.\n\nBecause nobody built a workflow around it.\n\nUntil now.\n\nWe built OffGrid Creatives AI to do exactly this.\n\nFill out a Google Form with your competitor's brand name.\n\nOur system scrapes the Meta Ad Library, runs the data through AI, and delivers a 17-section Ad Intelligence Report directly to your inbox.\n\nIn under 10 minutes.\n\nYou get: which ads are running, how long they've been live, what angles they're testing, what offers they're pushing, and where the gaps are that you can exploit.\n\nThis is the competitive layer that most founders are completely skipping.\n\nWe're in beta. A small number of brands are getting early access this week.",
+          "cta": "Want to see what your competitor's 90-day ads look like?\n\nDM me your niche and I'll pull it for you \u2014 free, this week only.",
+          "caption": "If your competitor has been running the same Meta ad for 90 days, congratulations. They just handed you their most profitable creative for free.\n\nHere's a rule that every media buyer knows but most brand owners don't:\n\nNo one runs a losing ad for 90 days.\n\nIf a brand is keeping the same creative live for months, it's because that creative is converting. Profitably. Consistently.\n\nThat's not an assumption. That's how paid advertising works.\n\nAd spend is real money. Nobody burns it on something that isn't working.\n\nSo when you see a competitor running the same hook, the same offer, the same visual for 90+ days \u2014 you're not looking at stubbornness.\n\nYou're looking at their most profitable asset.\n\nAnd here's the part that should stop you mid-scroll:\n\nThe Meta Ad Library is public.\n\nEvery active ad. Every inactive ad. Launch dates. Run duration. The exact creative.\n\nAll of it. Free. Right now.\n\nYour competitor's best-performing ad is sitting there, visible to anyone who knows where to look.\n\nAlmost no D2C founder is checking this systematically.\n\nNot because it's hard.\n\nBecause nobody built a workflow around it.\n\nUntil now.\n\nWe built OffGrid Creatives AI to do exactly this.\n\nFill out a Google Form with your competitor's brand name.\n\nOur system scrapes the Meta Ad Library, runs the data through AI, and delivers a 17-section Ad Intelligence Report directly to your inbox.\n\nIn under 10 minutes.\n\nYou get: which ads are running, how long they've been live, what angles they're testing, what offers they're pushing, and where the gaps are that you can exploit.\n\nThis is the competitive layer that most founders are completely skipping.\n\nWe're in beta. A small number of brands are getting early access this week.\n\nWant to see what your competitor's 90-day ads look like?\n\nDM me your niche and I'll pull it for you \u2014 free, this week only.",
+          "hashtags": [
+            "#MetaAds",
+            "#D2C",
+            "#EcommerceMarketing",
+            "#PaidAds",
+            "#AdStrategy",
+            "#CompetitorResearch",
+            "#FounderLife",
+            "#AIMarketing",
+            "#PerformanceMarketing",
+            "#OffGridCreativesAI"
+          ],
+          "production_notes": "No human face or voice required. Pure text post \u2014 no image or video asset needed for LinkedIn. Formatting note: use single-line breaks between short paragraphs to maximize scroll depth and readability in the LinkedIn feed. Do not compress into dense blocks. The rhythm of short punchy lines is intentional and must be preserved. Post between 7:30am\u20139:00am or 12:00pm\u20131:00pm on a Tuesday, Wednesday, or Thursday for maximum LinkedIn organic reach. Creator can pin first comment with a direct link to the Google Form once beta is ready. Do not add the link in the post body \u2014 LinkedIn's algorithm suppresses posts with outbound links in the main caption."
+        },
+        "original_post": {
+          "day": 7,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Pattern interrupt \u2014 what 90 days of running the same ad actually means",
+          "hook": "If your competitor has been running the same Meta ad for 90 days, congratulations. They just handed you their most profitable creative for free.",
+          "caption_direction": "Open with the hook. Explain the logic clearly: in paid advertising, longevity equals profitability. No brand runs a losing ad for 90 days. If you see a competitor running the same creative for months, it is converting. This is a public signal. The Meta Ad Library shows you exactly which ads are active and how long they have been running. Frame the ask: how many D2C founders are checking this systematically? Almost none. Then position OffGrid: we built a tool that reads this data for you, analyzes 17 dimensions of your competitor's ad strategy, and delivers it in 10 minutes. Close with a specific CTA tied to beta access.",
+          "cta": "Want to see what your competitor's 90-day ads look like? DM me your niche and I'll pull it for you \u2014 free, this week only.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + contrarian educational hook + beta soft-sell"
+        },
+        "week": 1,
+        "week_theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag"
+      }
+    ]
+  },
+  "calendar": {
+    "created_at": "2026-04-04T07:15:26.184787",
+    "brand": "offgrid-creatives-ai",
+    "calendar_angle": "GAP ANGLE \u2014 OffGrid is the only voice telling D2C founders to stop building ad strategy blind and start reverse-engineering competitor intelligence from the Meta Ad Library. Every post names the gap, triggers recognition, and drives curiosity toward the product.",
+    "posting_frequency": {
+      "linkedin_posts_per_week": 4,
+      "instagram_posts_per_week": 3,
+      "instagram_stories_per_week": 5,
+      "total_posts_30_days": 49,
+      "note": "Stories counted separately from feed posts. LinkedIn text posts can be repurposed from Instagram carousel scripts with platform-native reformatting."
+    },
+    "content_pillars": [
+      "BLIND SPOT \u2014 naming the information vacuum D2C founders operate in",
+      "INTELLIGENCE EDGE \u2014 showing what competitor ad data reveals and why it matters",
+      "BUILD IN PUBLIC \u2014 transparent founder narrative about building the product",
+      "PATTERN INTERRUPT \u2014 contrarian takes that challenge conventional ad advice",
+      "PROOF SEEDS \u2014 early signals, reactions, and process transparency before full testimonials exist"
+    ],
+    "week_1": {
+      "theme": "NAME THE PROBLEM \u2014 establish the gap, make founders feel seen, plant the flag",
+      "posts": [
+        {
+          "day": 1,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The information vacuum every D2C founder is operating in right now",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it. Or can you?",
+          "caption_direction": "Open with the hook as a standalone line. Then pivot: most founders are optimizing their own ads in complete isolation \u2014 tweaking copy, testing creatives, adjusting budgets \u2014 while their competitors are running ads that have already solved those exact problems. Name the Meta Ad Library as a public, underused intelligence source. Close with a teaser: we built a tool that reads it for you and delivers a 17-section report in under 10 minutes. Drop a single question at the end: 'How many of you have actually pulled your top competitor's active ads this week?' Let the comments do the awareness work.",
+          "cta": "Comment 'INTEL' and I'll show you what your competitor's ad strategy looks like right now.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "GAP ANGLE + top Instagram hook repurposed for LinkedIn native format"
+        },
+        {
+          "day": 1,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Launch post \u2014 planting the flag on competitor ad intelligence",
+          "hook": "Your competitor's best-performing Meta ad is live right now. You just can't see it.",
+          "caption_direction": "Short, punchy caption. Two to three lines max. State the problem in plain language: most D2C founders have zero visibility into what their competitors are actually running on Meta. This is not a strategy problem \u2014 it is an information problem. End with one line about OffGrid: we built the fix. Story swipe-up or link in bio directing to a Google Form waitlist or beta sign-up. Aesthetic should be bold typography on dark or high-contrast background \u2014 no stock photos, no generic imagery.",
+          "cta": "Link in bio \u2014 get your competitor's ad intelligence report in under 10 minutes.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "GAP ANGLE + pattern interrupt format"
+        },
+        {
+          "day": 2,
+          "platform": "Instagram",
+          "format": "Story \u2014 Poll",
+          "topic": "Audience qualification \u2014 do they know the Meta Ad Library exists?",
+          "hook": "Quick question for every founder running Meta ads right now.",
+          "caption_direction": "Two-frame story. Frame 1: text slide \u2014 'Have you ever looked at your competitor's active ads in the Meta Ad Library?' Frame 2: poll \u2014 Yes, I check it regularly / No, I didn't know this existed. Follow up in Frame 3 regardless of answer: 'Most founders say no. We built something that does it for you in under 10 minutes. DM us INTEL to see a sample report.' Collect poll responses as warm lead signals.",
+          "cta": "DM us INTEL to see a sample report.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Audience segmentation + GAP ANGLE education"
+        },
+        {
+          "day": 3,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Contrarian take \u2014 why testing your own ads without competitor data is a trap",
+          "hook": "We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.",
+          "caption_direction": "Open with the hook. Then build the argument: when ads fail, founders default to blaming creative, copy, or targeting. But the real question is: what are the brands winning in your exact category running right now? The Meta Ad Library is public. It shows every active ad. The data is there \u2014 founders just aren't reading it systematically. Share a specific hypothetical or anonymised scenario: a D2C skincare brand tests 6 creatives over 3 weeks, none convert, they increase budget. Meanwhile their top competitor has been running a single UGC testimonial video for 4 months straight. What does 4 months of continuous running tell you? It converts. Frame OffGrid as the first step to escaping the testing trap. End with a direct CTA.",
+          "cta": "Drop your brand niche in the comments and I'll tell you what your competitors are likely running right now.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + mirrored founder language from trend data"
+        },
+        {
+          "day": 4,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "What the Meta Ad Library tells you that your agency won't",
+          "hook": "Slide 1: Your agency sends you performance reports. Here's what they never show you.",
+          "caption_direction": "8-slide carousel. Slide 1: hook \u2014 bold text, dark background. Slide 2: 'The Meta Ad Library is public. Every brand's active ads are visible to anyone.' Slide 3: 'Here's what you can see: exact ad creative, copy, format, how long it's been running, all placements.' Slide 4: 'An ad running for 90+ days = it is converting. This is the most reliable signal in digital advertising.' Slide 5: 'Most agencies don't show you this because it exposes a gap in their strategy.' Slide 6: 'Most founders don't check it because pulling and analyzing it manually takes hours.' Slide 7: 'We built a pipeline that does it in under 10 minutes \u2014 17-section PDF, delivered to your inbox.' Slide 8: CTA slide \u2014 bold text, single action. Save this post. Design tip: consistent font, brand colors, no clip art. Each slide should be readable as a standalone screenshot.",
+          "cta": "Save this. Then DM us INTEL to get your own competitor intelligence report.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + educational carousel format optimized for saves"
+        },
+        {
+          "day": 5,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Build in public \u2014 why I built this and what problem it actually solves",
+          "hook": "I built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes. Here's why I built it.",
+          "caption_direction": "Founder-voice narrative. Start with the origin moment: a specific frustration \u2014 watching D2C founders spend money testing ads while their competitors' winning creatives were sitting publicly visible in the Meta Ad Library, unread. Walk through the logic: if a brand is running the same ad for 60 days, it's converting. That is free intelligence. The problem is manual extraction is slow, inconsistent, and most founders don't have the process. So the pipeline was built: Google Form triggers a scrape, Claude analyzes the output, a 17-section PDF lands in the inbox in under 10 minutes. No agency needed. No weeks of waiting. State clearly: this is in beta. We are offering it free to five D2C founders right now in exchange for honest feedback. If you run Meta ads and want to see what your competitors are actually running \u2014 this post is the DM you were supposed to send.",
+          "cta": "DM me your brand name and niche. I'll send you a free beta report. All I ask for is honest feedback.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "AI + ads velocity signal + GAP ANGLE + build-in-public narrative"
+        },
+        {
+          "day": 5,
+          "platform": "Instagram",
+          "format": "Story \u2014 Behind the Scenes",
+          "topic": "Showing the pipeline working in real time",
+          "hook": "Watch a 17-section competitor intelligence report get generated in under 10 minutes.",
+          "caption_direction": "Three-frame story sequence. Frame 1: screen recording or screenshot of the Google Form being filled. Frame 2: text slide \u2014 'The pipeline runs. Claude analyzes. Report generates.' Frame 3: screenshot of the PDF appearing in an inbox \u2014 cover page visible, 17 sections listed. Add text overlay: 'Beta access open now. DM INTEL.' Keep it raw and real \u2014 no polished graphics needed here. Authenticity is the signal.",
+          "cta": "DM INTEL to get early access.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Build-in-public + process transparency for trust acceleration"
+        },
+        {
+          "day": 6,
+          "platform": "Instagram",
+          "format": "Story \u2014 Question Box",
+          "topic": "Collect audience pain points to fuel Week 2 content",
+          "hook": "If your Meta ads aren't converting \u2014 what's your biggest frustration right now?",
+          "caption_direction": "Single story frame with a question box sticker. Text above: 'Running Meta ads? Tell me your biggest frustration.' Use responses as content fuel for Week 2 posts \u2014 screenshot anonymised responses and address them directly in LinkedIn and Instagram posts. This also signals to the algorithm that the account is generating engagement, which amplifies reach on subsequent posts.",
+          "cta": "Answer below \u2014 I read every reply.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Audience intelligence gathering + community engagement signal"
+        },
+        {
+          "day": 7,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Pattern interrupt \u2014 what 90 days of running the same ad actually means",
+          "hook": "If your competitor has been running the same Meta ad for 90 days, congratulations. They just handed you their most profitable creative for free.",
+          "caption_direction": "Open with the hook. Explain the logic clearly: in paid advertising, longevity equals profitability. No brand runs a losing ad for 90 days. If you see a competitor running the same creative for months, it is converting. This is a public signal. The Meta Ad Library shows you exactly which ads are active and how long they have been running. Frame the ask: how many D2C founders are checking this systematically? Almost none. Then position OffGrid: we built a tool that reads this data for you, analyzes 17 dimensions of your competitor's ad strategy, and delivers it in 10 minutes. Close with a specific CTA tied to beta access.",
+          "cta": "Want to see what your competitor's 90-day ads look like? DM me your niche and I'll pull it for you \u2014 free, this week only.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + contrarian educational hook + beta soft-sell"
+        }
+      ]
+    },
+    "week_2": {
+      "theme": "EDUCATE WITH EDGE \u2014 teach the intelligence framework, deepen the hook, begin beta outreach publicly",
+      "posts": [
+        {
+          "day": 8,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The 3 signals every D2C founder should be reading from competitor ads \u2014 but isn't",
+          "hook": "There are 3 things your competitor's Meta ad is telling you right now. Most founders read zero of them.",
+          "caption_direction": "Structured post with three clearly labeled insights. Signal 1 \u2014 Ad longevity: an ad running for 60+ days is profitable. Period. Signal 2 \u2014 Format consistency: if a competitor is running only video UGC, their audience responds to social proof over product shots \u2014 and so probably does yours. Signal 3 \u2014 Copy angle: the headline and first line of their ad copy reveals their highest-converting value proposition. These three signals take minutes to read once you know where to look. The problem is most founders never look. Tie each signal back to the Meta Ad Library as the source. Close with the OffGrid product as the systematic way to extract all three signals in under 10 minutes across multiple competitors at once.",
+          "cta": "I'm pulling free competitor reports for 5 D2C founders this week. DM me 'SIGNALS' if you want yours.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Educational framework + GAP ANGLE + beta outreach driver"
+        },
+        {
+          "day": 8,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "3 signals your competitor's Meta ad is sending you right now",
+          "hook": "Slide 1: Your competitor's Meta ad is sending you 3 signals. Are you reading them?",
+          "caption_direction": "7-slide carousel mirroring the LinkedIn post but designed for Instagram saves. Slide 1: hook text, bold and clean. Slide 2: 'Signal 1 \u2014 Ad Longevity. Running 60+ days = it's converting. This is the most reliable profit signal in paid media.' Slide 3: 'Signal 2 \u2014 Format Choice. All video? Their audience wants proof, not polish. All static? They've found a winning product shot. Copy that.' Slide 4: 'Signal 3 \u2014 Copy Angle. Their headline = their highest-converting value prop. Read it like a brief.' Slide 5: 'All of this is public. It's sitting in the Meta Ad Library right now.' Slide 6: 'The problem? Pulling and reading it manually takes hours. We built a tool that does it in under 10 minutes.' Slide 7: CTA \u2014 'DM us SIGNALS for a free beta report.' Design for saves \u2014 make each slide feel like a reference card they'll want to come back to.",
+          "cta": "Save this. DM us SIGNALS for a free competitor intelligence report.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "GAP ANGLE + save-optimized carousel format"
+        },
+        {
+          "day": 9,
+          "platform": "Instagram",
+          "format": "Story \u2014 Slider or React",
+          "topic": "How many competitor ads have you checked this month?",
+          "hook": "Be honest. How many of your competitor's active Meta ads have you actually looked at this month?",
+          "caption_direction": "Two-frame story. Frame 1: emoji slider \u2014 'How many competitor ads have you checked this month?' slider from zero to many. Frame 2: regardless of answer, text response \u2014 'Most founders say zero. Your competitors are not saying the same thing. DM INTEL to change that.' Screenshot slider results \u2014 even low engagement data here is useful content for a future post about founder blind spots.",
+          "cta": "DM INTEL to get a free competitor intelligence report.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Engagement mechanic + gap amplification"
+        },
+        {
+          "day": 10,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Why the Meta Ad Library is the most underused competitive intelligence tool in D2C",
+          "hook": "Meta built a public database of every ad every brand is running. D2C founders are barely using it. Here's why that's the biggest missed edge in performance marketing right now.",
+          "caption_direction": "Data-driven argument post. Open with the hook. Then explain: the Meta Ad Library was built for transparency \u2014 but it became the best competitive intelligence tool in the industry. It shows every active ad, every creative, every format, the date it launched, all placements. For D2C brands competing in the same category, this is a goldmine. Walk through a specific use case: a supplements brand founder wants to know why a competitor is scaling \u2014 pull their Meta Ad Library, find their ads running 120+ days, analyze the creative angle, spot the UGC hook they're using. This is a two-hour manual process. Or a 10-minute automated one with OffGrid. Name the tool explicitly. Explain the 17-section output. Share the delivery mechanism. Make the product feel inevitable.",
+          "cta": "I'm opening 3 more beta spots this week. DM me 'LIBRARY' to get your report free.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "AI + ads velocity signal + GAP ANGLE + authority positioning"
+        },
+        {
+          "day": 11,
+          "platform": "Instagram",
+          "format": "Reel",
+          "topic": "60-second walkthrough of what the Meta Ad Library actually shows you",
+          "hook": "Most D2C founders have never opened this tool. Here's what they're missing.",
+          "caption_direction": "Screen-recorded or face-to-camera Reel, 45 to 60 seconds. Open on the Meta Ad Library website \u2014 show how to search a competitor brand name and see their active ads. Narrate: 'Every active ad. The exact creative. How long it's been running. All placements.' Then cut to: 'Doing this for one competitor manually takes two hours. We built a pipeline that does it for multiple competitors in under 10 minutes \u2014 and gives you a 17-section PDF analysis.' End frame: 'Beta access open now. Link in bio.' Keep the energy fast and founder-to-founder. No fancy production \u2014 phone footage and a clear voice works better here than studio quality.",
+          "cta": "Link in bio \u2014 get your free beta competitor intelligence report.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Educational demonstration + AI + ads velocity signal + GAP ANGLE"
+        },
+        {
+          "day": 11,
+          "platform": "Instagram",
+          "format": "Story \u2014 Countdown or Urgency",
+          "topic": "Beta spots closing \u2014 create scarcity around free report access",
+          "hook": "We have 3 free beta report spots left this week. Here's what you get.",
+          "caption_direction": "Three-frame story. Frame 1: countdown timer sticker \u2014 '3 free beta spots left this week.' Frame 2: bullet list of what the report includes \u2014 17 sections, competitor ad creative analysis, hook breakdown, format analysis, copy angle extraction, delivered in under 10 minutes. Frame 3: 'DM INTEL to claim yours.' Keep the design clean. The scarcity framing is real \u2014 beta access is genuinely limited. Never manufacture false urgency.",
+          "cta": "DM INTEL now.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Beta scarcity + product reveal"
+        },
+        {
+          "day": 12,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Build in public update \u2014 what happened when I gave 3 D2C founders a free report",
+          "hook": "I gave 3 D2C founders a free competitor intelligence report this week. Here's what happened.",
+          "caption_direction": "Narrative update post. Be specific about what was delivered \u2014 not vague. Share one or two anonymised reactions: a founder in the skincare space who saw their top competitor had been running a single UGC video for 4 months and had no idea. A supplements founder who realised their competitor was using a pain-point-led hook while they were leading with product features. Do not fabricate reactions \u2014 if reports have not been delivered yet, frame this as what the pipeline revealed in the analysis process, using hypothetical but plausible scenarios clearly labeled as illustrative. Transparency is the trust engine here. Close with how many beta spots remain and what is needed to claim one.",
+          "cta": "DM me if you want a free report for your brand. I have 2 spots left this week.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Build-in-public trust narrative + social proof seeding"
+        },
+        {
+          "day": 13,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Contrarian take \u2014 why most ad testing frameworks are backwards",
+          "hook": "You don't have a creative problem. You have an intelligence problem.",
+          "caption_direction": "Bold single-image post. Large typographic text: 'You don't have a creative problem. You have an intelligence problem.' Caption: two to three sentences expanding \u2014 most D2C founders think ads fail because their creative wasn't good enough. But your competitor solved this problem months ago and is running proof of it publicly. The real gap is not creative \u2014 it is visibility. End with OffGrid product mention as the visibility tool.",
+          "cta": "DM INTEL to see what your competitors are actually running.",
+          "content_pillar": "PATTERN INTERRUPT",
+          "trend_angle_used": "Contrarian hook + GAP ANGLE reframe"
+        },
+        {
+          "day": 14,
+          "platform": "Instagram",
+          "format": "Story \u2014 Story Series",
+          "topic": "What a 17-section competitor intelligence report actually contains",
+          "hook": "A lot of people are asking what's inside the report. Here's a full breakdown.",
+          "caption_direction": "5-frame story series walking through the report sections. Frame 1: 'You asked what's inside. Here's the full breakdown.' Frame 2: 'Section 1-5: competitor ad creative inventory, active vs inactive status, format breakdown, placement analysis, launch date mapping.' Frame 3: 'Section 6-11: hook analysis, copy angle extraction, CTA mapping, offer framing, visual style patterns, audience signal indicators.' Frame 4: 'Section 12-17: competitive positioning summary, gap opportunities for your brand, recommended hook angles based on competitor data, 3 immediate action steps, strategic brief template, and full AI-generated synthesis.' Frame 5: 'All of this in under 10 minutes. DM INTEL to get yours free this week.' Keep each frame clean \u2014 white text on brand-color background or vice versa.",
+          "cta": "DM INTEL to claim a free beta report.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Product transparency + curiosity loop closure"
+        }
+      ]
+    },
+    "week_3": {
+      "theme": "PROOF SEEDS AND MOMENTUM \u2014 first reactions, beta report transparency, deepening the gap narrative with specificity",
+      "posts": [
+        {
+          "day": 15,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "What 60 days of running the same ad actually means \u2014 a case study frame",
+          "hook": "I analyzed 40 active Meta ads across 8 D2C categories this week. Here's the pattern no one talks about.",
+          "caption_direction": "Data-framed analysis post. Share findings from the beta reports delivered or from direct Meta Ad Library analysis done as part of building the product. Example: in the supplements category, 7 out of 10 top-spending brands are running UGC-style testimonials \u2014 not polished product videos. In skincare, the longest-running ads are pain-point-led, not ingredient-led. In fitness equipment, price anchoring appears in the first line of copy on 60% of active ads running longer than 45 days. Frame these as what any founder could find if they knew where to look \u2014 and what OffGrid extracts systematically. This post demonstrates product value before purchase.",
+          "cta": "What category is your brand in? Drop it in the comments and I'll share what the pattern looks like in your space.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Data-backed post format + GAP ANGLE authority positioning"
+        },
+        {
+          "day": 15,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "What I found when I analyzed 40 Meta ads across 8 D2C categories",
+          "hook": "Slide 1: I pulled 40 active Meta ads across 8 D2C categories. Here's what the data actually showed.",
+          "caption_direction": "8-slide carousel. Slide 1: hook. Slide 2: 'Supplements: 7/10 top brands running UGC testimonials \u2014 not polished product ads.' Slide 3: 'Skincare: Longest-running ads are pain-point-led. Not ingredient-led.' Slide 4: 'Fitness Equipment: Price anchoring appears in the first line of copy on 60% of ads running 45+ days.' Slide 5: 'Fashion D2C: Lifestyle imagery outperforms product flat lays on 8 of 10 long-running creatives.' Slide 6: 'The pattern: winning brands found a format that works and ran it hard \u2014 not constantly tested new ones.' Slide 7: 'This data is publicly available in the Meta Ad Library. Most founders never read it.' Slide 8: 'We built a tool that reads it for you. 17-section report. Under 10 minutes. DM INTEL.' Design: each slide should feel like a data card \u2014 bold number, clean stat, clear label.",
+          "cta": "Save this. DM INTEL for a free report on your specific category.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Data-backed carousel + save optimization + GAP ANGLE"
+        },
+        {
+          "day": 16,
+          "platform": "Instagram",
+          "format": "Story \u2014 Behind the Scenes",
+          "topic": "Show the Google Form to inbox pipeline in real time",
+          "hook": "Here's the exact process from form fill to 17-section PDF in your inbox.",
+          "caption_direction": "4-frame story sequence. Frame 1: screenshot of the Google Form \u2014 'Step 1: Fill the form with your brand and up to 3 competitors.' Frame 2: text slide \u2014 'Step 2: The pipeline scrapes the Meta Ad Library. Claude analyzes every active ad.' Frame 3: screenshot of report PDF cover page landing in an email inbox \u2014 timestamp visible showing under 10 minutes. Frame 4: 'That's it. 17 sections. Under 10 minutes. Beta access is free this week. DM INTEL.' Raw and authentic \u2014 the messiness of a real pipeline screenshot is more credible than a polished mock-up.",
+          "cta": "DM INTEL to get your report.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Process transparency + AI + ads velocity signal"
+        },
+        {
+          "day": 17,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The founder who spent 3 weeks testing ads \u2014 a parable for the intelligence gap",
+          "hook": "A founder spent 3 weeks and Rs 80,000 testing Meta ad creatives. Their top competitor had been running the answer for 5 months.",
+          "caption_direction": "Narrative parable post \u2014 clearly framed as an illustrative scenario (not a fabricated testimonial). Walk through the story: a D2C founder in a competitive category ran 12 creative variations over 3 weeks, burned significant budget, got no clear winner. Meanwhile, their closest competitor had been running one creative \u2014 a 45-second UGC testimonial with a pain-point hook \u2014 for 5 months continuously. This means it was converting. The founder never checked. The intelligence was public the entire time. Close with the question: how many founders are in this exact situation right now? Frame OffGrid as the structural fix \u2014 not a hack, not a shortcut, but a systematic intelligence process that should be standard practice before any ad spend.",
+          "cta": "I'm offering a free report to 3 more founders this week. DM me 'REPORT' with your niche.",
+          "content_pillar": "BLIND SPOT",
+          "trend_angle_used": "Narrative parable format + mirrored founder pain language + GAP ANGLE"
+        },
+        {
+          "day": 18,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Bold claim \u2014 the most valuable free tool in D2C marketing that no one is using",
+          "hook": "The most valuable free competitive intelligence tool in D2C marketing is public, legal, and almost no one is using it.",
+          "caption_direction": "Bold typographic static post. Text on image: 'The Meta Ad Library is public. Legal. Free. And almost no one in D2C is using it systematically.' Caption: two lines \u2014 'Your competitor's entire ad strategy is visible right now. We built a tool to read it for you in under 10 minutes.' Link in bio. High contrast design \u2014 the image should be screenshot-worthy.",
+          "cta": "Link in bio \u2014 get your free competitor intelligence report.",
+          "content_pillar": "PATTERN INTERRUPT",
+          "trend_angle_used": "Pattern interrupt + GAP ANGLE + bold claim format"
+        },
+        {
+          "day": 18,
+          "platform": "Instagram",
+          "format": "Story \u2014 DM Prompt",
+          "topic": "Direct engagement driver \u2014 personalised intelligence tease",
+          "hook": "Tell me your brand's main competitor and I'll tell you one thing their Meta ads are doing that yours probably isn't.",
+          "caption_direction": "Single story frame with question box sticker. Text: 'What's your brand's #1 competitor? Drop it below and I'll share one insight from their active Meta ads.' Respond personally to every reply via DM. This creates one-to-one engagement, qualifies leads, and generates real intelligence content for future posts. Every response is a warm lead.",
+          "cta": "Drop your competitor's name below.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Personalised engagement + DM funnel entry"
+        },
+        {
+          "day": 19,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Build in public \u2014 what the pipeline actually looks like under the hood",
+          "hook": "Here's exactly how the OffGrid AI pipeline works \u2014 no fluff, no vague AI buzzwords.",
+          "caption_direction": "Technical transparency post \u2014 founder-voice, plain language. Walk through: Step 1 \u2014 Google Form collects brand name and up to 3 competitor names. Step 2 \u2014 Pipeline triggers a scrape of the Meta Ad Library for each competitor. Step 3 \u2014 Raw ad data is fed to Claude with a structured 17-section analysis prompt. Step 4 \u2014 Output is compiled into a formatted PDF. Step 5 \u2014 PDF is delivered to the client's inbox. Total time: under 10 minutes. State clearly what the pipeline does not do \u2014 it does not access any private data, it only reads what is publicly available in the Meta Ad Library. This transparency builds trust. Explain why you built it with Claude specifically \u2014 the depth of analysis, the structured output capability. This post appeals to the technically curious and the trust-skeptical.",
+          "cta": "Curious what your competitor's report would look like? DM me and I'll pull it for you free.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Build-in-public + AI + ads velocity signal + technical credibility"
+        },
+        {
+          "day": 20,
+          "platform": "Instagram",
+          "format": "Reel",
+          "topic": "Contrarian 60-second take \u2014 why creative testing is the wrong first step",
+          "hook": "Stop testing creatives. Start reading your competitor's ads. Here's why the order matters.",
+          "caption_direction": "Face-to-camera or voiceover Reel, 45 to 60 seconds. Script: 'Every D2C founder is told to test creatives. But here's what nobody tells you: your competitor has already done the testing for you. Their ads that are still running after 60 days? Those won the test. That UGC video they've been running since Q4? It converts. The pain-point hook in their first line of copy? It's their best-performing angle. All of this is visible right now in the Meta Ad Library. Before you spend another rupee on creative testing, read what's already working in your category. We built a tool that does that analysis in under 10 minutes. Link in bio.' Keep it tight, direct, founder-to-founder energy.",
+          "cta": "Link in bio \u2014 get your competitor intelligence report free.",
+          "content_pillar": "PATTERN INTERRUPT",
+          "trend_angle_used": "Contrarian hook + GAP ANGLE + educational Reel format"
+        },
+        {
+          "day": 21,
+          "platform": "Instagram",
+          "format": "Story \u2014 Week 3 Proof Story",
+          "topic": "Share first beta reaction or process milestone",
+          "hook": "Update from the beta: here's what happened when the first reports went out.",
+          "caption_direction": "3-frame story. Frame 1: 'Week 3 update \u2014 the first beta reports are out.' Frame 2: Share one authentic reaction \u2014 a DM screenshot (with permission), a voice note reaction, or a paraphrase of real feedback received. If no external feedback yet, share an internal finding from generating the reports \u2014 'While building report #2, we found that the brand's top competitor had 4 ads running for 90+ days that the founder had never seen. All 4 used the same hook structure.' Frame 3: 'Beta is still open. DM INTEL.' Authenticity over polish \u2014 even imperfect proof builds more trust than no proof.",
+          "cta": "DM INTEL \u2014 2 beta spots remain.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Social proof seeding + build-in-public transparency"
+        }
+      ]
+    },
+    "week_4": {
+      "theme": "CONVERT AND COMPRESS \u2014 drive DM inquiries to form completions, introduce beta pricing signal, close month with proof and momentum",
+      "posts": [
+        {
+          "day": 22,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The competitive intelligence practice that D2C brands will standardize in 12 months \u2014 and how to start now",
+          "hook": "In 12 months, every serious D2C brand will have a competitor ad intelligence process. Right now, almost none of them do. That window is closing.",
+          "caption_direction": "Forward-looking authority post. Make the argument: the brands winning on Meta are not guessing \u2014 they have systematized competitive intelligence. Right now this is a practice only large teams with dedicated analysts can maintain. OffGrid is making it accessible to every solo founder and small team. In 12 months, this will be table stakes. The window to build this edge before competitors adopt it is now. Frame OffGrid as the early-mover advantage \u2014 not just a tool, but a practice that compounds over time. Tie back to the core offer: 17-section report, under 10 minutes, currently in beta.",
+          "cta": "We're closing beta at the end of this week. DM me 'EDGE' to get your report before we move to paid access.",
+          "content_pillar": "PATTERN INTERRUPT",
+          "trend_angle_used": "Future-state framing + early adopter urgency + GAP ANGLE"
+        },
+        {
+          "day": 22,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "Before and after \u2014 ad strategy blind vs intelligence-led",
+          "hook": "Slide 1: Two D2C founders. Same budget. Same platform. Very different approach.",
+          "caption_direction": "6-slide before/after carousel. Slide 1: hook. Slide 2: 'Founder A \u2014 blind strategy: tests 8 creatives, no competitor reference, optimizes based on internal data only.' Slide 3: 'Founder B \u2014 intelligence-led: pulls competitor ad data first, identifies 3 winning hooks in the category, builds creative around proven angles, tests 3 variations instead of 8.' Slide 4: 'The difference is not budget. It is not creative talent. It is information.' Slide 5: 'The Meta Ad Library gives you everything Founder B is using. OffGrid reads it for you in under 10 minutes.' Slide 6: 'Beta access \u2014 free this week. DM INTEL.' Design: clean split-screen or contrast layout \u2014 make the visual difference feel obvious.",
+          "cta": "Save this. DM INTEL to move from Founder A to Founder B.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Before/after contrast format + save optimization + GAP ANGLE"
+        },
+        {
+          "day": 23,
+          "platform": "Instagram",
+          "format": "Story \u2014 Urgency + Testimonial Seed",
+          "topic": "Beta closing this week \u2014 last call framing",
+          "hook": "Beta closes Friday. Here's what people who got the report said.",
+          "caption_direction": "3-frame story. Frame 1: 'Beta closes Friday. Last call for free access.' Frame 2: Real DM reaction or anonymised feedback from a beta recipient \u2014 screenshot or paraphrase. If no external testimonial yet, share a specific finding from a delivered report that the founder responded positively to. Frame 3: 'DM INTEL before Friday. After that we move to paid access.' Real urgency \u2014 if the beta period is genuinely closing, this is honest. Never manufacture false scarcity.",
+          "cta": "DM INTEL now.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Social proof acceleration + scarcity close"
+        },
+        {
+          "day": 24,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "What I learned building an AI-powered ad intelligence pipeline from zero",
+          "hook": "I spent 6 weeks building a pipeline that scrapes the Meta Ad Library and delivers a 17-section competitor intelligence report in under 10 minutes. Here's the most surprising thing I learned.",
+          "caption_direction": "Personal reflection post \u2014 founder voice, honest tone. Share the most counterintuitive finding from building the product. Example: the most surprising thing was not how powerful the AI analysis was \u2014 it was how much free intelligence was sitting in the Meta Ad Library untouched. Founders are spending thousands on ads while their competitors' entire playbooks are visible publicly. The real insight is not the tool \u2014 it is the practice. The tool just makes the practice accessible. Close with a reflection on what phase 1 of beta has taught and what comes next. Hint at paid access without being pushy. This post builds founder-to-founder credibility.",
+          "cta": "If you're building something in the D2C or ad-tech space and want to compare notes \u2014 DM me. Always open to a conversation.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Founder reflection + build-in-public + trust compounding"
+        },
+        {
+          "day": 25,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Single bold stat or insight from beta reports delivered",
+          "hook": "The average D2C brand has 3+ competitor ads running for 60+ days that they have never seen.",
+          "caption_direction": "Bold typographic static post. Large text: '3+ competitor ads. Running 60+ days. Invisible to you.' Caption: 'The Meta Ad Library is public. The intelligence is there. OffGrid reads it in under 10 minutes. Beta access \u2014 link in bio.' High contrast, screenshot-worthy design. This is a shareable, saveable single-insight post \u2014 minimal text, maximum signal. If the stat comes from actual beta report data, state it as such. If it is a directional estimate from analysis, label it accordingly.",
+          "cta": "Link in bio \u2014 free beta access this week.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Stat-backed bold claim + GAP ANGLE + save optimization"
+        },
+        {
+          "day": 25,
+          "platform": "Instagram",
+          "format": "Story \u2014 FAQ",
+          "topic": "Answer the 3 most common questions from DMs about the report",
+          "hook": "You've been DMing us questions. Here are the 3 most common ones answered.",
+          "caption_direction": "3-frame story, one question per frame. Q1: 'Is this legal?' \u2014 Answer: 'Yes. The Meta Ad Library is public data. We only read what Meta has made publicly available.' Q2: 'How accurate is the AI analysis?' \u2014 Answer: 'We use Claude. The analysis is structured, detailed, and covers 17 dimensions. Every report is reviewed for quality before delivery.' Q3: 'What do I need to provide?' \u2014 Answer: 'Just your brand name and up to 3 competitor names. Fill a Google Form. Report lands in your inbox in under 10 minutes.' Final frame: 'More questions? DM us. Beta is still open.' This post addresses the most common trust objections without needing a sales page.",
+          "cta": "DM any other questions \u2014 or DM INTEL to get your report.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Trust objection handling + FAQ format for credibility"
+        },
+        {
+          "day": 26,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Pricing signal \u2014 beta is ending, here's what paid access looks like",
+          "hook": "We've delivered 5 free beta reports this month. Starting next week, we're moving to paid access at INR 999. Here's why that price is not the point.",
+          "caption_direction": "Transition post from beta to paid. Acknowledge the beta work done. Name the price clearly \u2014 INR 999. Then make the value argument: a single insight from a competitor ad report \u2014 one hook angle you hadn't considered, one format signal you can test \u2014 is worth multiples of INR 999 in saved ad spend. Frame this not as a price announcement but as a value statement. Thank the beta participants publicly (even without naming them). Reiterate what the report includes. Close with a final beta CTA for anyone who has not accessed it yet and wants the free version before it closes.",
+          "cta": "Last 48 hours of free beta. DM me 'BETA' to claim your free report before we go paid.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Pricing transparency + value framing + final beta push"
+        },
+        {
+          "day": 27,
+          "platform": "Instagram",
+          "format": "Carousel",
+          "topic": "Month 1 wrap \u2014 what we built, what we learned, what comes next",
+          "hook": "Slide 1: 30 days. 5 beta reports. Here's what we built, what surprised us, and what's coming next.",
+          "caption_direction": "7-slide build-in-public recap carousel. Slide 1: hook. Slide 2: 'What we built: an AI pipeline that scrapes the Meta Ad Library and delivers a 17-section competitor intelligence report in under 10 minutes.' Slide 3: 'What surprised us: the volume of untouched intelligence sitting in public view. Every D2C founder's competitor playbook is visible. Almost no one is reading it.' Slide 4: 'What we learned from beta: the most valuable section for founders is the hook analysis and the 3 immediate action steps.' Slide 5: 'What's coming: paid access at INR 999, expanded category coverage, and a short video walkthrough of every report delivered.' Slide 6: 'Thank you to every founder who gave feedback, asked hard questions, and DM'd us this month.' Slide 7: 'Paid access opens Monday. DM INTEL for early access pricing.' Authentic, reflective, forward-looking tone.",
+          "cta": "Save this. DM INTEL for early access to paid tier.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Build-in-public monthly recap + trust consolidation"
+        },
+        {
+          "day": 28,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "The single most important thing a D2C founder can do before spending on ads in 2026",
+          "hook": "Before you spend your next rupee on Meta ads \u2014 do this one thing. It takes 10 minutes and it will change how you see your entire category.",
+          "caption_direction": "Authority post with high share potential. The one thing: pull your top 3 competitors' ads from the Meta Ad Library and identify which ones have been running the longest. Those are the ones converting. Then build your next creative brief around what those ads are doing \u2014 the hook structure, the format choice, the copy angle, the offer framing. That is intelligence-led creative strategy. The problem: doing this manually takes two hours per competitor and requires knowing what to look for. OffGrid does it in 10 minutes and gives you 17 sections of structured analysis. Make this post feel like the most actionable thing they will read this week. It should generate saves and shares on LinkedIn.",
+          "cta": "Want this done for you in 10 minutes? Paid access is now open at INR 999. Link in bio or DM 'REPORT'.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "High-value actionable post + GAP ANGLE + paid launch soft CTA"
+        },
+        {
+          "day": 28,
+          "platform": "Instagram",
+          "format": "Story \u2014 Paid Launch Announcement",
+          "topic": "Paid access is now open \u2014 clean and direct announcement",
+          "hook": "Paid access is open. INR 999. 17 sections. Under 10 minutes.",
+          "caption_direction": "3-frame story. Frame 1: 'Paid access is now open.' Large bold text. Frame 2: 'INR 999. 17-section AI-powered competitor ad intelligence report. Delivered to your inbox in under 10 minutes after filling a Google Form.' Frame 3: 'Link in bio. Or DM REPORT.' Clean, minimal design. This is not a hype launch \u2014 it is a confident, direct announcement consistent with the brand tone.",
+          "cta": "Link in bio \u2014 or DM REPORT.",
+          "content_pillar": "PROOF SEEDS",
+          "trend_angle_used": "Product launch announcement + beta-to-paid transition"
+        },
+        {
+          "day": 29,
+          "platform": "Instagram",
+          "format": "Reel",
+          "topic": "Full product demo \u2014 60-second walkthrough of the report from form to inbox",
+          "hook": "Here's what happens after you fill the form. Full demo.",
+          "caption_direction": "Screen-recorded Reel with voiceover, 60 seconds max. Show the full journey: Google Form fill (10 seconds), text slide explaining the pipeline runs (5 seconds), report PDF arriving in inbox \u2014 show the cover page and scroll through 3 to 4 sections (30 seconds), close with value summary (15 seconds): '17 sections. Competitor ad creative inventory. Hook analysis. Copy angle extraction. Competitive gaps. 3 immediate action steps. Under 10 minutes. INR 999. Link in bio.' This is the most important Reel of the 30 days \u2014 it closes the loop from curiosity to conversion for anyone who has been watching the account.",
+          "cta": "Link in bio \u2014 get your report now.",
+          "content_pillar": "INTELLIGENCE EDGE",
+          "trend_angle_used": "Product demo Reel + AI + ads velocity + conversion driver"
+        },
+        {
+          "day": 30,
+          "platform": "LinkedIn",
+          "format": "Text Post",
+          "topic": "Day 30 \u2014 what we proved, who we built it for, and what comes next",
+          "hook": "Day 30. Here's what 30 days of building in public taught me about the D2C founder's biggest blind spot.",
+          "caption_direction": "Month-close reflection post. Honest, specific, forward-looking. Recap: the core insight \u2014 D2C founders are building ad strategy in an information vacuum while their competitors' playbooks sit untouched in the Meta Ad Library. What was built: a pipeline that closes this gap in under 10 minutes. What was validated in beta: the specific sections founders find most valuable, the categories with the highest intelligence density in the Meta Ad Library, the friction points that the pipeline removes. What comes next: Phase 2 of the product, expanded features, and a goal of reaching the first 10 paying clients in the next 30 days. Thank the community \u2014 everyone who DM'd, gave feedback, shared a post, or asked a hard question. End with a direct and confident CTA for paid access. This post should feel like a milestone, not a closing.",
+          "cta": "If you run Meta ads and want to stop building strategy blind \u2014 the report is INR 999. Link in bio. DM 'REPORT' and I'll send you the form directly.",
+          "content_pillar": "BUILD IN PUBLIC",
+          "trend_angle_used": "Build-in-public milestone post + GAP ANGLE + paid conversion CTA"
+        },
+        {
+          "day": 30,
+          "platform": "Instagram",
+          "format": "Static",
+          "topic": "Day 30 close \u2014 bold statement to end month 1",
+          "hook": "30 days. One mission. Stop D2C founders from building ad strategy blind.",
+          "caption_direction": "Bold typographic static post. Text on image: 'Stop building ad strategy blind.' Caption: 'Your competitor's best-performing Meta ad is live right now. We built the tool that reads it. 17 sections. Under 10 minutes. INR 999. Link in bio.' Clean, confident, brand-defining. This post should feel like a brand statement, not a product ad.",
+          "cta": "Link in bio \u2014 get your competitor intelligence report.",
+          "content_pillar": "PATTERN INTERRUPT",
+          "trend_angle_used": "Brand statement post + GAP ANGLE + month 1 close"
+        }
+      ]
+    },
+    "posting_rules": [
+      "Every LinkedIn post must be written in first-person founder voice \u2014 no third-person brand references, no corporate language.",
+      "Every Instagram carousel must be designed to be saved \u2014 each slide should deliver standalone value readable as a screenshot.",
+      "No post should mention the product without first naming the problem it solves \u2014 lead with the gap, close with the product.",
+      "Hook must appear as the first line of every post with no preamble \u2014 no 'Hey everyone', no 'I wanted to share'.",
+      "Instagram Stories must be posted 5 days per week \u2014 they are the primary DM funnel entry point and must always include a response mechanic (poll, question box, swipe up, DM prompt).",
+      "Every CTA must be singular \u2014 one action per post, never two or three competing calls to action.",
+      "DM keyword triggers (INTEL, REPORT, SIGNALS, EDGE, BETA) must be consistent across platforms and tracked manually in a response log.",
+      "LinkedIn posts should be between 150 and 400 words \u2014 long enough to deliver value, short enough to read in one scroll.",
+      "Instagram captions should be between 3 and 6 lines \u2014 hook in line 1, value in lines 2-3, CTA in final line.",
+      "Reels must open on the hook within the first 2 seconds \u2014 no logo reveals, no music intros, no slow pans.",
+      "Never post a product-first piece of content \u2014 every post must earn the right to mention OffGrid by delivering value first.",
+      "Build-in-public posts must include specific details \u2014 numbers, timelines, decisions made, things that didn't work. Vague transparency is not transparency.",
+      "If a beta report has not been delivered yet when a proof-seeds post is scheduled, reframe the post around process transparency or a finding from the Meta Ad Library itself \u2014 never fabricate testimonials or reactions.",
+      "Cross-post strategically \u2014 LinkedIn text posts can be adapted for Instagram captions but must be reformatted for platform norms. Do not copy-paste verbatim across platforms."
+    ],
+    "what_not_to_post": [
+      "Generic ad tips that any marketing account could post \u2014 'use strong CTAs', 'test your creatives', 'know your audience'.",
+      "Motivational quotes or founder mindset content unrelated to the product's core gap.",
+      "Polls asking 'which do you prefer, A or B?' without connecting the answer back to competitive intelligence or the product.",
+      "Content that references AI without being specific \u2014 never say 'we use AI' without saying which AI, what it does, and what the output looks like.",
+      "Oversaturated stat-backed content with no original insight \u2014 '82% of marketers say...' type posts that appear across thousands of generic accounts.",
+      "Fake urgency or manufactured scarcity \u2014 every beta limit, deadline, or spot count must be real.",
+      "Content that positions OffGrid as a tool rather than a practice \u2014 the product enables a competitive intelligence practice, it is not just another SaaS tool.",
+      "Posts that lead with the price before establishing value \u2014 INR 999 is only mentioned after the value case has been made.",
+      "Agency-tone content \u2014 no 'we help brands scale' language, no stock imagery of charts and dashboards, no before/after graph graphics without real data.",
+      "Content that apologizes for being in beta \u2014 beta is a feature, not a flaw. Frame it as early access and proof-in-progress, never as unfinished or incomplete."
+    ]
+  },
+  "strategy": {
+    "created_at": "2026-04-03T18:04:13.240011",
+    "brand": "offgrid-creatives-ai",
+    "strategic_angle": "GAP ANGLE \u2014 You are the only voice telling D2C founders to stop building ad strategy blind and start reverse-engineering competitor intelligence from the Meta Ad Library. No one in the scraped feed is saying this. You own this narrative from day one.",
+    "north_star_metric": "10 paying beta clients in 90 days",
+    "phase_1": {
+      "days": "1-30",
+      "name": "PROOF FACTORY",
+      "goal": "Generate 3-5 completed beta reports, collect 3+ written testimonials or video reactions, build initial audience trust on Instagram and LinkedIn with founder-POV content that names the competitor-intelligence gap",
+      "primary_platform": "LinkedIn",
+      "content_focus": "Founder-POV narrative posts naming the structural gap (founders are building ad strategy in an information vacuum), behind-the-scenes build-in-public showing the pipeline working in real time, and free/discounted beta report drops to 5 hand-picked D2C founders in exchange for honest public feedback",
+      "weekly_output": {
+        "linkedin_posts": 4,
+        "instagram_posts": 3,
+        "instagram_stories": 5,
+        "dm_outreach_per_week": 30,
+        "beta_reports_delivered": "1-2 per week target"
+      },
+      "key_actions": [
+        "Identify 20 D2C founders and agency owners on LinkedIn and Instagram who have posted about Meta ads frustration \u2014 DM them a free beta report in exchange for a public testimonial or 30-second video reaction",
+        "Publish 3 LinkedIn posts using the exact hooks from trend data: 'Your competitor's best-performing Meta ad is live right now. You just can't see it.' and 'We tested ads and they didn't work \u2014 said every founder who never looked at what their competitors were running.'",
+        "Create one Instagram carousel: 'What the Meta Ad Library tells you that your agency won't' \u2014 educational, positions OffGrid as the authority naming the gap",
+        "Record a 60-second Loom or Reel walking through a real (anonymized) beta report \u2014 show the 17 sections, the speed of delivery, the depth of analysis \u2014 post natively on both platforms",
+        "Post a build-in-public thread on LinkedIn: 'I built a pipeline that scrapes the Meta Ad Library, feeds it to Claude, and delivers a 17-section competitor intelligence PDF in under 10 minutes. Here's what happened when I gave it to 5 D2C founders for free.'",
+        "Collect every piece of feedback \u2014 screenshots of DMs, testimonial quotes, reaction videos \u2014 and store in a proof bank for Phase 2",
+        "Join 3-5 relevant WhatsApp/Telegram communities for D2C founders and agency owners \u2014 contribute value before ever mentioning the product, then soft-drop the beta offer by week 3"
+      ],
+      "success_gate": "Minimum 3 completed beta reports delivered AND minimum 2 public testimonials (screenshot, quote, or video) collected. If gate is not met by Day 30, extend Phase 1 by 10 days before moving to Phase 2. Do not scale content volume without proof assets."
+    },
+    "phase_2": {
+      "days": "31-60",
+      "name": "CONTENT WEAPONIZATION",
+      "goal": "Convert proof into high-frequency content, reach 3-5 paying beta clients at INR 999, grow audience to 500+ engaged followers across platforms, establish OffGrid as the singular voice for competitor ad intelligence",
+      "primary_platform": "Instagram",
+      "content_focus": "Before/After comparison posts (blind strategy vs intelligence-led strategy), testimonial-embedded carousels, stat-backed posts using real data from delivered reports (anonymized), Q1/Q2 performance narrative posts, and direct CTA content driving to Google Form",
+      "weekly_output": {
+        "linkedin_posts": 3,
+        "instagram_posts": 5,
+        "instagram_reels": 2,
+        "instagram_stories_with_cta": 7,
+        "dm_outreach_per_week": 20,
+        "community_engagement_actions": 15
+      },
+      "key_actions": [
+        "Turn every testimonial into a native content piece \u2014 screenshot post with founder caption on Instagram, narrative post on LinkedIn with the story of what the report revealed for that founder",
+        "Publish the Before/After carousel format: 'Founder X was spending 40k/month on Meta ads blind. Here's what their competitor intelligence report revealed in 10 minutes.' \u2014 use real anonymized data from beta reports",
+        "Launch a 'Competitor Ad Teardown' content series on Instagram \u2014 pick one well-known D2C brand per week, show 3 insights from their Meta Ad Library presence, end with CTA: 'Want this for YOUR competitors? Link in bio.'",
+        "Create and pin a LinkedIn article or long post: 'Why 90% of D2C founders are building ad strategy in an information vacuum \u2014 and the 10-minute fix' \u2014 this becomes the evergreen trust anchor",
+        "Activate the INR 999 beta pricing publicly \u2014 frame it as limited to first 10 clients, create genuine scarcity since it is genuinely scarce",
+        "Run a '48-hour beta drop' twice during this phase \u2014 announce on Stories and LinkedIn that 3 spots are open at beta price, close the form after 48 hours or 3 fills, whichever comes first",
+        "Engage daily in comments on posts by D2C founders, agency owners, and e-commerce communities \u2014 always add value, never spam, but have a profile that clearly communicates what OffGrid does"
+      ],
+      "success_gate": "Minimum 3 paying beta clients at INR 999 AND minimum 300 combined followers across Instagram and LinkedIn AND at least 2 content pieces that crossed 50+ organic engagements. If gate is not met by Day 60, audit content resonance, re-survey beta clients on messaging, and adjust hooks before Phase 3."
+    },
+    "phase_3": {
+      "days": "61-90",
+      "name": "CONVERSION ENGINE",
+      "goal": "Close remaining 5-7 paying clients to hit 10 total, begin price ladder testing toward INR 3500, build retargeting-ready content library for future paid amplification, validate repeatable conversion path",
+      "primary_platform": "Instagram and LinkedIn equally",
+      "content_focus": "Social proof stacking (multiple testimonials in single posts), ROI-framed content ('This founder found 3 competitor angles they'd never tested \u2014 cost: INR 999, time: 10 minutes'), urgency-driven beta closing content, and early authority content positioning OffGrid for post-beta pricing",
+      "weekly_output": {
+        "linkedin_posts": 4,
+        "instagram_posts": 5,
+        "instagram_reels": 3,
+        "instagram_stories_with_cta": 10,
+        "dm_outreach_per_week": 25,
+        "micro_budget_boosted_posts": "1-2 per week if any budget unlocked from beta revenue (INR 500-1000 per boost)"
+      },
+      "key_actions": [
+        "Stack all testimonials into a single 'Wall of Proof' carousel \u2014 post on both platforms, pin to profile",
+        "Publish a '10 things we learned analyzing competitor ads for X founders' post using aggregated anonymized insights from all delivered reports \u2014 positions OffGrid as having proprietary data no one else has",
+        "Announce beta closing: 'We're closing INR 999 pricing after 10 clients. 4 spots left.' \u2014 update the count publicly as clients come in",
+        "Run a LinkedIn poll or Instagram Story poll: 'Do you know what your top 3 competitors are running on Meta right now? Yes / No / Wait you can check that?' \u2014 use results as content and lead-gen",
+        "DM every person who engaged with content in Phase 2 but did not convert \u2014 personal message from founder, not a template, referencing their specific business",
+        "If beta revenue allows (INR 3000-5000 total), boost the single highest-performing Instagram post or Reel from Phase 2 with a micro-budget targeting D2C founder interests in India",
+        "Begin testing INR 3500 pricing with 1-2 clients who come in after the beta closes or who have higher willingness to pay \u2014 do not announce publicly yet, test via DM conversations",
+        "Document the full 90-day journey in a long-form LinkedIn post or Twitter thread \u2014 this becomes the launch content for the post-beta phase and attracts the next wave of clients"
+      ],
+      "success_gate": "10 total paying clients across all phases AND at least 1 client acquired at INR 3500 or willingness-to-pay signal at that tier AND a documented conversion path (content type \u2192 DM or form \u2192 payment \u2192 delivery \u2192 testimonial) that can be repeated in Month 4+."
+    },
+    "platform_priority": [
+      "LinkedIn \u2014 primary for Phase 1 because founder-to-founder trust content performs better here, D2C founders and agency owners are active, and long-form narrative builds credibility faster than Instagram in zero-proof stage",
+      "Instagram \u2014 primary for Phase 2 and co-primary for Phase 3 because visual proof formats (carousels, before/after, Reels) scale reach faster once proof assets exist, and the target hashtag ecosystem (#metacads, #d2cmarketing, #facebookads) has high posting volume but near-zero quality competition",
+      "WhatsApp/Telegram D2C communities \u2014 secondary channel throughout, used for relationship-building and soft beta drops, not primary content distribution"
+    ],
+    "content_pillars": [
+      "THE GAP \u2014 Content that names the problem no one else is naming: D2C founders are spending money on Meta ads without ever looking at what competitors are running. This is the structural content gap identified in trend data. Every piece in this pillar educates the audience that competitor ad intelligence exists and they're ignoring it.",
+      "THE PROOF \u2014 Content built from real beta report deliveries: testimonials, anonymized data insights, before/after narratives, founder reaction screenshots. This pillar directly attacks the trust bottleneck.",
+      "THE TEARDOWN \u2014 Educational content where OffGrid publicly analyzes a well-known brand's Meta Ad Library presence, reveals 2-3 strategic insights, and ends with a CTA. This demonstrates product value before purchase and exploits the 'What the Meta Ad Library tells you that your agency won't' format from trend data.",
+      "THE BUILD \u2014 Behind-the-scenes founder-POV content showing the pipeline, the AI analysis process, the speed of delivery. This pillar uses the 'I noticed / I checked / here's what I found' narrative arc identified in trending formats.",
+      "THE CLOSE \u2014 Direct conversion content with clear CTA, scarcity framing (limited beta spots), and price anchoring (INR 999 vs value of one bad ad campaign). Used sparingly in Phase 1, increases in Phase 2 and 3."
+    ],
+    "what_not_to_do": [
+      "Do NOT post generic 'we run data-driven ads' or 'grow your business with Meta' content \u2014 this is the exact commodity noise that scores 0-3 likes in the scraped feed and would bury OffGrid in the same low-resonance pool",
+      "Do NOT use stock images or templated Canva carousels that look like every other agency post \u2014 the scraped feed is saturated with this and it signals low authority",
+      "Do NOT spend any money on paid ads before Phase 3 \u2014 zero-proof paid amplification burns budget and builds no trust; organic proof-building must come first",
+      "Do NOT try to sell in DMs before delivering value \u2014 every outreach must lead with a free insight or beta offer, not a pitch",
+      "Do NOT post more than 20% sales-CTA content in Phase 1 \u2014 the ratio should be 80% education/proof, 20% CTA until trust assets are established",
+      "Do NOT chase vanity metrics like follower count \u2014 optimize for DM conversations, form fills, and testimonial collection",
+      "Do NOT create content about 'AI writing ad copy' or general AI hype \u2014 the trend data shows this conversation exists but is not specific to Meta Ad Library intelligence; borrowing this framing dilutes OffGrid's unique positioning"
+    ],
+    "trend_angles_to_exploit": [
+      "STRUCTURAL GAP \u2014 Zero content in the scraped feed addresses competitor ad intelligence or Meta Ad Library analysis. OffGrid is the first and only voice in this space. Every piece of content should reinforce this ownership.",
+      "AI + ADS VELOCITY \u2014 The 'AI applied to ad workflows' signal is gaining momentum but is stuck on AI-for-ad-copy framing. OffGrid reframes this to AI-for-competitive-intelligence, riding the velocity while occupying a distinct subcategory.",
+      "FOUNDER FRUSTRATION LANGUAGE \u2014 Exact phrases from scraped posts like 'tested ads and they didn't work' and 'bad creatives' and 'wrong targeting' should be mirrored in hooks to create instant recognition and trust.",
+      "Q1/Q2 PERFORMANCE RECAP FORMAT \u2014 Founders sharing real numbers are getting organic traction. OffGrid should use this format to share anonymized aggregate insights from beta reports ('We analyzed 847 competitor ads across 5 D2C brands. Here's what we found.').",
+      "STAT-BACKED BOLD OPENER FORMAT \u2014 The carousel format with a single bold stat on the first slide is proven to stop scrolls. OffGrid should use proprietary data from reports as the stat source, making the content unreplicable by competitors."
+    ],
+    "competitive_positioning": "OffGrid Creatives AI is not another Meta ads agency. It is not an ad creative tool. It is not an AI copywriter. It is the only product that takes the publicly available Meta Ad Library \u2014 10 million active ads \u2014 and converts a founder's specific competitive landscape into a structured 17-section intelligence report delivered in under 10 minutes. The positioning is: everyone else tells you to improve your ads from the inside. OffGrid is the only one telling you to look outside \u2014 at what's already working for your competitors \u2014 and giving you the tool to do it instantly. This maps directly to the structural content gap where zero competitors are speaking to this need.",
+    "conversion_path": "Instagram/LinkedIn content (hook from trend data) \u2192 Profile visit (bio clearly states 'AI-powered competitor ad intelligence in 10 minutes') \u2192 Link in bio to Google Form \u2192 Form fill (brand name, competitor names, email) \u2192 Make.com triggers Apify scrape \u2192 Claude API analysis \u2192 Railway Flask generates PDF \u2192 Gmail delivers 17-section report to client inbox in under 10 minutes \u2192 Follow-up DM/email requesting testimonial \u2192 Testimonial becomes content \u2192 Content attracts next client. Secondary path: DM outreach to engaged followers or community members \u2192 Free beta report offer \u2192 Delivery \u2192 Testimonial \u2192 Conversion of their network via word-of-mouth.",
+    "risk_factors": [
+      "PIPELINE RELIABILITY \u2014 The Make.com \u2192 Apify \u2192 Claude \u2192 Railway \u2192 Gmail pipeline must work flawlessly for every delivery. A single failed or delayed report during beta phase destroys trust before it's built. Mitigation: test pipeline 5 times with different brands before first beta client, have manual fallback process ready.",
+      "META AD LIBRARY ACCESS \u2014 Apify scraping of Meta Ad Library is subject to rate limits, structural changes, and potential blocking. Mitigation: monitor scrape success rates weekly, maintain backup scraping approach, be transparent with clients if delays occur.",
+      "TESTIMONIAL VELOCITY \u2014 The entire Phase 2 and 3 strategy depends on collecting proof in Phase 1. If beta clients receive reports but do not provide testimonials, the content engine stalls. Mitigation: make testimonial request part of delivery flow, offer additional free report for a second competitor in exchange for video testimonial, follow up 3 times.",
+      "AUDIENCE SIZE \u2014 With zero existing following, organic reach is severely limited in the first 30 days. Mitigation: compensate with direct DM outreach (30/week), community participation, and cross-platform posting to maximize surface area.",
+      "PRICE SENSITIVITY \u2014 INR 999 is low but still a nonzero commitment from founders who have never heard of OffGrid. Mitigation: frame beta price against cost of one wasted ad set (INR 5000-50000), offer money-back guarantee for beta clients, and let the report quality speak for itself.",
+      "FOUNDER BANDWIDTH \u2014 This is a beta-phase product with one founder likely doing content, outreach, delivery, and product development simultaneously. Mitigation: batch content creation (one session per week), automate everything possible in the pipeline, and prioritize conversion actions over vanity content."
+    ]
+  }
+}

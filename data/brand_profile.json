@@ -1,0 +1,49 @@
+{
+  "accounts": {
+    "email": "offgridcreativesai@gmail.com",
+    "instagram_handle": "@offgrid.creatives",
+    "linkedin_url": "https://www.linkedin.com/in/offgrid-creatives-1198753b3/"
+  },
+  "bottlenecks": [
+    "Awareness",
+    "Trust"
+  ],
+  "brand_guardian_learnings": {
+    "audience_language": [],
+    "brand_pov": "",
+    "failed_content_lessons": [],
+    "the_enemy": "",
+    "unique_tension": ""
+  },
+  "brand_name": "OffGrid Creatives AI",
+  "budget_phase": "low_budget_month_1",
+  "competitors": [],
+  "current_assets": "none",
+  "existing_pipeline": {
+    "flow": "Google Forms \u2192 Make.com \u2192 Apify \u2192 Claude API \u2192 Railway Flask \u2192 Gmail PDF",
+    "railway_url": "https://web-production-175d5.up.railway.app"
+  },
+  "goal": "Sell beta reports, collect proof, scale to full price, eventually build UI platform",
+  "meta_ad_account_id": "",
+  "phase": "beta",
+  "platforms": [
+    "Instagram",
+    "LinkedIn"
+  ],
+  "price": {
+    "beta_inr": 999,
+    "currency": "INR",
+    "india_inr": 3500,
+    "international_inr": 5000
+  },
+  "product": "AI-powered Ad Intelligence Report",
+  "product_description": "A 17-section PDF report that scrapes and analyzes competitor ads from the Meta Ad Library using AI. Delivered automatically to the client inbox in under 10 minutes after filling a Google Form.",
+  "target_audience": [
+    "D2C brand owners",
+    "E-commerce founders",
+    "Agency owners",
+    "Solopreneurs running Meta ads"
+  ],
+  "tone": "Bold, credible, founder-to-founder, disruptive but educational",
+  "website_url": ""
+}

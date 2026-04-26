@@ -1,0 +1,16 @@
+claude-agent-sdk
+anthropic
+apify-client
+python-dotenv
+notion-client
+requests
+Pillow
+python-slugify
+schedule
+pytrends
+google-api-python-client
+google-auth
+google-auth-oauthlib
+fal-client
+moviepy
+ffmpeg-python

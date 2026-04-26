@@ -77,15 +77,21 @@ def _flatten(obj, path: str, out: dict):
             out[path] = str(obj)
 
 
-def build_source_index(source_files: list[str | Path]) -> dict:
+def build_source_index(source_files: list, virtual_sources: dict | None = None) -> dict:
     """
     Read every JSON file in source_files and build a flat lookup:
       { "trends_live.json#competitor_intel.gaps_identified[1].opportunity_for_brand": "ASKGauravAI can..." }
+
+    source_files: list of paths (str or Path) to JSON files
+    virtual_sources: optional dict {virtual_filename: dict_object} for in-memory data
+                     (e.g. Trend Researcher's scraped_data before it's saved to disk)
 
     Skips files that don't exist or fail to parse.
     Returns the index dict.
     """
     index: dict[str, str] = {}
+
+    # Load files from disk
     for fpath in source_files:
         p = Path(fpath)
         if not p.exists():
@@ -97,9 +103,19 @@ def build_source_index(source_files: list[str | Path]) -> dict:
             continue
         leaves: dict[str, str] = {}
         _flatten(data, "", leaves)
-        # Prefix every key with the file basename so different files don't collide
         for k, v in leaves.items():
             index[f"{p.name}#{k}"] = v
+
+    # Add virtual in-memory sources
+    if virtual_sources:
+        for virtual_name, data_obj in virtual_sources.items():
+            if not isinstance(data_obj, (dict, list)):
+                continue
+            leaves = {}
+            _flatten(data_obj, "", leaves)
+            for k, v in leaves.items():
+                index[f"{virtual_name}#{k}"] = v
+
     return index
 
 

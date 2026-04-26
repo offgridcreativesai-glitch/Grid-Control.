@@ -1442,42 +1442,100 @@ OUTPUT: Return valid JSON only. No markdown fences. No commentary outside the JS
   }}
 }}"""
 
-        self.log("Calling Claude claude-sonnet-4-6 for AutoResearch Loop analysis...")
-
-        response = self.client.messages.create(
-            model=MODEL,
-            max_tokens=16000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        self._total_input_tokens += response.usage.input_tokens
-        self._total_output_tokens += response.usage.output_tokens
-
-        # Detect truncation early — gives a clearer error than json.JSONDecodeError
-        if response.stop_reason == "max_tokens":
-            self.log(f"WARNING: Claude hit max_tokens cap ({response.usage.output_tokens} out). Response will be truncated.")
-
-        raw = response.content[0].text.strip()
-
-        # Strip accidental markdown fences
-        if "```" in raw:
-            parts = raw.split("```")
-            for part in parts:
-                part = part.strip()
-                if part.startswith("json"):
-                    part = part[4:].strip()
-                if part.startswith("{"):
-                    raw = part
-                    break
-
+        # ── Rule 10: build source_index from REAL scraped_data + brand_profile ──
+        # Note: trend_researcher's "source" is the live Apify scrapes (in scraped_data dict).
+        # We pass it as a virtual source so the validator can check Claude's claims against it.
         try:
-            result = _safe_json_loads(raw)
-            self.log(f"AutoResearch Loop complete.")
-            self.log(f"Winner: {result['loop_header']['winner']}")
-            return result
-        except json.JSONDecodeError as e:
-            self.log(f"ERROR: Claude returned invalid JSON — {e}")
-            self.log(f"Raw response (first 500 chars): {raw[:500]}")
-            raise
+            from _provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
+        except ImportError:
+            import sys as _sys
+            _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from _provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        source_files = [
+            os.path.join(project_root, "brands", self.brand_slug, "brand_profile.json"),
+        ]
+        source_index = build_source_index(
+            source_files,
+            virtual_sources={"scraped_data.json": scraped_data}
+        )
+        self.log(f"Rule 10: Source index built — {len(source_index)} citable keys (file + virtual scraped_data)")
+
+        # Append Rule 10 enforcement block to the prompt
+        prompt += """
+
+⚠️ RULE 10 — SOURCE CITATION ENFORCEMENT (HARD REQUIREMENT) ⚠️
+
+Every claim in your trend_report (audience_language phrases, competitor patterns,
+content_angles_to_pursue, contrarian_opportunities, summary) MUST trace back to a real
+source data point in either:
+  - brand_profile.json (brand context)
+  - scraped_data.json (the live Apify scrape data shown above)
+
+Add a top-level "data_provenance" array to your output with entries:
+  - "claim": short text of the claim
+  - "source_file": "brand_profile.json" OR "scraped_data.json"
+  - "source_path": dot.notation path (e.g. "instagram_competitor_profiles.competitors.manthanjethwani.top_posts[0].caption_snippet")
+  - "source_value": verbatim ≥30-char snippet
+
+Aim for 8–12 provenance entries. Validation will reject claims that don't trace.
+"""
+
+        messages = [{"role": "user", "content": prompt}]
+        result = None
+        validation_report = None
+        attempt = 0
+        max_attempts = _MAX + 1
+
+        while attempt < max_attempts:
+            attempt += 1
+            self.log(f"Calling Claude claude-sonnet-4-6 for AutoResearch Loop (attempt {attempt}/{max_attempts})...")
+            response = self.client.messages.create(
+                model=MODEL,
+                max_tokens=16000,
+                messages=messages
+            )
+            self._total_input_tokens += response.usage.input_tokens
+            self._total_output_tokens += response.usage.output_tokens
+
+            if response.stop_reason == "max_tokens":
+                self.log(f"WARNING: Claude hit max_tokens cap ({response.usage.output_tokens} out). Response truncated.")
+
+            raw = response.content[0].text.strip()
+            if "```" in raw:
+                for part in raw.split("```"):
+                    part = part.strip()
+                    if part.startswith("json"):
+                        part = part[4:].strip()
+                    if part.startswith("{"):
+                        raw = part
+                        break
+
+            try:
+                result = _safe_json_loads(raw)
+            except json.JSONDecodeError as e:
+                self.log(f"ERROR: invalid JSON — {e}")
+                raise
+
+            is_valid, missing, validation_report = validate_citations(result, source_index)
+            self.log(f"Rule 10 validation (attempt {attempt}): {validation_report['claims_validated']}/{validation_report['claims_total']} passed")
+
+            if is_valid or attempt >= max_attempts:
+                break
+
+            messages.append({"role": "assistant", "content": json.dumps(result)})
+            messages.append({"role": "user", "content": (
+                f"Your previous output failed Rule 10 validation.\n\n"
+                f"{build_violation_message(missing)}\n\n"
+                f"Re-emit COMPLETE corrected JSON. Strict JSON only."
+            )})
+
+        if result is not None:
+            result["provenance_validation"] = validation_report
+
+        self.log(f"AutoResearch Loop complete.")
+        self.log(f"Winner: {result['loop_header']['winner']}")
+        return result
 
     # -------------------------------------------------------------------------
     # SAVE TRENDS LIVE
@@ -1607,6 +1665,10 @@ OUTPUT: Return valid JSON only. No markdown fences. No commentary outside the JS
 
         # BUILD B — Inject quality gate report (so downstream agents can audit data trust)
         trend_report["quality_gate"] = scraped_data.get("quality_gate", {})
+
+        # Rule 10 — Inject provenance + validation into trend_report
+        trend_report["data_provenance"] = loop_result.get("data_provenance", [])
+        trend_report["provenance_validation"] = loop_result.get("provenance_validation", {})
 
         loop_header = loop_result["loop_header"]
 

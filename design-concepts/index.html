@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GRID CONTROL — Premium Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:       #080808;
+    --surface:  #111111;
+    --surface2: #161616;
+    --border:   rgba(255,255,255,0.06);
+    --border2:  rgba(255,255,255,0.1);
+    --gold:     #C9A84C;
+    --gold-dim: rgba(201,168,76,0.12);
+    --gold-mid: rgba(201,168,76,0.25);
+    --text-1:   #F0EDE8;
+    --text-2:   #6B6560;
+    --text-3:   #3A3530;
+    --green:    #2ECC71;
+    --amber:    #F0A500;
+    --red:      #E74C3C;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── LAYOUT ── */
+  .shell { display: flex; height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+  }
+
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .brand-selector {
+    margin: 16px 12px;
+    padding: 10px 12px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  .brand-name { font-size: 12px; font-weight: 600; color: var(--gold); flex: 1; }
+  .brand-caret { font-size: 10px; color: var(--text-2); }
+
+  nav { padding: 12px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-2);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    letter-spacing: 0.2px;
+    transition: color 0.15s;
+  }
+  .nav-item svg { opacity: 0.4; }
+  .nav-item:hover { color: var(--text-1); }
+  .nav-item.active {
+    color: var(--text-1);
+    border-left-color: var(--gold);
+    background: linear-gradient(90deg, rgba(201,168,76,0.07), transparent);
+  }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 16px 20px 0;
+    border-top: 1px solid var(--border);
+  }
+  .user-row { display: flex; align-items: center; gap: 8px; }
+  .user-avatar {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--gold); font-weight: 700;
+  }
+  .user-info { }
+  .user-name { font-size: 12px; font-weight: 600; color: var(--text-1); }
+  .user-role { font-size: 10px; color: var(--text-2); letter-spacing: 0.5px; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    padding: 0 28px;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .page-title { font-size: 14px; font-weight: 600; color: var(--text-1); }
+  .page-breadcrumb { font-size: 12px; color: var(--text-3); }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .status-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .status-chip.online { color: var(--green); border-color: rgba(46,204,113,0.25); background: rgba(46,204,113,0.06); }
+  .status-chip .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+  .topbar-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 11px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── BODY SPLIT ── */
+  .body-split { flex: 1; display: flex; overflow: hidden; }
+
+  /* ── AGENTS PANEL ── */
+  .agents-panel {
+    width: 380px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-2); }
+  .panel-count { font-size: 11px; color: var(--text-3); }
+
+  .agents-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .agents-list::-webkit-scrollbar { width: 3px; }
+  .agents-list::-webkit-scrollbar-track { background: transparent; }
+  .agents-list::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 2px; }
+
+  .agent-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .agent-row:hover { background: var(--surface2); border-color: var(--border); }
+  .agent-row.selected { background: var(--surface2); border-color: var(--border2); }
+
+  .agent-icon-wrap {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .agent-row.selected .agent-icon-wrap {
+    border-color: rgba(201,168,76,0.3);
+    background: var(--gold-dim);
+  }
+
+  .agent-meta { flex: 1; min-width: 0; }
+  .agent-meta-name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+  .agent-meta-role { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+  .agent-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .agent-status-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px rgba(46,204,113,0.5); }
+  .dot-amber { background: var(--amber); box-shadow: 0 0 6px rgba(240,165,0,0.5); animation: flicker 2s infinite; }
+  .dot-gray  { background: var(--text-3); }
+  @keyframes flicker { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+  .agent-last { font-size: 10px; color: var(--text-3); }
+
+  /* ── CHAT PANEL ── */
+  .chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .chat-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-header-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .chat-header-info { flex: 1; }
+  .chat-header-name { font-size: 14px; font-weight: 600; }
+  .chat-header-sub { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+  .data-badge {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 4px;
+    background: rgba(46,204,113,0.07);
+    border: 1px solid rgba(46,204,113,0.2);
+    font-size: 10px; font-weight: 600; color: var(--green);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 3px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 2px; }
+
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg-av {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; margin-top: 1px;
+  }
+  .msg-body { flex: 1; }
+  .msg-who {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .msg-name { font-size: 12px; font-weight: 700; color: var(--text-1); letter-spacing: 0.3px; }
+  .msg-time { font-size: 11px; color: var(--text-3); }
+  .msg-verified {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 6px; border-radius: 3px;
+    background: rgba(46,204,113,0.08);
+    border: 1px solid rgba(46,204,113,0.15);
+    font-size: 10px; color: var(--green); font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .msg-text {
+    font-size: 13px; color: #8A8480; line-height: 1.7;
+  }
+  .msg-text strong { color: var(--text-1); font-weight: 600; }
+  .msg-text em { color: var(--gold); font-style: normal; }
+
+  .msg-data-block {
+    margin-top: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .data-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-2);
+  }
+  .data-row .key { color: var(--text-3); font-size: 11px; min-width: 80px; }
+  .data-row .val { color: var(--text-1); font-weight: 500; }
+  .data-row .val.gold { color: var(--gold); }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* Chat input */
+  .chat-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chat-input-wrap {
+    display: flex; align-items: center; gap: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .chat-input-wrap input {
+    flex: 1; background: none; border: none; outline: none;
+    padding: 11px 14px;
+    font-size: 13px; color: var(--text-1);
+    font-family: 'Inter', sans-serif;
+  }
+  .chat-input-wrap input::placeholder { color: var(--text-3); }
+  .send-btn {
+    background: var(--gold); color: #000; border: none;
+    padding: 11px 18px;
+    font-size: 10px; font-weight: 800; cursor: pointer;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    transition: opacity 0.15s;
+  }
+  .send-btn:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">Grid Control</div>
+      <div class="logo-sub">OffGrid Marketing OS</div>
+    </div>
+
+    <div class="brand-selector">
+      <div class="brand-dot"></div>
+      <span class="brand-name">Gaurav Khanna AI</span>
+      <span class="brand-caret">⌄</span>
+    </div>
+
+    <nav>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item active">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+        Agents
+      </div>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M14 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3l3 3 3-3h3a1 1 0 001-1V3a1 1 0 00-1-1z"/></svg>
+        Meeting Room
+      </div>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M12 2H4a2 2 0 00-2 2v10l3-3h7a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>
+        Review & Approve
+      </div>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="2" rx="1"/><rect x="2" y="7" width="8" height="2" rx="1"/><rect x="2" y="11" width="10" height="2" rx="1"/></svg>
+        Content Hub
+      </div>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        Cost Tracker
+      </div>
+      <div class="nav-item">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 12l4-4 3 3 5-7"/></svg>
+        Workflow
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar">GK</div>
+        <div class="user-info">
+          <div class="user-name">Gaurav Khanna</div>
+          <div class="user-role">CEO · OffGrid</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="page-breadcrumb">Agents /</span>
+        <span class="page-title">Command Centre</span>
+      </div>
+      <div class="topbar-right">
+        <div class="status-chip online"><div class="live-dot"></div> 3 Active</div>
+        <button class="topbar-btn">Run All</button>
+      </div>
+    </div>
+
+    <div class="body-split">
+
+      <!-- AGENTS LIST -->
+      <div class="agents-panel">
+        <div class="panel-header">
+          <span class="panel-label">Your Team</span>
+          <span class="panel-count">9 agents</span>
+        </div>
+        <div class="agents-list">
+
+          <div class="agent-row selected">
+            <div class="agent-icon-wrap">🧠</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">CEO Brain</div>
+              <div class="agent-meta-role">Orchestrates the team</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-green"></div>
+              <div class="agent-last">Active now</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">📡</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Trend Researcher</div>
+              <div class="agent-meta-role">Live market intelligence</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-amber"></div>
+              <div class="agent-last">Running...</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">🗺️</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Strategy Agent</div>
+              <div class="agent-meta-role">90-day roadmap</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-green"></div>
+              <div class="agent-last">2h ago</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">📅</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Content Planner</div>
+              <div class="agent-meta-role">30-day content calendar</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-green"></div>
+              <div class="agent-last">1d ago</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">✍️</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Script Writer</div>
+              <div class="agent-meta-role">Scripts, hooks, captions</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-gray"></div>
+              <div class="agent-last">3d ago</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">🎬</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Creative Director</div>
+              <div class="agent-meta-role">AI video & visuals</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-gray"></div>
+              <div class="agent-last">Never</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">📊</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Data Analyst</div>
+              <div class="agent-meta-role">Performance metrics</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-gray"></div>
+              <div class="agent-last">Never</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">🔁</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Funnel Specialist</div>
+              <div class="agent-meta-role">Conversion & retention</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-gray"></div>
+              <div class="agent-last">Never</div>
+            </div>
+          </div>
+
+          <div class="agent-row">
+            <div class="agent-icon-wrap">💰</div>
+            <div class="agent-meta">
+              <div class="agent-meta-name">Cost Tracker</div>
+              <div class="agent-meta-role">Monthly spend report</div>
+            </div>
+            <div class="agent-right">
+              <div class="agent-status-dot dot-gray"></div>
+              <div class="agent-last">Never</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div class="chat-icon-wrap" style="width:30px;height:30px;border-radius:8px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;font-size:14px;">🧠</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name">Meeting Room</div>
+            <div class="chat-header-sub">CEO Brain · All agents on standby</div>
+          </div>
+          <div class="data-badge">● Live Data</div>
+        </div>
+
+        <div class="chat-messages">
+
+          <div class="msg">
+            <div class="msg-av">🧠</div>
+            <div class="msg-body">
+              <div class="msg-who">
+                <span class="msg-name">CEO Brain</span>
+                <span class="msg-time">4:52 PM</span>
+              </div>
+              <div class="msg-text">
+                Gaurav, Trend Researcher just completed a live scrape on your 500-follower goal.
+                Found <strong>4 validated growth patterns</strong> from real accounts in your niche.
+                I'm briefing Content Planner now with the findings.
+              </div>
+            </div>
+          </div>
+
+          <div class="msg">
+            <div class="msg-av">📡</div>
+            <div class="msg-body">
+              <div class="msg-who">
+                <span class="msg-name">Trend Researcher</span>
+                <span class="msg-time">4:53 PM</span>
+                <span class="msg-verified">✓ Scraped</span>
+              </div>
+              <div class="msg-text">
+                Pulled <strong>47 founder accounts</strong> that hit 0→500 followers in under 30 days across Instagram and LinkedIn.
+                Top pattern: <em>daily short-form + 1 carousel per week.</em>
+                The hook format dominating right now — <strong>"I paid agencies ₹X, got nothing. So I built this."</strong>
+                That maps directly onto your story.
+              </div>
+              <div class="msg-data-block">
+                <div class="data-row"><span class="key">Profiles scraped</span><span class="val">47 accounts</span></div>
+                <div class="data-row"><span class="key">Platforms</span><span class="val">Instagram · LinkedIn</span></div>
+                <div class="data-row"><span class="key">Top hook format</span><span class="val gold">Agency failure arc</span></div>
+                <div class="divider"></div>
+                <div class="data-row"><span class="key">Data freshness</span><span class="val" style="color:var(--green)">Scraped 4 min ago</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="msg">
+            <div class="msg-av">🗺️</div>
+            <div class="msg-body">
+              <div class="msg-who">
+                <span class="msg-name">Strategy Agent</span>
+                <span class="msg-time">4:54 PM</span>
+                <span class="msg-verified">✓ From strategy file</span>
+              </div>
+              <div class="msg-text">
+                Reading from your approved 90-day plan. Week 1–4 is foundation phase — no changes needed.
+                The trend data from Researcher aligns with what we locked in. <em>No plan revision required.</em>
+                Content Planner has everything it needs to map this week's posts.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="chat-footer">
+          <div class="chat-input-wrap">
+            <input type="text" placeholder="Talk to your team — every answer is backed by real data" />
+            <button class="send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

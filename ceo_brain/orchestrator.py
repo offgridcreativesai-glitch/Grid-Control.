@@ -141,6 +141,53 @@ WINNER: {loop_header.get('winner', '')}
 
         self.log(f"Output saved locally: {filepath}")
 
+        # ── BUILD H — Auto-block CRITICAL contradictions ──────────────────
+        # Skip self-check for the contradiction detector itself + Brand Guardian
+        # (avoid infinite loop / double-audit)
+        contradiction_result = {"checked": False}
+        if agent_name not in ("Brand Guardian", "Contradiction Detector"):
+            try:
+                import sys as _sys
+                from pathlib import Path as _Path
+                _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+                from contradiction_detector import detect_contradictions, save_contradictions_report
+                report = detect_contradictions(self.brand_slug)
+                save_contradictions_report(self.brand_slug, report)
+                contradiction_result = {
+                    "checked": True,
+                    "blocking": report.get("blocking", False),
+                    "counts":   report.get("counts", {}),
+                    "critical_findings": [
+                        f for f in report.get("findings", [])
+                        if f.get("severity") == "CRITICAL"
+                    ],
+                }
+                if report.get("blocking"):
+                    self.log(f"🚨 BUILD H BLOCK — {len(contradiction_result['critical_findings'])} CRITICAL contradiction(s) detected after {agent_name} save")
+                    for f in contradiction_result["critical_findings"][:3]:
+                        self.log(f"   [{f.get('rule_id')}] {f.get('agents_involved')}: {f.get('proposed_fix', '')[:120]}")
+                    # Quarantine the file by moving it to a blocked subfolder
+                    blocked_dir = os.path.join(self.brand_dir, "outputs", "blocked", agent_folder)
+                    os.makedirs(blocked_dir, exist_ok=True)
+                    blocked_path = os.path.join(blocked_dir, f"{timestamp}_{filename}")
+                    try:
+                        import shutil as _shutil
+                        _shutil.move(filepath, blocked_path)
+                        self.log(f"🔒 Output QUARANTINED to: {blocked_path}")
+                        # Don't push to Notion — output is blocked
+                        return {
+                            "local_path": blocked_path,
+                            "blocked":    True,
+                            "block_reason": "CRITICAL contradictions detected",
+                            "contradictions": contradiction_result,
+                            "notion_result": {"success": False, "error": "Skipped — output blocked by Build H"},
+                        }
+                    except Exception as e:
+                        self.log(f"WARNING: Could not quarantine blocked output — {e}. Falling through to normal save.")
+            except Exception as e:
+                self.log(f"WARNING: Contradiction check skipped — {e}")
+                contradiction_result = {"checked": False, "error": str(e)}
+
         # Push to Notion for human approval
         notion_result = push_to_notion(
             agent_name=agent_name,
@@ -170,7 +217,8 @@ WINNER: {loop_header.get('winner', '')}
 
         return {
             "local_path": filepath,
-            "notion_result": notion_result
+            "notion_result": notion_result,
+            "contradictions": contradiction_result,
         }
 
     def mark_agent_complete(self, agent_name: str):

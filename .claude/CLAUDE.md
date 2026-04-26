@@ -1,5 +1,53 @@
 # OffGrid Marketing OS — Project Intelligence File
 
+## Last Session — April 26 2026 (Late)
+
+### COMPLETED APRIL 26 (Late) — Final 13-item backend punch list. System now "use-ready, only tweaks needed."
+
+#### A — Foundation fixes
+- **Notion push hardened** (`notion_integration/notion_pusher.py`): added `NotionAuthError` for 401 cases, explicit error messages instead of cryptic `'id'` KeyError. `_get_or_create_database` now fails loud on auth/server errors. **User action required**: regenerate Notion token at https://notion.so/my-integrations and update `NOTION_API_KEY` in .env (current token is 401 invalid).
+- **Dashboard build verified** — 1811 modules, zero TypeScript errors with new schemas (Build C/D outputs render fine).
+- **CEO Brain Notion-failure handling** — already graceful (logs warning + continues).
+
+#### B — Brand Guardian + Rule 10 Expansion
+- **`agents/brand_guardian.py` NEW** (Agent ID 10) — independent SOUL check across all generated content. Audits voice / audience / positioning / forbidden-phrase consistency via Claude Opus + Rule 10 retry loop. Distinct from Contradiction Detector (which is rule-based diff): Brand Guardian catches subtle drift Claude can see but rules can't. Outputs: `brands/{slug}/brand_consistency_report.json` + Notion push.
+- **Rule 10 wired into Creative Director** (`agents/creative_director.py`) — every creative direction (image_prompt, video_prompt, narration_text, hook_text) must cite source from `brand_profile.json` / `competitors_db.json` / `content_calendar.json`. Retry loop + provenance_validation block.
+- **Rule 10 wired into Trend Researcher AutoResearch loop** — claims must cite either `brand_profile.json` or virtual `scraped_data.json` source. Extended `_provenance.build_source_index()` to accept in-memory dict objects via `virtual_sources` param.
+- Brand Guardian + Performance Tracker registered in `AGENT_SCRIPTS` + `_FOLDER_TO_SLUG`.
+
+#### C — Build H: Auto-block CRITICAL contradictions
+- **`CEOBrain.save_agent_output()` patched** (`ceo_brain/orchestrator.py`) — after saving any output, runs `contradiction_detector.detect_contradictions()`. If `report.blocking == True`, the file is QUARANTINED to `brands/{slug}/outputs/blocked/{agent_slug}/` and Notion push is skipped. Returns `{blocked: true, block_reason, contradictions}` in result.
+- **Contradiction detector wired into daily pipeline** (`dashboard_api.py:_run_pipeline`) — runs after all agents complete. Logs counts + blocking status.
+- Brand Guardian + Contradiction Detector self-skip the auto-block (avoid infinite loop).
+
+#### D — Cron + scheduler
+- **`scripts/cron_daily_pipeline.sh`** — wraps the curl trigger to `/api/pipeline/daily-run`, auto-starts Flask if not running, logs to `/tmp/grid_daily_pipeline_YYYYMMDD.log`.
+- **`scripts/install_launchd_pipeline.sh`** — installs as launchd job `com.offgrid.dailypipeline` (Mac native, no Terminal Full Disk Access prompt). Runs at 8:00am local time daily for askgauravai brand.
+- **User action required**: run `bash scripts/install_launchd_pipeline.sh` once to activate.
+
+#### E — Dashboard Insights Space (NEW Space 6)
+- **`dashboard/src/spaces/InsightsSpace.tsx` NEW** — single-file Space 6 with 3 tabs:
+  - **Performance Log** — form to paste post-metrics (POST `/api/performance/log-post`) + view inbox queue + view computed history (winning/dead patterns from Performance Tracker)
+  - **Contradictions** — runs detector on demand (POST `/api/contradictions/check`) + lists findings with severity badges + cites evidence
+  - **Provenance Audit** — reads Strategy / Calendar / Trends and renders `data_provenance` + `provenance_validation` blocks. Shows passed/total with PASSED/FLAGGED badge.
+- Sidebar updated: Insights nav item with bar-chart icon. Space 6 wired in `App.tsx`.
+- New endpoint **`GET /api/brand/file?brand_slug=&file=`** — whitelisted brand-output file reader (only specific JSON files allowed). Used by Provenance panel.
+
+#### Skipped this session (with reason)
+- **D1 — Creative Director live FAL.ai test**: deferred. FAL costs money per generation. Run `python3 agents/creative_director.py` when ready (after approving Week 1 scripts).
+- **Notion token regeneration**: requires user action (notion.so/my-integrations).
+
+#### What "use-ready" means now
+1. Run `bash scripts/install_launchd_pipeline.sh` → daily pipeline runs 8am every day
+2. Regenerate Notion token → approval flow live
+3. Open dashboard → Insights tab → log post performance after publishing
+4. System self-audits (contradictions auto-run after every pipeline + every save)
+5. CRITICAL contradictions auto-block to `outputs/blocked/` for human review
+
+Backend is done. From here it's tweaks (better hooks, wider audience match, specific niche keyword tuning) based on real publishing results.
+
+---
+
 ## Last Session — April 26 2026
 
 ### COMPLETED APRIL 26 — Build D — Cross-Agent Contradiction Detector

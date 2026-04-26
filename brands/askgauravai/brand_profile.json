@@ -1,0 +1,49 @@
+{
+  "brand_name": "ASKGauravAI",
+  "product": "AI strategy consulting, personal brand content, and AI education — helping founders and companies understand and apply AI",
+  "phase": "Phase 1 — Awareness",
+  "price_india": "",
+  "price_international": "",
+  "price_beta": "",
+  "audience": [
+    "D2C founders",
+    "Solopreneurs",
+    "Agency owners",
+    "Aspiring AI users",
+    "Companies hiring AI strategists"
+  ],
+  "platforms": [
+    "Instagram",
+    "YouTube",
+    "LinkedIn",
+    "Twitter/X"
+  ],
+  "bottlenecks": [
+    "Meta Graph API token pending"
+  ],
+  "business_type": "Personal Brand + Consulting + Content",
+  "industry": "AI Strategy / Marketing",
+  "brand_brief": "ASKGauravAI is Gaurav Khanna's AI strategy brand — combining personal brand content, AI education for founders, and a behind-the-scenes DM outreach strategy targeting companies and managers looking to hire an AI strategist. Competitors to track and differentiate from: @manthanjethwani, @aiwithanushka, @shivam.ai.data. Style and ambition references (not competitors): @garyvee (volume + raw founder energy), @vaibhavsisinty (Indian founder personal brand scale).",
+  "target_audience": "D2C founders, solopreneurs, agency owners, and aspiring AI users who want to apply AI in their businesses. Hidden strategy: managers and companies looking to hire an AI strategist.",
+  "primary_bottleneck": "Meta Graph API token pending",
+  "railway_url": "",
+  "existing_pipeline": "",
+  "tone_of_voice": "Direct + Educational",
+  "tone_specifics": "Straight-talking but makes complex AI simple to understand. Founder-to-founder energy. No fluff. Teach through examples, not theory.",
+  "instagram_handle": "AskGauravAI",
+  "competitor_handles": ["manthanjethwani", "aiwithanushka", "shivam.ai.data"],
+  "reference_handles": ["garyvee", "vaibhavsisinty"],
+  "platform_handles": [
+    { "platform": "Instagram", "handle": "AskGauravAI" },
+    { "platform": "YouTube", "handle": "AskGauravAI" },
+    { "platform": "LinkedIn", "handle": "AskGauravAI" },
+    { "platform": "Twitter/X", "handle": "AskGauravAI" }
+  ],
+  "website_url": "",
+  "brand_face": "Person",
+  "content_goal_90d": "Brand Awareness + Inbound Leads",
+  "weekly_post_target": "5x",
+  "past_content_worked": "",
+  "what_to_never_say": "Never pitch the hiring/consulting angle in public content. Never use jargon-heavy AI buzzwords without explaining them. Never sound like a generic 'AI guru'.",
+  "has_existing_pipeline": false
+}

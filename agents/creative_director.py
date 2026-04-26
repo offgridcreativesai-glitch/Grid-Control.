@@ -21,6 +21,45 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
 import cost_reporter
+# Rule 10 — Source citation enforcement
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _provenance import (
+    build_source_index,
+    validate_citations,
+    build_violation_message,
+    MAX_RERUN_ATTEMPTS,
+)
+
+
+def _escape_literal_newlines_in_strings(json_str: str) -> str:
+    result = []
+    in_string = False
+    i = 0
+    while i < len(json_str):
+        c = json_str[i]
+        if in_string:
+            if c == '\\':
+                result.append(c); i += 1
+                if i < len(json_str): result.append(json_str[i])
+            elif c == '"':
+                in_string = False; result.append(c)
+            elif c == '\n': result.append('\\n')
+            elif c == '\r': result.append('\\r')
+            elif c == '\t': result.append('\\t')
+            else: result.append(c)
+        else:
+            if c == '"': in_string = True
+            result.append(c)
+        i += 1
+    return ''.join(result)
+
+
+def _safe_json_loads(raw: str):
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return json.loads(_escape_literal_newlines_in_strings(raw))
+
 
 load_dotenv(override=True)
 
@@ -229,45 +268,106 @@ For EACH variant provide:
   - hook_text: (3-5 words)
   - brand_safety_concept: (brief concept description for safety check)
 
+⚠️ RULE 10 — SOURCE CITATION ENFORCEMENT (HARD REQUIREMENT) ⚠️
+
+Every creative direction (image_prompt, video_prompt, narration_text, hook_text) MUST trace
+back to a real source data point in:
+  - brand_profile.json (visual identity, audience, tone)
+  - competitors_db.json (visual reference data)
+  - content_calendar.json (the post slot context)
+
+For each variant, add an entry to "data_provenance" with:
+  - "claim": short text of the creative direction it justifies
+  - "source_file": one of: brand_profile.json | competitors_db.json | (script file)
+  - "source_path": dot.notation path
+  - "source_value": verbatim ≥30-char snippet from the source
+
+Aim for 3–6 provenance entries (one per variant minimum).
+
 Return ONLY valid JSON in this structure:
 {{
   "loop_goal": "maximise Save + Share rate across Instagram and LinkedIn",
   "loop_metric": "better = higher save+share rate than last 3 posts combined",
+  "data_provenance": [
+    {{"claim": "...", "source_file": "brand_profile.json", "source_path": "tone_of_voice", "source_value": "..."}}
+  ],
   "variants": [
     {{
       "creative_direction": "Variant A — Minimal text, visual-led",
       "target_emotion": "...",
       "safe_option": {{...}},
       "viral_option": {{...}}
-    }},
-    ...
+    }}
   ]
 }}"""
 
-        self.log("Running AutoResearch Loop — generating 3 creative variants via Claude Opus...")
-        response = self.client.messages.create(
-            model=MODEL,
-            max_tokens=8000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        self._total_input_tokens += response.usage.input_tokens
-        self._total_output_tokens += response.usage.output_tokens
-        raw = response.content[0].text.strip()
-        if "```" in raw:
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            self.log("⚠️  JSON parse failed on loop response — attempting partial recovery")
-            idx = raw.find("{")
-            if idx >= 0:
-                try:
-                    return json.loads(raw[idx:])
-                except Exception:
-                    pass
-            raise ValueError(f"Could not parse AutoResearch Loop response as JSON: {raw[:200]}")
+        # ── Rule 10: source index ──
+        project_root = Path(__file__).resolve().parent.parent
+        source_files = [
+            project_root / "brands" / self.brand_slug / "brand_profile.json",
+            project_root / "brands" / self.brand_slug / "competitors_db.json",
+            project_root / "brands" / self.brand_slug / "content_calendar.json",
+        ]
+        source_index = build_source_index(source_files)
+        self.log(f"Rule 10: Source index built — {len(source_index)} citable keys")
+
+        # ── Rule 10: Claude call with retry loop ──
+        messages = [{"role": "user", "content": prompt}]
+        result = None
+        validation_report = None
+        attempt = 0
+        max_attempts = MAX_RERUN_ATTEMPTS + 1
+
+        self.log("Running AutoResearch Loop — 3 creative variants with Rule 10 enforcement...")
+        while attempt < max_attempts:
+            attempt += 1
+            self.log(f"Calling Claude {MODEL} (attempt {attempt}/{max_attempts})...")
+            response = self.client.messages.create(
+                model=MODEL,
+                max_tokens=16000,
+                messages=messages
+            )
+            self._total_input_tokens += response.usage.input_tokens
+            self._total_output_tokens += response.usage.output_tokens
+            raw = response.content[0].text.strip()
+            if "```" in raw:
+                for part in raw.split("```"):
+                    part = part.strip()
+                    if part.startswith("json"):
+                        part = part[4:].strip()
+                    if part.startswith("{"):
+                        raw = part
+                        break
+
+            try:
+                result = _safe_json_loads(raw)
+            except Exception:
+                self.log("⚠️  JSON parse failed — attempting partial recovery")
+                idx = raw.find("{")
+                if idx >= 0:
+                    try:
+                        result = _safe_json_loads(raw[idx:])
+                    except Exception:
+                        raise ValueError(f"Could not parse: {raw[:200]}")
+                else:
+                    raise
+
+            is_valid, missing, validation_report = validate_citations(result, source_index)
+            self.log(f"Rule 10 validation (attempt {attempt}): {validation_report['claims_validated']}/{validation_report['claims_total']} passed")
+
+            if is_valid or attempt >= max_attempts:
+                break
+
+            messages.append({"role": "assistant", "content": json.dumps(result)})
+            messages.append({"role": "user", "content": (
+                f"Your previous output failed Rule 10 validation.\n\n"
+                f"{build_violation_message(missing)}\n\n"
+                f"Re-emit COMPLETE corrected JSON. Strict JSON only."
+            )})
+
+        if result is not None:
+            result["provenance_validation"] = validation_report
+        return result
 
     # ── FAL.ai image generation ───────────────────────────────────────────────
 
