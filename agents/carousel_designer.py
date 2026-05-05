@@ -267,20 +267,31 @@ Return ONLY valid JSON, no markdown fences:
             spec["post_id"] = post_id
         return spec
 
-    # ── PNG rendering (Pillow) ───────────────────────────────────────────────
-    def render_slides(self, spec: dict, out_dir: Path, platform: str = "instagram") -> list[Path]:
+    # ── PNG rendering ────────────────────────────────────────────────────────
+    def render_slides(self, spec: dict, out_dir: Path, platform: str = "instagram",
+                       style: str = "editorial") -> list[Path]:
+        """style: 'editorial' (HTML/CSS via Playwright, default) or 'basic' (Pillow legacy)."""
         out_dir.mkdir(parents=True, exist_ok=True)
-        size = PLATFORM_SIZES.get(platform, PLATFORM_SIZES["instagram"])
         slides = spec.get("slides", [])
+
+        if style == "editorial":
+            from carousel_html_renderer import render_slides_to_png
+            self.log(f"Rendering {len(slides)} slides via editorial HTML renderer")
+            rendered = render_slides_to_png(slides, self.palette, self.handle, out_dir)
+            for p in rendered:
+                self.log(f"Rendered → {p.name}")
+            return rendered
+
+        # Legacy Pillow path
+        size = PLATFORM_SIZES.get(platform, PLATFORM_SIZES["instagram"])
         total = len(slides)
         rendered: list[Path] = []
-
         for slide in slides:
             n = slide.get("number", 1)
             path = out_dir / f"slide_{n:02d}.png"
             self._render_one(slide, total, size, path)
             rendered.append(path)
-            self.log(f"Rendered slide {n}/{total} → {path.name}")
+            self.log(f"Rendered slide {n}/{total} → {path.name} (basic)")
         return rendered
 
     def _render_one(self, slide: dict, total: int, size: tuple, out_path: Path):
@@ -459,7 +470,8 @@ Return ONLY valid JSON, no markdown fences:
     # ── Run pipeline ─────────────────────────────────────────────────────────
     def run(self, post_id: str | None, topic: str | None, slide_count: int,
             platform: str, hook_override: str | None = None,
-            body_override: str | None = None, cta_override: str | None = None) -> dict:
+            body_override: str | None = None, cta_override: str | None = None,
+            style: str = "editorial") -> dict:
 
         # Source resolution: prefer post_id from calendar, else freeform topic
         resolved_topic = topic
@@ -523,7 +535,7 @@ Return ONLY valid JSON, no markdown fences:
         self.log(f"Saved spec: {spec_path}")
 
         # Render PNGs
-        rendered = self.render_slides(spec, out_dir, platform=platform)
+        rendered = self.render_slides(spec, out_dir, platform=platform, style=style)
 
         # Push to CEO Brain pending_approval
         approval_payload = {
@@ -643,6 +655,8 @@ def main():
     parser.add_argument("--hook", help="Override hook text")
     parser.add_argument("--body", help="Override body summary")
     parser.add_argument("--cta", help="Override CTA text")
+    parser.add_argument("--style", default="editorial", choices=["editorial", "basic"],
+                        help="editorial = HTML/CSS via Playwright (default), basic = legacy Pillow")
     args = parser.parse_args()
 
     cd = CarouselDesigner(brand_slug=args.brand_slug)
@@ -654,6 +668,7 @@ def main():
         hook_override=args.hook,
         body_override=args.body,
         cta_override=args.cta,
+        style=args.style,
     )
     print(json.dumps({
         "ok": result["ok"],
