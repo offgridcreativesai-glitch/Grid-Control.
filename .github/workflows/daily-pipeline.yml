@@ -1,0 +1,92 @@
+name: Daily Brand Pipeline
+
+# Replaces Mac launchd. Runs Trend Researcher → Trend Sentinel → Data Analyst → Contradiction Detector
+# off-device every day. Outputs push to Notion (live for review). Local JSON outputs uploaded as
+# workflow artifacts (90-day retention) — download with: gh run download <run_id>
+
+on:
+  schedule:
+    # 8:00am IST = 2:30am UTC every day
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      brand_slug:
+        description: 'Brand slug to run pipeline for'
+        required: true
+        default: 'askgauravai'
+
+permissions:
+  contents: read
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      ACTIVE_BRAND: ${{ inputs.brand_slug || 'askgauravai' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+      META_GRAPH_API_TOKEN: ${{ secrets.META_GRAPH_API_TOKEN }}
+      META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify required secrets
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret missing — set via 'gh secret set ANTHROPIC_API_KEY'"
+            exit 1
+          fi
+          if [ -z "$APIFY_API_KEY" ]; then
+            echo "::error::APIFY_API_KEY secret missing"
+            exit 1
+          fi
+          echo "Brand: $ACTIVE_BRAND"
+
+      - name: Step 1 — Trend Researcher
+        run: python3 agents/trend_researcher.py
+        continue-on-error: true
+
+      - name: Step 2 — Trend Sentinel
+        run: python3 agents/trend_sentinel.py
+        continue-on-error: true
+
+      - name: Step 3 — Data Analyst
+        run: python3 agents/data_analyst.py
+        continue-on-error: true
+
+      - name: Step 4 — Contradiction Detector
+        run: python3 ceo_brain/contradiction_detector.py
+        continue-on-error: true
+
+      - name: Upload outputs as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-${{ env.ACTIVE_BRAND }}-${{ github.run_id }}
+          path: |
+            brands/${{ env.ACTIVE_BRAND }}/trends_live.json
+            brands/${{ env.ACTIVE_BRAND }}/contradictions.json
+            brands/${{ env.ACTIVE_BRAND }}/pivot_decision.json
+            brands/${{ env.ACTIVE_BRAND }}/pivot_impact.json
+            brands/${{ env.ACTIVE_BRAND }}/trend_sentinel_watchlist.json
+            brands/${{ env.ACTIVE_BRAND }}/session_state.json
+            brands/${{ env.ACTIVE_BRAND }}/outputs/pending_approval/
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,83 @@
+name: Carousel On-Demand
+
+# Manually-triggered carousel generation. Outputs PNGs to brands/{slug}/visuals/carousels/
+# and commits them back to the repo (visuals/ is NOT gitignored).
+# Usage: gh workflow run carousel-on-demand.yml -f brand_slug=askgauravai -f post_id=week1_post_01
+
+on:
+  workflow_dispatch:
+    inputs:
+      brand_slug:
+        description: 'Brand slug'
+        required: true
+        default: 'askgauravai'
+      post_id:
+        description: 'Post ID (pulls hook/body/cta from script-writer outputs or content_calendar)'
+        required: false
+      topic:
+        description: 'Freeform topic (used if post_id absent)'
+        required: false
+      slides:
+        description: 'Slide count'
+        required: false
+        default: '7'
+      platform:
+        description: 'Platform'
+        required: false
+        default: 'instagram'
+        type: choice
+        options: [instagram, linkedin, square]
+
+permissions:
+  contents: write
+
+jobs:
+  generate-carousel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      ACTIVE_BRAND: ${{ inputs.brand_slug }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate carousel
+        run: |
+          ARGS="--brand-slug ${{ inputs.brand_slug }} --slides ${{ inputs.slides }} --platform ${{ inputs.platform }}"
+          if [ -n "${{ inputs.post_id }}" ]; then
+            ARGS="$ARGS --post-id ${{ inputs.post_id }}"
+          fi
+          if [ -n "${{ inputs.topic }}" ]; then
+            ARGS="$ARGS --topic \"${{ inputs.topic }}\""
+          fi
+          eval "python3 agents/carousel_designer.py $ARGS"
+
+      - name: Commit generated carousel back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f brands/${{ inputs.brand_slug }}/visuals/carousels/
+          git diff --staged --quiet || git commit -m "carousel: ${{ inputs.brand_slug }} ${{ inputs.post_id || inputs.topic }} ($(date -u +'%Y-%m-%d'))"
+          git push
+
+      - name: Upload carousel as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: carousel-${{ inputs.brand_slug }}-${{ github.run_id }}
+          path: brands/${{ inputs.brand_slug }}/visuals/carousels/
+          retention-days: 30

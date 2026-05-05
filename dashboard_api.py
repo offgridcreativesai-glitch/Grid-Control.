@@ -151,13 +151,14 @@ AGENTS = [
     {"id": 7, "name": "Funnel Specialist", "role": "Conversion",       "model": "claude-sonnet-4-6", "agentFile": "funnel-specialist.md"},
     {"id": 8, "name": "Website Agent",     "role": "Site/Railway",     "model": "claude-sonnet-4-6", "agentFile": "website-agent.md"},
     {"id": 9, "name": "Cost Tracker",      "role": "Monthly spend",    "model": "claude-haiku-4-5-20251001", "agentFile": ""},
+    {"id": 10, "name": "Carousel Designer", "role": "Carousel slides + PNG render", "model": "claude-sonnet-4-6", "agentFile": ""},
 ]
 
 # Locked slug set — any agent not in this list is filtered before response
 _ACTIVE_SLUGS = {
     "trend-researcher", "strategy-agent", "content-planner", "script-writer",
     "creative-director", "ad-strategist", "data-analyst", "funnel-specialist", "website-agent",
-    "cost-tracker",
+    "cost-tracker", "carousel-designer",
 }
 
 
@@ -190,6 +191,7 @@ AGENT_SCRIPTS: dict[str, Any] = {
     "Funnel Specialist":   "agents/funnel_specialist.py",
     "Website Agent":       "agents/website_agent.py",
     "Cost Tracker":        "agents/cost_tracker.py",
+    "Carousel Designer":   "agents/carousel_designer.py",
 }
 
 # Agents enriched with coming_soon flag for the frontend
@@ -221,6 +223,7 @@ _FOLDER_TO_SLUG: dict[str, str] = {
     "Funnel Specialist":   "funnel-specialist",
     "Website Agent":       "website-agent",
     "Cost Tracker":        "cost-tracker",
+    "Carousel Designer":   "carousel-designer",
     "CEO Brain":           "ceo-brain",
 }
 
@@ -975,6 +978,103 @@ def agent_run_status():
         mimetype="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── CAROUSEL DESIGNER ──────────────────────────────────────────────────────────
+
+@app.route("/api/carousel/generate", methods=["POST"])
+@require_auth
+def carousel_generate():
+    """
+    Generate a carousel (slides JSON + PNG render + pending_approval push).
+
+    Body:
+      brand_slug: required
+      post_id:    optional — pulls hook/body/cta from content_calendar.json or
+                  script-writer outputs. If absent, requires `topic`.
+      topic:     optional — freeform topic if no post_id present.
+      slides:    int, default 7
+      platform:  "instagram" | "linkedin" | "square", default "instagram"
+      hook:      optional override
+      body:      optional override
+      cta:       optional override
+
+    Runs synchronously (~30-60s). Returns paths + spec preview.
+    """
+    if not _ANTHROPIC_KEY:
+        return jsonify({"success": False, "error": "ANTHROPIC_API_KEY not configured"}), 400
+
+    body = request.get_json() or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+
+    post_id = (body.get("post_id") or "").strip() or None
+    topic = (body.get("topic") or "").strip() or None
+    if not post_id and not topic:
+        return jsonify({"success": False, "error": "Either post_id or topic required"}), 400
+
+    slides = int(body.get("slides") or 7)
+    if slides < 3 or slides > 12:
+        return jsonify({"success": False, "error": "slides must be between 3 and 12"}), 400
+
+    platform = (body.get("platform") or "instagram").strip()
+
+    script_path = BASE_DIR / AGENT_SCRIPTS["Carousel Designer"]
+    if not script_path.exists():
+        return jsonify({"success": False, "error": "Carousel Designer script missing"}), 500
+
+    cmd = [
+        sys.executable, str(script_path),
+        "--brand-slug", brand_slug,
+        "--slides", str(slides),
+        "--platform", platform,
+    ]
+    if post_id:
+        cmd.extend(["--post-id", post_id])
+    if topic:
+        cmd.extend(["--topic", topic])
+    for opt_key, flag in (("hook", "--hook"), ("body", "--body"), ("cta", "--cta")):
+        v = (body.get(opt_key) or "").strip()
+        if v:
+            cmd.extend([flag, v])
+
+    env = os.environ.copy()
+    env["ACTIVE_BRAND"] = brand_slug
+    env["GRID_BRAND_SLUG"] = brand_slug
+
+    try:
+        result = subprocess.run(
+            cmd, env=env, capture_output=True, text=True, timeout=300, cwd=str(BASE_DIR)
+        )
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "Carousel generation timed out (>5min)"}), 504
+
+    if result.returncode != 0:
+        return jsonify({
+            "success": False,
+            "error": "Carousel Designer subprocess failed",
+            "stderr": result.stderr[-2000:],
+            "stdout": result.stdout[-1000:],
+        }), 500
+
+    # Parse the JSON tail of stdout (designer prints {ok, spec_path, slide_paths})
+    parsed = None
+    for line in reversed(result.stdout.splitlines()):
+        if line.strip().startswith("{"):
+            try:
+                parsed = json.loads(line)
+                break
+            except Exception:
+                continue
+    if parsed is None:
+        # try entire stdout
+        try:
+            parsed = json.loads(result.stdout)
+        except Exception:
+            parsed = {"raw_stdout": result.stdout[-1500:]}
+
+    return jsonify({"success": True, "data": parsed})
 
 
 # ── DAILY PIPELINE RUN ─────────────────────────────────────────────────────────

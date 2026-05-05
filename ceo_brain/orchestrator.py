@@ -163,27 +163,37 @@ WINNER: {loop_header.get('winner', '')}
                     ],
                 }
                 if report.get("blocking"):
-                    self.log(f"🚨 BUILD H BLOCK — {len(contradiction_result['critical_findings'])} CRITICAL contradiction(s) detected after {agent_name} save")
+                    # Only quarantine THIS save if the current agent is named in any CRITICAL finding's
+                    # agents_involved list. Otherwise the contradiction is unrelated to this output —
+                    # log a warning, surface it for review, but let the save proceed.
+                    current_agent_in_critical = any(
+                        agent_name in (f.get("agents_involved") or [])
+                        for f in contradiction_result["critical_findings"]
+                    )
+                    self.log(f"🚨 BUILD H — {len(contradiction_result['critical_findings'])} CRITICAL contradiction(s) detected after {agent_name} save")
                     for f in contradiction_result["critical_findings"][:3]:
                         self.log(f"   [{f.get('rule_id')}] {f.get('agents_involved')}: {f.get('proposed_fix', '')[:120]}")
-                    # Quarantine the file by moving it to a blocked subfolder
-                    blocked_dir = os.path.join(self.brand_dir, "outputs", "blocked", agent_folder)
-                    os.makedirs(blocked_dir, exist_ok=True)
-                    blocked_path = os.path.join(blocked_dir, f"{timestamp}_{filename}")
-                    try:
-                        import shutil as _shutil
-                        _shutil.move(filepath, blocked_path)
-                        self.log(f"🔒 Output QUARANTINED to: {blocked_path}")
-                        # Don't push to Notion — output is blocked
-                        return {
-                            "local_path": blocked_path,
-                            "blocked":    True,
-                            "block_reason": "CRITICAL contradictions detected",
-                            "contradictions": contradiction_result,
-                            "notion_result": {"success": False, "error": "Skipped — output blocked by Build H"},
-                        }
-                    except Exception as e:
-                        self.log(f"WARNING: Could not quarantine blocked output — {e}. Falling through to normal save.")
+
+                    if current_agent_in_critical:
+                        # Quarantine the file by moving it to a blocked subfolder
+                        blocked_dir = os.path.join(self.brand_dir, "outputs", "blocked", agent_folder)
+                        os.makedirs(blocked_dir, exist_ok=True)
+                        blocked_path = os.path.join(blocked_dir, f"{timestamp}_{filename}")
+                        try:
+                            import shutil as _shutil
+                            _shutil.move(filepath, blocked_path)
+                            self.log(f"🔒 {agent_name} is named in CRITICAL finding — output QUARANTINED to: {blocked_path}")
+                            return {
+                                "local_path": blocked_path,
+                                "blocked":    True,
+                                "block_reason": "CRITICAL contradictions detected (agent named in finding)",
+                                "contradictions": contradiction_result,
+                                "notion_result": {"success": False, "error": "Skipped — output blocked by Build H"},
+                            }
+                        except Exception as e:
+                            self.log(f"WARNING: Could not quarantine blocked output — {e}. Falling through to normal save.")
+                    else:
+                        self.log(f"   {agent_name} is NOT named in any CRITICAL finding — save allowed, but flagged for review.")
             except Exception as e:
                 self.log(f"WARNING: Contradiction check skipped — {e}")
                 contradiction_result = {"checked": False, "error": str(e)}
