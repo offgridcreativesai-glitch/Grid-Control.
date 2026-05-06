@@ -209,16 +209,17 @@ STRUCTURE (strict):
 - Slide 1: HOOK — 1 bold line, max 9 words. Stops scroll. No subtitle. The visual_emphasis: "huge".
 - Slides 2 to {slide_count - 1}: VALUE — each slide has ONE insight.
   - headline: ≤6 words.
-  - body: 18-32 words. Plain language. Use brand voice/Hinglish if specified in voice DNA.
+  - body: 18-32 words. Plain conversational ENGLISH ONLY (carousels/static images = English even if voice DNA allows Hinglish in spoken/video).
   - bullets: optional, 0-3 short bullets (max 6 words each). Use ONLY if the insight is naturally listy.
   - visual_emphasis: "headline" or "body" or "split".
 - Slide {slide_count}: CTA — single line CTA + handle prompt. visual_emphasis: "cta".
 
 RULES:
 - Every slide must respect what_to_never_say (no jargon, no banned phrases).
-- Match voice DNA — if Hinglish is specified, use Hinglish in body lines.
+- LANGUAGE — STATIC IMAGES = plain conversational ENGLISH ONLY. NO Hinglish, NO Hindi words ('yaar', 'matlab', 'samjho', 'nahi', 'hai', etc), NO Hindi connectors. Voice DNA's Hinglish rule applies ONLY to spoken/video content, NEVER carousel slides. Reads clean to a global feed.
 - Slide 1 must hook in the first 1-2 seconds of viewing.
 - Last slide must give a transferable principle or open-loop, NEVER a hire-me CTA.
+- Caption (post_caption field) ALSO English-only. Save the Hinglish for video voice-over.
 
 Return ONLY valid JSON, no markdown fences:
 {{
