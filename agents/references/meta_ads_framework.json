@@ -1,0 +1,86 @@
+{
+  "name": "Meta Ads 10-Pillar Framework",
+  "source": "Industry standard Meta Ads strategy framework — required reading for Ad Strategist agent when paid budget is confirmed",
+  "version": "1.0",
+  "added": "2026-05-05",
+  "rule_for_agent": "When the Ad Strategist plans a campaign, every recommendation must explicitly map to ONE OR MORE of these 10 pillars. The output must reference which pillar(s) it addresses and cite the specific element within that pillar.",
+  "pillars": [
+    {
+      "id": 1,
+      "name": "Basic Structure",
+      "elements": ["Campaign", "Ad Set", "Ad", "Objective", "Funnel"],
+      "agent_use": "Always start here. Define the funnel stage and objective before any audience or creative decision."
+    },
+    {
+      "id": 2,
+      "name": "Performance Metrics",
+      "elements": ["Impressions", "Reach", "CTR", "CPC", "CPM"],
+      "agent_use": "Top-of-funnel signal layer. Watch CTR + CPM together — high CPM with low CTR usually means audience-creative mismatch."
+    },
+    {
+      "id": 3,
+      "name": "Conversion Metrics",
+      "elements": ["CPA", "ROAS", "Conversion Rate", "Cost Per Result", "Value"],
+      "agent_use": "Bottom-of-funnel signals. ROAS is the only metric that matters at the end — CPA without LTV context can mislead."
+    },
+    {
+      "id": 4,
+      "name": "Audience Targeting",
+      "elements": ["Custom Audience", "Lookalike Audience", "Interest Targeting", "Demographics", "Behavior Targeting"],
+      "agent_use": "Custom + Lookalike are highest-intent. Interest + Behavior are exploratory. Always have at least one Custom Audience layer if pixel data exists."
+    },
+    {
+      "id": 5,
+      "name": "Tracking",
+      "elements": ["Meta Pixel", "Conversion API", "Event Tracking", "Standard Events", "Custom Events"],
+      "agent_use": "Conversion API is non-negotiable post-iOS14. If brand doesn't have CAPI set up, flag it as a blocker before recommending any campaign."
+    },
+    {
+      "id": 6,
+      "name": "Optimize",
+      "elements": ["Optimization Event", "Learning Phase", "Ad Delivery", "Frequency", "Relevance Score"],
+      "agent_use": "Learning Phase requires ~50 events/week per ad set. If volume is below that, recommend consolidating ad sets first. Frequency >3 = creative fatigue, refresh."
+    },
+    {
+      "id": 7,
+      "name": "Place",
+      "elements": ["Automatic Placements", "Manual Placements", "Facebook Feed", "Instagram Feed", "Audience Network"],
+      "agent_use": "Default to Automatic Placements unless the brand has clear data showing one placement underperforms. Audience Network often eats budget — review data before including."
+    },
+    {
+      "id": 8,
+      "name": "Budget",
+      "elements": ["Daily Budget", "Lifetime Budget", "Bid Strategy", "Cost Cap", "CBO (Campaign Budget Optimization)"],
+      "agent_use": "CBO for >2 ad sets unless testing. Cost Cap requires conversion volume to work — don't recommend for cold accounts."
+    },
+    {
+      "id": 9,
+      "name": "Creative Elements",
+      "elements": ["Hook", "Headline", "Primary Text", "Call-To-Action (CTA)", "Creative Testing"],
+      "agent_use": "Hook is the only thing that matters in first 1.5 seconds. Test 3+ hooks per ad set. CTA must match funnel stage (no 'Buy Now' on TOFU cold)."
+    },
+    {
+      "id": 10,
+      "name": "Advanced Strategy",
+      "elements": ["Retargeting", "Scaling", "A/B Testing", "Attribution Window", "Cold vs Warm Audience"],
+      "agent_use": "Cold:Warm split should typically be 70:30 budget. Scaling = duplicate winning ad sets at higher budget, not raise budget on existing. 7-day click + 1-day view is the safest attribution."
+    }
+  ],
+  "checklist_for_every_campaign_recommendation": [
+    "Pillar 1: What's the campaign objective + funnel stage?",
+    "Pillar 4: Who's the audience? (Custom / Lookalike / Interest / Behavior layered)",
+    "Pillar 5: Is CAPI + Pixel + correct events live?",
+    "Pillar 8: Daily or Lifetime? CBO yes/no? Bid strategy?",
+    "Pillar 9: At least 3 hook variants + 1 CTA matched to funnel stage?",
+    "Pillar 6: Will the optimization event hit 50+ events/week at this budget?",
+    "Pillar 10: Cold:Warm split? Attribution window? Retargeting plan?"
+  ],
+  "red_flags_agent_must_surface": [
+    "Pixel not installed → block all recommendations until fixed",
+    "CAPI missing on iOS14+ → reduces signal quality 30-40%",
+    "Less than 50 weekly events for the optimization event → permanent learning phase",
+    "Frequency >3 with no creative refresh → ad fatigue burning budget",
+    "No retargeting layer when warm audience exists → leaving money on the table",
+    "Cost Cap recommended for an account with <100 conversions/week → won't work"
+  ]
+}

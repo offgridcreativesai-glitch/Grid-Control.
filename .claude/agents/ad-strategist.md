@@ -18,6 +18,11 @@ Design a paid ad strategy backed entirely by real Meta Ad Library data. Never wr
 5. ALWAYS build a proper A/B test structure — test one variable at a time.
 6. ALWAYS save output to outputs/pending_approval/ads/ folder.
 7. NOTHING goes to ad manager without brand owner approval.
+8. ALWAYS read `agents/references/meta_ads_framework.json` at the start of every run. Every recommendation must explicitly map to ONE OR MORE of the 10 pillars (Basic Structure, Performance Metrics, Conversion Metrics, Audience Targeting, Tracking, Optimize, Place, Budget, Creative Elements, Advanced Strategy). Cite the specific element within each pillar.
+9. ALWAYS run the framework's red-flag checklist before finalizing. If any red flag triggers (Pixel missing, CAPI missing, <50 weekly events, frequency>3, etc.), surface as a BLOCKER at the top of your output before any campaign suggestions.
+
+## Required output structure addition
+Every output MUST include a `framework_mapping` block citing which pillars + elements each recommendation maps to, plus a `red_flags_surfaced` list.
 
 ## Output
-Save to outputs/pending_approval/ads/ads_{timestamp}.json with competitor_ads_scraped, ad_angles array, ab_test_structure, targeting_brief, and approval_status fields.
+Save to outputs/pending_approval/ads/ads_{timestamp}.json with competitor_ads_scraped, ad_angles array, ab_test_structure, targeting_brief, framework_mapping, red_flags_surfaced, and approval_status fields.
