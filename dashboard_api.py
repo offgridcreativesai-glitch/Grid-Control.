@@ -1108,17 +1108,42 @@ def daily_pipeline_run():
     ]
 
     def _run_pipeline():
-        for agent_name, script_rel in pipeline_agents:
+        # PARALLELIZATION (May 5 2026): Trend Researcher + Data Analyst are independent
+        # (Trend reads scrape data, Data reads brand metrics — no shared inputs).
+        # Run them in parallel. Trend Sentinel runs AFTER Trend Researcher completes
+        # (it depends on trends_live.json).
+
+        def _run_one(agent_name: str, script_rel: str) -> None:
             if not script_rel:
                 print(f"[daily-run] Skipping {agent_name} — no script path configured")
-                continue
+                return
             script_path = BASE_DIR / script_rel
             if not script_path.exists():
                 print(f"[daily-run] Skipping {agent_name} — script not found: {script_path}")
-                continue
+                return
             print(f"[daily-run] Starting: {agent_name} for {brand_slug}")
             _run_agent_subprocess(str(script_path), brand_slug, agent_name, None)
             print(f"[daily-run] Completed: {agent_name}")
+
+        # Phase 1: Trend Researcher + Data Analyst in parallel
+        t_trend = threading.Thread(
+            target=_run_one,
+            args=("Trend Researcher", AGENT_SCRIPTS.get("Trend Researcher")),
+            daemon=True,
+        )
+        t_data = threading.Thread(
+            target=_run_one,
+            args=("Data Analyst", AGENT_SCRIPTS.get("Data Analyst")),
+            daemon=True,
+        )
+        t_trend.start()
+        t_data.start()
+        t_trend.join()
+        t_data.join()
+        print("[daily-run] Phase 1 complete (Trend + Data parallel)")
+
+        # Phase 2: Trend Sentinel — needs trends_live.json from Phase 1
+        _run_one("Trend Sentinel", AGENT_SCRIPTS.get("Trend Sentinel"))
 
         # BUILD D — Auto-run contradiction detector at end of pipeline
         try:
