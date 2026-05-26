@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "${RAILWAY_API_URL}/api/$1" },
+    { "source": "/api/:path*", "destination": "https://web-production-175d5.up.railway.app/api/:path*" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
