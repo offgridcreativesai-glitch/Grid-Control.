@@ -31,6 +31,8 @@ _admin: Client | None = None
 if SUPABASE_SERVICE_ROLE_KEY:
     _admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+_client: Client = _admin or _public
+
 def _svc() -> Client:
     """Return admin client (service_role, bypasses RLS). Falls back to public."""
     return _admin or _public
