@@ -7,3 +7,4 @@
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
+
