@@ -27,7 +27,9 @@ sys.path.insert(0, str(ROOT))
 import anthropic
 
 BRANDS_DIR    = ROOT / "brands"
-BETA_HEADER   = {"anthropic-beta": "managed-agents-2026-04-01"}
+# anthropic-beta header is no longer required for memory_stores in SDK 0.100+ — it's
+# auto-injected by the SDK. Keep an empty kwarg so call-sites don't break.
+BETA_HEADER   = {}
 STORES_FILE   = "memory_stores.json"  # written inside brands/{slug}/
 
 
@@ -64,10 +66,7 @@ def save_stores(brand_slug: str, stores: dict) -> None:
 
 def create_store(client: anthropic.Anthropic, name: str) -> str:
     """Create a memory store and return its ID."""
-    store = client.beta.memory_stores.create(
-        name=name,
-        extra_headers=BETA_HEADER,
-    )
+    store = client.beta.memory_stores.create(name=name)
     return store.id
 
 
@@ -89,7 +88,7 @@ def ensure_stores(client: anthropic.Anthropic, brand_slug: str) -> dict:
         if existing.get(key):
             # Verify it still exists
             try:
-                client.beta.memory_stores.retrieve(existing[key], extra_headers=BETA_HEADER)
+                client.beta.memory_stores.retrieve(existing[key])
                 stores[key] = existing[key]
                 print(f"  [skip]   {key} — {existing[key]}")
                 continue
@@ -131,11 +130,10 @@ Full profile JSON:
 {json.dumps(profile, indent=2)}
 """
 
-    client.beta.memory_stores.documents.create(
-        store_id,
+    client.beta.memory_stores.memories.create(
+        memory_store_id=store_id,
         content=content,
-        title=f"Brand Profile — {brand_slug}",
-        extra_headers=BETA_HEADER,
+        path=f"/brand_profile.md",
     )
     print(f"  [seeded] brand_context with brand_profile.json")
 
@@ -150,21 +148,20 @@ def seed_market_data(client: anthropic.Anthropic, store_id: str, brand_slug: str
     seeded = False
 
     if trends:
-        client.beta.memory_stores.documents.create(
-            store_id,
+        ts = trends.get('scraped_at', 'unknown').replace(':', '').replace(' ', '_')[:30]
+        client.beta.memory_stores.memories.create(
+            memory_store_id=store_id,
             content=json.dumps(trends, indent=2),
-            title=f"Live Trends — {brand_slug} — {trends.get('scraped_at', 'unknown')}",
-            extra_headers=BETA_HEADER,
+            path=f"/trends_{ts}.md",
         )
         print(f"  [seeded] market_data with trends_live.json")
         seeded = True
 
     if competitors:
-        client.beta.memory_stores.documents.create(
-            store_id,
+        client.beta.memory_stores.memories.create(
+            memory_store_id=store_id,
             content=json.dumps(competitors, indent=2),
-            title=f"Competitors DB — {brand_slug}",
-            extra_headers=BETA_HEADER,
+            path=f"/competitors_db.md",
         )
         print(f"  [seeded] market_data with competitors_db.json")
         seeded = True
@@ -175,11 +172,10 @@ def seed_market_data(client: anthropic.Anthropic, store_id: str, brand_slug: str
 
 def seed_agent_learnings(client: anthropic.Anthropic, store_id: str, brand_slug: str) -> None:
     """Seed agent_learnings with a placeholder — grows across sessions."""
-    client.beta.memory_stores.documents.create(
-        store_id,
+    client.beta.memory_stores.memories.create(
+        memory_store_id=store_id,
         content=f"Agent learnings for {brand_slug}.\nThis store grows as agents complete sessions and record insights.\nInitialised: empty.",
-        title=f"Agent Learnings — {brand_slug} — initialized",
-        extra_headers=BETA_HEADER,
+        path=f"/_init.md",
     )
     print(f"  [seeded] agent_learnings with placeholder")
 
@@ -231,11 +227,12 @@ def record_agent_learning(brand_slug: str, agent_name: str, learning: str) -> No
     if not stores.get("agent_learnings"):
         return
 
-    client.beta.memory_stores.documents.create(
-        stores["agent_learnings"],
+    import time as _t
+    safe_agent = agent_name.lower().replace(" ", "-").replace("+", "-")
+    client.beta.memory_stores.memories.create(
+        memory_store_id=stores["agent_learnings"],
         content=learning,
-        title=f"{agent_name} — learning — {brand_slug}",
-        extra_headers=BETA_HEADER,
+        path=f"/{safe_agent}_{int(_t.time())}.md",
     )
 
 

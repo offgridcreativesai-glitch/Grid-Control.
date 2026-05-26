@@ -1,6 +1,11 @@
 """
 supabase/db.py — GRID CONTROL Supabase Integration Layer
-Single shared client. All functions return None on failure.
+
+Two clients:
+  _admin  — service_role key, bypasses RLS. Used by Flask backend for agent ops.
+  _public — anon key + user JWT. Used for user-scoped queries from dashboard.
+
+All functions return None on failure.
 """
 
 import os
@@ -15,24 +20,117 @@ load_dotenv(
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env")
 
-_client: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+_public: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+_admin: Client | None = None
+if SUPABASE_SERVICE_ROLE_KEY:
+    _admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+def _svc() -> Client:
+    """Return admin client (service_role, bypasses RLS). Falls back to public."""
+    return _admin or _public
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# ── Auth Helpers ─────────────────────────────────────────────────────────────
+
+def verify_jwt(token: str) -> dict | None:
+    """Verify a Supabase JWT and return the user object. None if invalid."""
+    try:
+        user = _public.auth.get_user(token)
+        return {"id": user.user.id, "email": user.user.email} if user and user.user else None
+    except Exception:
+        return None
+
+
+def get_user_brands(user_id: str) -> list[dict]:
+    """Return all brands the user is a member of."""
+    try:
+        res = (
+            _svc().table("brand_members")
+            .select("brand_id, role, brands(id, slug, name, profile, created_at)")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_user_brands error: {e}")
+        return []
+
+
+def check_brand_access(user_id: str, brand_id: str) -> str | None:
+    """Return user's role for a brand, or None if no access."""
+    try:
+        res = (
+            _svc().table("brand_members")
+            .select("role")
+            .eq("user_id", user_id)
+            .eq("brand_id", brand_id)
+            .single()
+            .execute()
+        )
+        return res.data["role"] if res.data else None
+    except Exception:
+        return None
+
+
+def create_brand_with_owner(slug: str, name: str, profile_dict: dict, owner_user_id: str) -> dict | None:
+    """Create a brand and add the creator as admin. Returns the brand row."""
+    try:
+        brand = upsert_brand(slug, name, profile_dict)
+        if not brand:
+            return None
+        _svc().table("brand_members").insert({
+            "brand_id": brand["id"],
+            "user_id": owner_user_id,
+            "role": "admin",
+        }).execute()
+        return brand
+    except Exception as e:
+        print(f"[db] create_brand_with_owner error: {e}")
+        return None
+
+
+def add_brand_member(brand_id: str, user_email: str, role: str = "editor") -> dict | None:
+    """Add a user to a brand by email. Returns the membership row."""
+    try:
+        user_res = _svc().table("profiles").select("id").eq("email", user_email).single().execute()
+        if not user_res.data:
+            return None
+        res = _svc().table("brand_members").upsert({
+            "brand_id": brand_id,
+            "user_id": user_res.data["id"],
+            "role": role,
+        }, on_conflict="brand_id,user_id").execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        print(f"[db] add_brand_member error: {e}")
+        return None
+
+
+def get_profile(user_id: str) -> dict | None:
+    """Return user profile."""
+    try:
+        res = _svc().table("profiles").select("*").eq("id", user_id).single().execute()
+        return res.data
+    except Exception:
+        return None
+
+
 # ── Brands ────────────────────────────────────────────────────────────────────
 
 def upsert_brand(slug: str, name: str, profile_dict: dict) -> dict | None:
-    """Upsert a brand row by slug. Returns the brand row."""
     try:
         res = (
-            _client.table("brands")
+            _svc().table("brands")
             .upsert({"slug": slug, "name": name, "profile": profile_dict}, on_conflict="slug")
             .execute()
         )
@@ -43,9 +141,8 @@ def upsert_brand(slug: str, name: str, profile_dict: dict) -> dict | None:
 
 
 def get_brand(slug: str) -> dict | None:
-    """Return brand row by slug."""
     try:
-        res = _client.table("brands").select("*").eq("slug", slug).single().execute()
+        res = _svc().table("brands").select("*").eq("slug", slug).single().execute()
         return res.data
     except Exception as e:
         print(f"[db] get_brand error: {e}")
@@ -55,9 +152,8 @@ def get_brand(slug: str) -> dict | None:
 # ── Agent Runs ────────────────────────────────────────────────────────────────
 
 def get_agent_run(run_id: str) -> dict | None:
-    """Fetch a single agent_run row by id."""
     try:
-        res = _client.table("agent_runs").select("*").eq("id", run_id).single().execute()
+        res = _svc().table("agent_runs").select("*").eq("id", run_id).single().execute()
         return res.data
     except Exception as e:
         print(f"[db] get_agent_run error: {e}")
@@ -65,10 +161,9 @@ def get_agent_run(run_id: str) -> dict | None:
 
 
 def save_agent_run(brand_id: str, agent_slug: str) -> dict | None:
-    """Insert a new agent_run row with status='running'. Returns the row with id."""
     try:
         res = (
-            _client.table("agent_runs")
+            _svc().table("agent_runs")
             .insert({"brand_id": brand_id, "agent_slug": agent_slug, "status": "running"})
             .execute()
         )
@@ -79,13 +174,12 @@ def save_agent_run(brand_id: str, agent_slug: str) -> dict | None:
 
 
 def update_agent_run_status(run_id: str, status: str, error: str | None = None) -> dict | None:
-    """Update agent_run status and set completed_at."""
     try:
         payload: dict = {"status": status, "completed_at": _now()}
         if error:
             payload["error"] = error
         res = (
-            _client.table("agent_runs")
+            _svc().table("agent_runs")
             .update(payload)
             .eq("id", run_id)
             .execute()
@@ -107,7 +201,6 @@ def save_agent_output(
     formatted_output: dict | None = None,
     loop_header: dict | None = None,
 ) -> dict | None:
-    """Insert agent output row. Returns the row."""
     try:
         payload = {
             "brand_id": brand_id,
@@ -118,10 +211,9 @@ def save_agent_output(
             "formatted_output": formatted_output or {},
             "approval_status": "pending",
         }
-        # Store loop_header inside formatted_output for convenience
         if loop_header:
             payload["formatted_output"]["loop_header"] = loop_header
-        res = _client.table("agent_outputs").insert(payload).execute()
+        res = _svc().table("agent_outputs").insert(payload).execute()
         return res.data[0] if res.data else None
     except Exception as e:
         print(f"[db] save_agent_output error: {e}")
@@ -129,10 +221,9 @@ def save_agent_output(
 
 
 def get_pending_outputs(brand_id: str) -> list[dict]:
-    """Return all pending agent_outputs for a brand, newest first."""
     try:
         res = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .select("*")
             .eq("brand_id", brand_id)
             .eq("approval_status", "pending")
@@ -146,10 +237,9 @@ def get_pending_outputs(brand_id: str) -> list[dict]:
 
 
 def approve_output(output_id: str) -> dict | None:
-    """Set approval_status = 'approved' and record approved_at."""
     try:
         res = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .update({"approval_status": "approved", "approved_at": _now()})
             .eq("id", output_id)
             .execute()
@@ -161,10 +251,9 @@ def approve_output(output_id: str) -> dict | None:
 
 
 def reject_output(output_id: str) -> dict | None:
-    """Set approval_status = 'rejected'."""
     try:
         res = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .update({"approval_status": "rejected"})
             .eq("id", output_id)
             .execute()
@@ -176,10 +265,9 @@ def reject_output(output_id: str) -> dict | None:
 
 
 def get_output_history(brand_id: str, agent_slug: str) -> list[dict]:
-    """Return id, created_at, approval_status, output_type for all outputs of an agent (newest first)."""
     try:
         res = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .select("id, created_at, approval_status, output_type")
             .eq("brand_id", brand_id)
             .eq("agent_slug", agent_slug)
@@ -193,16 +281,15 @@ def get_output_history(brand_id: str, agent_slug: str) -> list[dict]:
 
 
 def update_output_notion_id(output_id: str, notion_page_id: str) -> dict | None:
-    """Store notion_page_id in the agent_outputs row's formatted_output JSON."""
     try:
-        res = _client.table("agent_outputs").select("formatted_output").eq("id", output_id).single().execute()
+        res = _svc().table("agent_outputs").select("formatted_output").eq("id", output_id).single().execute()
         if not res.data:
             return None
         formatted = res.data.get("formatted_output") or {}
         formatted["notion_page_id"] = notion_page_id
         formatted["notion_url"] = f"https://notion.so/{notion_page_id.replace('-', '')}"
         res2 = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .update({"formatted_output": formatted})
             .eq("id", output_id)
             .execute()
@@ -214,10 +301,9 @@ def update_output_notion_id(output_id: str, notion_page_id: str) -> dict | None:
 
 
 def get_outputs_by_agent(brand_id: str, agent_slug: str, approval_status: str | None = None) -> list[dict]:
-    """Return agent_outputs for a brand+agent, optionally filtered by approval_status."""
     try:
         q = (
-            _client.table("agent_outputs")
+            _svc().table("agent_outputs")
             .select("*")
             .eq("brand_id", brand_id)
             .eq("agent_slug", agent_slug)
@@ -235,10 +321,9 @@ def get_outputs_by_agent(brand_id: str, agent_slug: str, approval_status: str | 
 # ── Session State ─────────────────────────────────────────────────────────────
 
 def get_session_state(brand_id: str) -> dict:
-    """Return state dict from session_state table for this brand."""
     try:
         res = (
-            _client.table("session_state")
+            _svc().table("session_state")
             .select("state")
             .eq("brand_id", brand_id)
             .execute()
@@ -252,19 +337,18 @@ def get_session_state(brand_id: str) -> dict:
 
 
 def upsert_session_state(brand_id: str, state: dict) -> dict | None:
-    """Insert or update session_state row for a brand."""
     try:
-        existing = _client.table("session_state").select("id").eq("brand_id", brand_id).execute()
+        existing = _svc().table("session_state").select("id").eq("brand_id", brand_id).execute()
         if existing.data:
             res = (
-                _client.table("session_state")
+                _svc().table("session_state")
                 .update({"state": state, "updated_at": _now()})
                 .eq("brand_id", brand_id)
                 .execute()
             )
         else:
             res = (
-                _client.table("session_state")
+                _svc().table("session_state")
                 .insert({"brand_id": brand_id, "state": state, "updated_at": _now()})
                 .execute()
             )
@@ -277,11 +361,9 @@ def upsert_session_state(brand_id: str, state: dict) -> dict | None:
 # ── Conversations ─────────────────────────────────────────────────────────────
 
 def save_conversation(brand_id: str, agent_slug: str, messages_list: list) -> dict | None:
-    """Upsert the full messages list for a brand+agent conversation."""
     try:
-        # Check if row already exists
         existing = (
-            _client.table("conversations")
+            _svc().table("conversations")
             .select("id")
             .eq("brand_id", brand_id)
             .eq("agent_slug", agent_slug)
@@ -290,14 +372,14 @@ def save_conversation(brand_id: str, agent_slug: str, messages_list: list) -> di
         if existing.data:
             row_id = existing.data[0]["id"]
             res = (
-                _client.table("conversations")
+                _svc().table("conversations")
                 .update({"messages": messages_list, "updated_at": _now()})
                 .eq("id", row_id)
                 .execute()
             )
         else:
             res = (
-                _client.table("conversations")
+                _svc().table("conversations")
                 .insert({
                     "brand_id": brand_id,
                     "agent_slug": agent_slug,
@@ -313,10 +395,9 @@ def save_conversation(brand_id: str, agent_slug: str, messages_list: list) -> di
 
 
 def get_conversation(brand_id: str, agent_slug: str) -> list:
-    """Return messages list for a brand+agent. Empty list if none found."""
     try:
         res = (
-            _client.table("conversations")
+            _svc().table("conversations")
             .select("messages")
             .eq("brand_id", brand_id)
             .eq("agent_slug", agent_slug)
@@ -332,7 +413,6 @@ def get_conversation(brand_id: str, agent_slug: str) -> list:
 
 # ── Cost Tracking ─────────────────────────────────────────────────────────────
 
-# Anthropic pricing per 1M tokens (USD)
 _PRICING: dict[str, dict[str, float]] = {
     "claude-sonnet-4-6":        {"input": 3.00,  "output": 15.00},
     "claude-opus-4-6":          {"input": 15.00, "output": 75.00},
@@ -340,13 +420,11 @@ _PRICING: dict[str, dict[str, float]] = {
 }
 _DEFAULT_PRICING = {"input": 3.00, "output": 15.00}
 
-# External service per-unit costs (USD)
-FAL_COST_PER_IMAGE  = 0.008   # ~$0.008 per image generation
-APIFY_COST_PER_RUN  = 0.35    # ~$0.35 per actor run
+FAL_COST_PER_IMAGE  = 0.008
+APIFY_COST_PER_RUN  = 0.35
 
 
 def calc_api_cost(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Return Anthropic API cost in USD for a given model + token counts."""
     p = _PRICING.get(model, _DEFAULT_PRICING)
     return (input_tokens * p["input"] + output_tokens * p["output"]) / 1_000_000
 
@@ -359,13 +437,12 @@ def update_agent_run_costs(
     fal_generations: int = 0,
     apify_runs: int = 0,
 ) -> dict | None:
-    """Save token counts + computed costs to an agent_run row."""
     try:
         api_cost   = calc_api_cost(model, input_tokens, output_tokens)
         fal_cost   = fal_generations * FAL_COST_PER_IMAGE
         apify_cost = apify_runs      * APIFY_COST_PER_RUN
         res = (
-            _client.table("agent_runs")
+            _svc().table("agent_runs")
             .update({
                 "model":           model,
                 "input_tokens":    input_tokens,
@@ -386,19 +463,14 @@ def update_agent_run_costs(
 
 
 def get_brand_monthly_costs(brand_id: str, year: int, month: int) -> dict:
-    """
-    Return aggregated cost breakdown for a brand for a given month.
-    Returns dict with per-agent rows + totals.
-    """
     try:
         from_dt = f"{year:04d}-{month:02d}-01T00:00:00+00:00"
-        # last day of month
         import calendar
         last_day = calendar.monthrange(year, month)[1]
         to_dt    = f"{year:04d}-{month:02d}-{last_day:02d}T23:59:59+00:00"
 
         res = (
-            _client.table("agent_runs")
+            _svc().table("agent_runs")
             .select(
                 "agent_slug, model, input_tokens, output_tokens, "
                 "api_cost_usd, fal_cost_usd, apify_cost_usd, "
@@ -412,21 +484,15 @@ def get_brand_monthly_costs(brand_id: str, year: int, month: int) -> dict:
         )
         rows = res.data or []
 
-        # Aggregate per agent
         agents: dict[str, dict] = {}
         for r in rows:
             slug = r.get("agent_slug", "unknown")
             if slug not in agents:
                 agents[slug] = {
-                    "agent_slug":      slug,
-                    "runs":            0,
-                    "input_tokens":    0,
-                    "output_tokens":   0,
-                    "api_cost_usd":    0.0,
-                    "fal_cost_usd":    0.0,
-                    "apify_cost_usd":  0.0,
-                    "fal_generations": 0,
-                    "apify_runs":      0,
+                    "agent_slug": slug, "runs": 0,
+                    "input_tokens": 0, "output_tokens": 0,
+                    "api_cost_usd": 0.0, "fal_cost_usd": 0.0, "apify_cost_usd": 0.0,
+                    "fal_generations": 0, "apify_runs": 0,
                 }
             a = agents[slug]
             a["runs"]            += 1
@@ -444,8 +510,7 @@ def get_brand_monthly_costs(brand_id: str, year: int, month: int) -> dict:
         total_apify = sum(a["apify_cost_usd"] for a in agent_list)
 
         return {
-            "year":  year,
-            "month": month,
+            "year": year, "month": month,
             "agents": agent_list,
             "totals": {
                 "api_cost_usd":   round(total_api,   4),
@@ -463,25 +528,18 @@ def get_brand_monthly_costs(brand_id: str, year: int, month: int) -> dict:
 # ── Brand Memory (pgvector) ────────────────────────────────────────────────────
 
 def save_brand_memory(
-    brand_id: str,
-    agent_slug: str,
-    memory_key: str,
-    content: str,
+    brand_id: str, agent_slug: str, memory_key: str, content: str,
     embedding: list[float] | None = None,
 ) -> dict | None:
-    """Upsert a memory entry for a brand+agent. embedding is optional (1536-dim)."""
     try:
         payload: dict = {
-            "brand_id":   brand_id,
-            "agent_slug": agent_slug,
-            "memory_key": memory_key,
-            "content":    content,
-            "updated_at": _now(),
+            "brand_id": brand_id, "agent_slug": agent_slug,
+            "memory_key": memory_key, "content": content, "updated_at": _now(),
         }
         if embedding:
             payload["embedding"] = embedding
         res = (
-            _client.table("brand_memory")
+            _svc().table("brand_memory")
             .upsert(payload, on_conflict="brand_id,agent_slug,memory_key")
             .execute()
         )
@@ -492,10 +550,9 @@ def save_brand_memory(
 
 
 def get_brand_memory(brand_id: str, agent_slug: str) -> list[dict]:
-    """Return all memory entries for a brand+agent (no vector search — full recall)."""
     try:
         res = (
-            _client.table("brand_memory")
+            _svc().table("brand_memory")
             .select("memory_key, content, updated_at")
             .eq("brand_id", brand_id)
             .eq("agent_slug", agent_slug)
@@ -509,10 +566,9 @@ def get_brand_memory(brand_id: str, agent_slug: str) -> list[dict]:
 
 
 def get_all_brand_memory(brand_id: str) -> list[dict]:
-    """Return all memory entries for a brand across all agents."""
     try:
         res = (
-            _client.table("brand_memory")
+            _svc().table("brand_memory")
             .select("agent_slug, memory_key, content, updated_at")
             .eq("brand_id", brand_id)
             .order("updated_at", desc=True)
@@ -527,15 +583,12 @@ def get_all_brand_memory(brand_id: str) -> list[dict]:
 # ── Audit Log ─────────────────────────────────────────────────────────────────
 
 def log_audit(brand_id: str, action: str, actor: str = "system", payload: dict | None = None) -> dict | None:
-    """Insert an audit log entry."""
     try:
         res = (
-            _client.table("audit_log")
+            _svc().table("audit_log")
             .insert({
-                "brand_id": brand_id,
-                "action": action,
-                "actor": actor,
-                "payload": payload or {},
+                "brand_id": brand_id, "action": action,
+                "actor": actor, "payload": payload or {},
             })
             .execute()
         )

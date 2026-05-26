@@ -1,10 +1,17 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-interface Brand {
+export interface Brand {
   slug: string
   name: string
+  handle?: string
+  primary?: boolean
 }
+
+// Default brands seed (used until backend response loads)
+const defaultBrands: Brand[] = [
+  { slug: "askgauravai", name: "AskGauravAI", handle: "@askgauravai", primary: true },
+]
 
 interface Message {
   role: "user" | "agent"
@@ -40,8 +47,8 @@ interface BrandStore {
 export const useBrandStore = create<BrandStore>()(
   persist(
     (set) => ({
-      activeBrand: { slug: "", name: "" },
-      brands: [],
+      activeBrand: defaultBrands[0],
+      brands: defaultBrands,
       activeScreen: 1,
       individualHistories: {},
       groupHistories: {},
@@ -102,7 +109,7 @@ export const useBrandStore = create<BrandStore>()(
     }),
     {
       name: "grid-control-store",
-      version: 2,
+      version: 3,
       // Only persist what matters across refresh — brands list is always re-fetched from server
       partialize: (state) => ({
         individualHistories: state.individualHistories,

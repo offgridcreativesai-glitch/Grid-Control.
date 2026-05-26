@@ -1,8 +1,10 @@
 /**
  * Central API fetch wrapper.
- * Automatically injects X-Dashboard-Secret header on every request.
- * Use this instead of raw fetch() for all /api/* calls.
+ * Injects Supabase JWT (Authorization: Bearer) on every request.
+ * Falls back to X-Dashboard-Secret for backward compatibility.
  */
+
+import { supabase } from "./supabase"
 
 const DASHBOARD_SECRET = import.meta.env.VITE_DASHBOARD_SECRET ?? ""
 
@@ -11,8 +13,13 @@ export async function apiFetch(
   init: RequestInit = {}
 ): Promise<Response> {
   const headers = new Headers(init.headers)
-  if (DASHBOARD_SECRET) {
+
+  const { data } = await supabase.auth.getSession()
+  if (data.session?.access_token) {
+    headers.set("Authorization", `Bearer ${data.session.access_token}`)
+  } else if (DASHBOARD_SECRET) {
     headers.set("X-Dashboard-Secret", DASHBOARD_SECRET)
   }
+
   return fetch(input, { ...init, headers })
 }

@@ -64,15 +64,56 @@ def _validate_brand_slug(slug: str) -> bool:
     return bool(re.match(r'^[a-z0-9][a-z0-9-]{0,79}$', slug))
 
 
+def _get_current_user() -> dict | None:
+    """Extract and verify user from Authorization header (Bearer <JWT>).
+    Returns {"id": ..., "email": ...} or None."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header[7:]
+    if not _DB_AVAILABLE:
+        return None
+    return _db.verify_jwt(token)
+
+
 def require_auth(f):
-    """Decorator — rejects requests missing a valid X-Dashboard-Secret header."""
+    """Decorator — accepts Supabase JWT (Authorization: Bearer) or legacy X-Dashboard-Secret."""
     from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Try JWT first
+        user = _get_current_user()
+        if user:
+            request.user = user
+            return f(*args, **kwargs)
+        # Fall back to legacy secret
         if _DASHBOARD_SECRET:
             token = request.headers.get("X-Dashboard-Secret", "")
-            if token != _DASHBOARD_SECRET:
-                return jsonify({"success": False, "error": "Unauthorized"}), 401
+            if token == _DASHBOARD_SECRET:
+                request.user = None
+                return f(*args, **kwargs)
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+    return decorated
+
+
+def require_brand_access(f):
+    """Decorator — verifies the authenticated user has access to the requested brand.
+    Must be used after require_auth. Reads brand_slug from query params."""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = getattr(request, "user", None)
+        if not user or not _DB_AVAILABLE:
+            return f(*args, **kwargs)
+        brand_slug = request.args.get("brand_slug") or request.json.get("brand_slug", "") if request.is_json else request.args.get("brand_slug", "")
+        if not brand_slug:
+            return f(*args, **kwargs)
+        brand = _db.get_brand(brand_slug)
+        if brand:
+            role = _db.check_brand_access(user["id"], brand["id"])
+            if not role:
+                return jsonify({"success": False, "error": "No access to this brand"}), 403
+            request.brand_role = role
         return f(*args, **kwargs)
     return decorated
 
@@ -121,6 +162,56 @@ try:
 except Exception as _db_err:
     _DB_AVAILABLE = False
     print(f"[GRID CONTROL] ⚠️  Supabase db.py not loaded: {_db_err}")
+
+# ── SSE Event Bus — live agent activity stream ────────────────────────────────
+import queue as _queue_mod
+
+_sse_subscribers: list[_queue_mod.Queue] = []
+_sse_lock = threading.Lock()
+
+
+def broadcast_event(event_type: str, data: dict) -> None:
+    """Push an event to all SSE subscribers. Non-blocking."""
+    payload = json.dumps({"type": event_type, **data})
+    with _sse_lock:
+        dead = []
+        for q in _sse_subscribers:
+            try:
+                q.put_nowait(payload)
+            except _queue_mod.Full:
+                dead.append(q)
+        for q in dead:
+            _sse_subscribers.remove(q)
+
+
+@app.route("/api/events", methods=["GET"])
+def sse_events():
+    """Global SSE stream — client subscribes to get live agent activity updates."""
+    q: _queue_mod.Queue = _queue_mod.Queue(maxsize=100)
+    with _sse_lock:
+        _sse_subscribers.append(q)
+
+    def generate():
+        try:
+            while True:
+                try:
+                    payload = q.get(timeout=30)
+                    yield f"data: {payload}\n\n"
+                except _queue_mod.Empty:
+                    yield ": keepalive\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            with _sse_lock:
+                if q in _sse_subscribers:
+                    _sse_subscribers.remove(q)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
 
 # ── API Key Startup Verification ───────────────────────────────────────────────
 _ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "").strip()
@@ -673,6 +764,14 @@ def _update_session_agent_status(brand_slug: str, agent_name: str, status: str, 
             if brand_id:
                 _db.upsert_session_state(brand_id, session)
                 _db.log_audit(brand_id, f"agent_{status}", agent_name, {"last_output": last_output or ""})
+
+        # SSE broadcast — clients see live updates
+        broadcast_event("agent_status", {
+            "brand": brand_slug,
+            "agent": agent_name,
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
+        })
     except Exception as e:
         print(f"[dashboard_api] session update failed for {agent_name}: {e}")
 
@@ -804,6 +903,86 @@ def list_brands() -> list:
                 pass
             result.append({"slug": folder.name, "name": name})
     return result
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+@app.route("/api/auth/me", methods=["GET"])
+def get_me():
+    """Return current user profile + their brands. No auth required (returns null if not logged in)."""
+    user = _get_current_user()
+    if not user or not _DB_AVAILABLE:
+        return jsonify({"user": None, "brands": []})
+    profile = _db.get_profile(user["id"])
+    brands_raw = _db.get_user_brands(user["id"])
+    brands = []
+    for bm in brands_raw:
+        b = bm.get("brands", {})
+        if b:
+            brands.append({
+                "id": b.get("id"),
+                "slug": b.get("slug"),
+                "name": b.get("name"),
+                "role": bm.get("role"),
+            })
+    return jsonify({"user": profile, "brands": brands})
+
+
+@app.route("/api/auth/brands", methods=["GET"])
+@require_auth
+def get_my_brands():
+    """Return brands for authenticated user."""
+    user = getattr(request, "user", None)
+    if not user or not _DB_AVAILABLE:
+        return jsonify(list_brands())
+    brands_raw = _db.get_user_brands(user["id"])
+    brands = []
+    for bm in brands_raw:
+        b = bm.get("brands", {})
+        if b:
+            brands.append({
+                "id": b.get("id"),
+                "slug": b.get("slug"),
+                "name": b.get("name"),
+                "role": bm.get("role"),
+                "profile": b.get("profile", {}),
+            })
+    return jsonify(brands)
+
+
+@app.route("/api/auth/create-brand", methods=["POST"])
+@require_auth
+def auth_create_brand():
+    """Create a new brand and assign the current user as admin."""
+    user = getattr(request, "user", None)
+    data = request.json or {}
+    slug = data.get("slug", "").strip().lower()
+    name = data.get("name", "").strip()
+    if not slug or not name:
+        return jsonify({"success": False, "error": "slug and name required"}), 400
+    if not _validate_brand_slug(slug):
+        return jsonify({"success": False, "error": "Invalid slug format"}), 400
+    if not _DB_AVAILABLE:
+        return jsonify({"success": False, "error": "Database not available"}), 503
+
+    profile = data.get("profile", {})
+    if user:
+        brand = _db.create_brand_with_owner(slug, name, profile, user["id"])
+    else:
+        brand = _db.upsert_brand(slug, name, profile)
+
+    if not brand:
+        return jsonify({"success": False, "error": "Failed to create brand"}), 500
+
+    brand_dir = BRANDS_DIR / slug
+    brand_dir.mkdir(parents=True, exist_ok=True)
+    bp_path = brand_dir / "brand_profile.json"
+    if not bp_path.exists():
+        profile["name"] = name
+        profile["slug"] = slug
+        _atomic_write_json(bp_path, profile)
+
+    return jsonify({"success": True, "brand": brand})
 
 
 # ── Agents ────────────────────────────────────────────────────────────────────
@@ -2612,6 +2791,95 @@ def set_brand_goal(brand_slug: str):
 
 # ── Outputs ───────────────────────────────────────────────────────────────────
 
+def _strip_markdown(text: str) -> str:
+    """Remove markdown syntax for clean plain-English display in the UI.
+    Strips: # headers, **bold**, *italic*, `code`, [link](url)→link.
+    """
+    import re as _re
+    if not text:
+        return ""
+    # Remove leading hashes (## headers)
+    text = _re.sub(r"^#{1,6}\s+", "", text, flags=_re.MULTILINE)
+    # Remove bold/italic markers
+    text = _re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = _re.sub(r"\*([^*]+)\*", r"\1", text)
+    text = _re.sub(r"__([^_]+)__", r"\1", text)
+    text = _re.sub(r"_([^_]+)_", r"\1", text)
+    # Inline code
+    text = _re.sub(r"`([^`]+)`", r"\1", text)
+    # Links: [label](url) → label
+    text = _re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    return text.strip()
+
+
+def _extract_output_meta(agent_slug: str, data: dict) -> dict:
+    """Pull human-readable meta + media paths from an agent JSON output.
+
+    Returns dict with keys: title, platform, caption, body_text, slide_images,
+    hashtags, scheduled_for. All optional (None/empty if missing).
+    """
+    if not isinstance(data, dict):
+        return {}
+
+    out: dict = {
+        "title": None,
+        "platform": None,
+        "caption": None,
+        "body_text": None,
+        "slide_images": [],
+        "hashtags": [],
+        "scheduled_for": None,
+    }
+
+    # Carousel Designer
+    if "carousel" in agent_slug:
+        out["title"] = data.get("topic") or data.get("post_id")
+        out["platform"] = data.get("platform")
+        out["caption"] = data.get("post_caption")
+        out["slide_images"] = data.get("slide_image_paths", []) or []
+        out["scheduled_for"] = data.get("scheduled_for")
+
+    # Script Writer
+    elif "script" in agent_slug:
+        scripts = data.get("scripts") or []
+        if scripts:
+            first = scripts[0] if isinstance(scripts[0], dict) else {}
+            inner = first.get("script", first)
+            out["title"] = inner.get("title") or inner.get("hook") or inner.get("topic") or "Script"
+            out["platform"] = inner.get("platform") or first.get("platform")
+            # Compose body from beats / body / hook+body+cta
+            parts = []
+            for k in ("hook", "beat_1", "beat_2", "beat_3", "body", "cta"):
+                v = inner.get(k)
+                if isinstance(v, str) and v:
+                    parts.append(v)
+                elif isinstance(v, dict) and v.get("text"):
+                    parts.append(v["text"])
+            out["body_text"] = "\n\n".join(parts) if parts else None
+            out["caption"] = inner.get("caption")
+
+    # Content Planner / Strategy / Trend / etc — surface a usable title + summary
+    else:
+        out["title"] = (
+            data.get("topic")
+            or data.get("title")
+            or data.get("hook")
+            or data.get("summary", "")[:80]
+            or None
+        )
+        out["caption"] = data.get("summary") or data.get("description") or data.get("overall_decision")
+        out["platform"] = data.get("platform")
+
+    # Hashtags (any agent)
+    h = data.get("hashtags")
+    if isinstance(h, list):
+        out["hashtags"] = h
+    elif isinstance(h, str):
+        out["hashtags"] = [t for t in h.split() if t.startswith("#")]
+
+    return out
+
+
 @app.route("/api/outputs/pending", methods=["GET"])
 def get_pending_outputs():
     from utils.output_formatter import format_for_notion
@@ -2664,24 +2932,41 @@ def get_pending_outputs():
     for filepath in pending_dir.rglob("*"):
         if filepath.is_file():
             stat = filepath.stat()
+            # Skip dotfiles (.DS_Store, .gitkeep)
+            if filepath.name.startswith("."):
+                continue
             agent_name = filepath.parent.name if filepath.parent != pending_dir else "unknown"
             preview = ""
+            # Files written by orchestrator have a LOOP HEADER at the top, then
+            # `---`, then the JSON body. Strip the header before parsing.
+            try:
+                raw_text = filepath.read_text(errors="replace")
+            except Exception:
+                raw_text = ""
+
+            meta = {}
             if filepath.suffix == ".json":
+                # Try direct parse first
+                json_body = raw_text
+                if "---" in raw_text:
+                    # Likely has loop header — JSON starts after the first '---' line
+                    parts = raw_text.split("\n---\n", 1)
+                    if len(parts) == 2:
+                        json_body = parts[1].strip()
                 try:
-                    with open(filepath) as f:
-                        raw = json.load(f)
-                    preview = format_for_notion(agent_name, raw)[:500]
+                    raw = json.loads(json_body)
+                    # Format as PLAIN ENGLISH for the dashboard. NEVER raw JSON.
+                    formatted = format_for_notion(agent_name, raw)
+                    preview = _strip_markdown(formatted[:1500]) if formatted else json_body[:500]
+                    meta = _extract_output_meta(agent_name, raw)
                 except Exception:
-                    # Not valid JSON — read as plain text
-                    try:
-                        preview = filepath.read_text(errors="replace")[:500]
-                    except Exception:
-                        pass
+                    # Last resort — show plain text excerpt without the loop header
+                    if "---" in raw_text:
+                        preview = raw_text.split("\n---\n", 1)[-1][:500]
+                    else:
+                        preview = raw_text[:500]
             elif filepath.suffix in (".txt", ".md"):
-                try:
-                    preview = filepath.read_text(errors="replace")[:500]
-                except Exception:
-                    pass
+                preview = raw_text[:1500]
             items.append({
                 "output_id": None,
                 "filename": filepath.name,
@@ -2690,6 +2975,14 @@ def get_pending_outputs():
                 "contentType": filepath.suffix.lstrip(".").upper() or "FILE",
                 "preview": preview,
                 "timestamp": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                # Enriched human-readable fields (no markdown, ready for UI)
+                "title": meta.get("title"),
+                "platform": meta.get("platform"),
+                "caption": meta.get("caption"),
+                "body_text": meta.get("body_text"),
+                "slide_images": meta.get("slide_images", []),
+                "hashtags": meta.get("hashtags", []),
+                "scheduled_for": meta.get("scheduled_for"),
             })
     items.sort(key=lambda x: x["timestamp"], reverse=True)
     return jsonify({"success": True, "data": items})
@@ -2908,6 +3201,95 @@ def get_agent_output():
             "formatted": formatted,
         }
     })
+
+
+@app.route("/api/published", methods=["GET"])
+def get_published():
+    """Approved + scheduled + published posts across all platforms.
+
+    Reads:
+      - brands/{slug}/outputs/approved/*/*.json (each = one approved post)
+      - brands/{slug}/performance_inbox.json (queued metric entries — joined by post_id)
+      - brands/{slug}/performance_history.json (computed metrics — joined by post_id)
+
+    Returns each post as a row with: platform, title, caption, slide_images,
+    scheduled_for, posted_at, status (scheduled|published), and engagement
+    (likes/comments/shares/impressions/saves) once posted.
+    """
+    brand_slug = request.args.get("brand_slug", "askgauravai")
+    brand_dir = get_brand_dir(brand_slug)
+    approved_dir = brand_dir / "outputs" / "approved"
+
+    # Build engagement lookup keyed by post_id (and by filename as fallback)
+    engagement_by_id: dict[str, dict] = {}
+    posted_by_id: dict[str, str] = {}
+    for fp in (brand_dir / "performance_history.json", brand_dir / "performance_inbox.json"):
+        if not fp.exists():
+            continue
+        try:
+            data = json.loads(fp.read_text())
+        except Exception:
+            continue
+        # Both files have a 'posts' / 'queue' / similar list of entries with metrics
+        candidate_lists = []
+        for k in ("posts", "queue", "entries", "items"):
+            if isinstance(data.get(k), list):
+                candidate_lists.append(data[k])
+        for lst in candidate_lists:
+            for entry in lst:
+                if not isinstance(entry, dict):
+                    continue
+                pid = entry.get("post_id") or entry.get("id") or entry.get("filename")
+                if not pid:
+                    continue
+                metrics = entry.get("metrics") or entry
+                engagement_by_id[str(pid)] = {
+                    "likes":       metrics.get("likes") or metrics.get("like_count") or 0,
+                    "comments":    metrics.get("comments") or metrics.get("comment_count") or 0,
+                    "shares":      metrics.get("shares") or metrics.get("share_count") or 0,
+                    "impressions": metrics.get("impressions") or metrics.get("reach") or 0,
+                    "saves":       metrics.get("saves") or 0,
+                }
+                if entry.get("posted_at"):
+                    posted_by_id[str(pid)] = entry["posted_at"]
+
+    items: list[dict] = []
+    if approved_dir.exists():
+        for filepath in approved_dir.rglob("*.json"):
+            if filepath.name.startswith("."):
+                continue
+            try:
+                raw_text = filepath.read_text(errors="replace")
+                json_body = raw_text.split("\n---\n", 1)[1].strip() if "\n---\n" in raw_text else raw_text
+                raw = json.loads(json_body)
+            except Exception:
+                continue
+            agent_slug = filepath.parent.name
+            meta = _extract_output_meta(agent_slug, raw)
+            post_id = (raw.get("post_id") or filepath.stem) if isinstance(raw, dict) else filepath.stem
+            stat = filepath.stat()
+            engagement = engagement_by_id.get(str(post_id))
+            posted_at = posted_by_id.get(str(post_id))
+            items.append({
+                "id":             filepath.name,
+                "post_id":        post_id,
+                "platform":       meta.get("platform"),
+                "title":          meta.get("title"),
+                "caption":        meta.get("caption"),
+                "body_text":      meta.get("body_text"),
+                "slide_images":   meta.get("slide_images", []),
+                "hashtags":       meta.get("hashtags", []),
+                "scheduled_for":  meta.get("scheduled_for"),
+                "approved_at":    datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "posted_at":      posted_at,
+                "status":         "published" if posted_at or engagement else "scheduled",
+                "engagement":     engagement,
+                "agent_slug":     agent_slug,
+                "filepath":       str(filepath.relative_to(BASE_DIR)),
+            })
+    # Newest first by approved_at
+    items.sort(key=lambda x: x.get("approved_at") or "", reverse=True)
+    return jsonify({"success": True, "data": items})
 
 
 @app.route("/api/outputs/all", methods=["GET"])
@@ -3486,6 +3868,421 @@ def sync_notion_approvals():
             except Exception as _row_err:
                 errors.append(str(_row_err))
         return jsonify({"success": True, "data": {"synced": synced, "errors": errors}})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── The Brain (Claude chat embedded in GRID CONTROL) ─────────────────────────
+
+# Tool definitions for Claude — read tools auto-execute, write tools require approval.
+BRAIN_TOOLS_DEF = [
+    {
+        "name": "read_file",
+        "description": "Read a text file inside the project (auto-executes, no approval needed). Path must be relative to project root and stay within brands/, agents/, or top-level config files. Returns first 8KB.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string", "description": "Relative file path"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "list_dir",
+        "description": "List files in a project directory (auto-executes, no approval needed).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string", "description": "Relative directory path"}},
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "propose_edit",
+        "description": "Propose a file edit. Returned to user for approval — does NOT execute. User clicks Approve in the UI to apply.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Relative file path"},
+                "old_string": {"type": "string", "description": "Exact text to find"},
+                "new_string": {"type": "string", "description": "Replacement text"},
+                "rationale": {"type": "string", "description": "Why this change"},
+            },
+            "required": ["path", "old_string", "new_string", "rationale"],
+        },
+    },
+    {
+        "name": "propose_bash",
+        "description": "Propose a shell command. Returned to user for approval — does NOT execute. User clicks Approve to run.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "command": {"type": "string", "description": "Shell command"},
+                "rationale": {"type": "string", "description": "Why this command"},
+            },
+            "required": ["command", "rationale"],
+        },
+    },
+]
+
+
+def _brain_safe_path(rel_path: str) -> Path | None:
+    """Resolve a relative path safely under BASE_DIR. Returns None if outside or hidden."""
+    try:
+        p = (BASE_DIR / rel_path).resolve()
+        if BASE_DIR.resolve() not in p.parents and p != BASE_DIR.resolve():
+            return None
+        # Block .git, .env, secrets
+        parts = {part.lower() for part in p.parts}
+        if ".git" in parts or ".env" in [p.name.lower()] or "secrets" in parts:
+            return None
+        return p
+    except Exception:
+        return None
+
+
+def _brain_execute_read_tool(name: str, args: dict) -> dict:
+    """Execute auto-approved read-only tools. Returns dict with 'output' or 'error'."""
+    if name == "read_file":
+        path = args.get("path", "")
+        p = _brain_safe_path(path)
+        if not p or not p.exists() or not p.is_file():
+            return {"error": f"Path not accessible: {path}"}
+        try:
+            return {"output": p.read_text(errors="replace")[:8000]}
+        except Exception as e:
+            return {"error": str(e)}
+    if name == "list_dir":
+        path = args.get("path", "")
+        p = _brain_safe_path(path)
+        if not p or not p.exists() or not p.is_dir():
+            return {"error": f"Directory not accessible: {path}"}
+        try:
+            entries = sorted(
+                f"{x.name}/" if x.is_dir() else x.name
+                for x in p.iterdir()
+                if not x.name.startswith(".")
+            )[:100]
+            return {"output": "\n".join(entries)}
+        except Exception as e:
+            return {"error": str(e)}
+    return {"error": f"Unknown read tool: {name}"}
+
+
+@app.route("/api/brain/execute", methods=["POST"])
+def brain_execute_proposal():
+    """
+    Execute a proposed action AFTER user approval in the UI.
+    Body: { kind: 'edit' | 'bash', payload: {...} }
+    """
+    body = request.get_json(silent=True) or {}
+    kind = body.get("kind")
+    payload = body.get("payload") or {}
+
+    if kind == "edit":
+        path = payload.get("path", "")
+        old = payload.get("old_string", "")
+        new = payload.get("new_string", "")
+        p = _brain_safe_path(path)
+        if not p or not p.exists() or not p.is_file():
+            return jsonify({"success": False, "error": f"Path not accessible: {path}"}), 400
+        try:
+            content = p.read_text()
+            if old not in content:
+                return jsonify({"success": False, "error": "old_string not found in file"}), 400
+            count = content.count(old)
+            if count > 1:
+                return jsonify({"success": False, "error": f"old_string matches {count} times — needs more context"}), 400
+            new_content = content.replace(old, new, 1)
+            p.write_text(new_content)
+            return jsonify({"success": True, "result": f"Edited {path}"})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    if kind == "bash":
+        command = payload.get("command", "")
+        if not command:
+            return jsonify({"success": False, "error": "Empty command"}), 400
+        # Block obviously destructive commands
+        blocked = ["rm -rf /", "sudo ", "curl ", "wget ", " > /etc/", " > ~/.ssh/"]
+        if any(b in command for b in blocked):
+            return jsonify({"success": False, "error": "Command blocked by safety filter"}), 403
+        try:
+            import subprocess as _sp
+            result = _sp.run(
+                command,
+                shell=True,
+                cwd=str(BASE_DIR),
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            return jsonify({
+                "success": True,
+                "result": (result.stdout + result.stderr)[:8000],
+                "return_code": result.returncode,
+            })
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    return jsonify({"success": False, "error": f"Unknown kind: {kind}"}), 400
+
+
+def _build_brain_agent_summary(brand_slug: str, agent_slug: str) -> str:
+    """Agent-scoped context: role, recent outputs, last run.
+
+    Used when The Brain is in per-agent scope (clicking Chat on an agent card).
+    """
+    if not brand_slug or not agent_slug:
+        return ""
+
+    # Find agent role from registry
+    agent_name = ""
+    agent_role = ""
+    for a in AGENTS:  # type: ignore[name-defined]
+        if a.get("name", "").lower().replace(" ", "-").replace("+", "-") == agent_slug:
+            agent_name = a.get("name", agent_slug)
+            agent_role = a.get("role", "")
+            break
+
+    parts: list[str] = [
+        f"AGENT SCOPE: {agent_name or agent_slug}",
+        f"ROLE: {agent_role}" if agent_role else "",
+    ]
+
+    # Last 3 output filenames + first 200 chars of latest output
+    out_dir = BASE_DIR / "brands" / brand_slug / "outputs" / "pending_approval" / agent_slug
+    if out_dir.exists():
+        files = sorted([f for f in out_dir.iterdir() if f.is_file()], key=lambda p: p.stat().st_mtime, reverse=True)
+        if files:
+            recent = files[:3]
+            parts.append("RECENT OUTPUTS (pending):")
+            for f in recent:
+                parts.append(f"  · {f.name}")
+            try:
+                latest_preview = recent[0].read_text(errors="replace")[:600]
+                parts.append(f"\nLATEST OUTPUT PREVIEW ({recent[0].name}):\n{latest_preview}")
+            except Exception:
+                pass
+
+    # Pull persisted learnings for this agent on this brand
+    try:
+        import sys as _sys
+        agents_dir = str(BASE_DIR / "agents")
+        if agents_dir not in _sys.path:
+            _sys.path.insert(0, agents_dir)
+        from _learnings import render_recent_for_prompt  # type: ignore
+        learnings_block = render_recent_for_prompt(brand_slug, n=8, agent_filter=agent_slug)
+        if learnings_block:
+            parts.append(learnings_block)
+    except Exception:
+        pass
+
+    parts.append(
+        "Brain rules in this scope: answer specifically about THIS agent. "
+        "Use propose_bash to run the agent (e.g., python3 agents/<file>.py). "
+        "Use propose_edit to modify its outputs."
+    )
+    return "\n".join([p for p in parts if p])
+
+
+def _build_brain_brand_summary(brand_slug: str) -> str:
+    """Slim brand context for The Brain — uses agents._state compact summary.
+
+    Brain has read_file tool, so full files are accessible on demand.
+    """
+    if not brand_slug:
+        return "(no brand selected)"
+
+    try:
+        # Use the same compact state the agents read — no duplicate logic.
+        import sys
+        agents_dir = str(BASE_DIR / "agents")
+        if agents_dir not in sys.path:
+            sys.path.insert(0, agents_dir)
+        from _state import load_brand_state  # type: ignore
+        state = load_brand_state(brand_slug)
+        # Render as readable JSON-ish block (already only ~4KB).
+        return json.dumps(state, ensure_ascii=False, indent=2)[:6000]
+    except Exception as e:
+        return f"(failed to load state for {brand_slug}: {e})"
+
+
+@app.route("/api/brain/chat", methods=["POST"])
+def brain_chat():
+    """
+    Embedded Claude chat for The Brain right-rail panel.
+
+    Body: { messages: [{role: 'user'|'assistant', content: str}], brand_slug: str }
+    Returns: { response: str }
+
+    Read-only context-aware assistant. Has knowledge of brand profile, voice
+    profile, recent agent outputs, calendar. Does NOT have write tool access
+    in v1 — that would bypass the approval pipeline. To make changes, the
+    user runs an agent from the Agents page.
+    """
+    body = request.get_json(silent=True) or {}
+    messages = body.get("messages") or []
+    brand_slug = (body.get("brand_slug") or "").strip()
+
+    if not isinstance(messages, list) or not messages:
+        return jsonify({"success": False, "error": "messages array required"}), 400
+
+    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"success": False, "error": "ANTHROPIC_API_KEY not set"}), 400
+
+    # Token optimization: load a SLIM brand summary instead of dumping full JSONs.
+    # Brain can `read_file` to get full detail when actually needed.
+    use_opus = bool(body.get("use_opus", False))
+    agent_scope = (body.get("agent_scope") or "").strip() or None
+    context_block = _build_brain_brand_summary(brand_slug)
+    agent_block = _build_brain_agent_summary(brand_slug, agent_scope) if agent_scope else ""
+
+    # Static system instructions — eligible for prompt caching (5-min TTL).
+    system_static = (
+        "You are The Brain — embedded Claude inside GRID CONTROL, a marketing OS.\n"
+        f"Project root: {BASE_DIR}\n\n"
+        "TOOLS:\n"
+        "• read_file(path), list_dir(path) — auto-execute.\n"
+        "• propose_edit(path, old_string, new_string, rationale) — gated, user approves.\n"
+        "• propose_bash(command, rationale) — gated, user approves.\n\n"
+        "RULES:\n"
+        "1. Terse. Founder-grade. No fluff.\n"
+        "2. read_file/list_dir freely — they're free.\n"
+        "3. Any file change or shell command = propose_*. User approves in UI.\n"
+        "4. propose_edit old_string must be unique in the file (executor refuses ambiguous).\n"
+        "5. All paths relative to project root.\n"
+        "6. Default to short answers. Long only when explicitly asked."
+    )
+
+    # Brand context — small dynamic block, also cacheable per brand.
+    system_brand = f"ACTIVE BRAND: {brand_slug or '(none)'}\n\n{context_block}"
+    if agent_block:
+        system_brand += f"\n\n{agent_block}"
+
+    # Trim messages to last 20 to keep context bounded
+    trimmed = messages[-20:]
+    api_messages: list[dict] = []
+    for m in trimmed:
+        role = m.get("role")
+        content = m.get("content")
+        if role not in ("user", "assistant") or not content:
+            continue
+        # Allow content to be a string or a list (for tool_use/tool_result blocks)
+        api_messages.append({"role": role, "content": content})
+
+    proposals: list[dict] = []  # collected propose_edit/propose_bash calls returned to UI
+
+    # Token optimization: default to Sonnet (4-5x cheaper than Opus). User can opt
+    # into Opus by passing use_opus: true (e.g. complex reasoning tasks).
+    model = "claude-opus-4-7" if use_opus else "claude-sonnet-4-6"
+
+    # System as cacheable blocks. Static instructions cache for 5 min across all
+    # users; brand block caches per brand. After cache hit, only delta is billed.
+    system_blocks = [
+        {"type": "text", "text": system_static, "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": system_brand, "cache_control": {"type": "ephemeral"}},
+    ]
+
+    try:
+        import anthropic as _anthropic
+        client = _anthropic.Anthropic(api_key=api_key)
+
+        # Tool-use loop. Cap at 6 turns to prevent runaway.
+        for _ in range(6):
+            resp = client.messages.create(
+                model=model,
+                max_tokens=2000,
+                system=system_blocks,
+                tools=BRAIN_TOOLS_DEF,
+                messages=api_messages,
+            )
+
+            stop_reason = resp.stop_reason
+            assistant_blocks = []
+            tool_uses = []
+            text_parts: list[str] = []
+
+            for b in resp.content:
+                btype = getattr(b, "type", None)
+                if btype == "text":
+                    text_parts.append(b.text)
+                    assistant_blocks.append({"type": "text", "text": b.text})
+                elif btype == "tool_use":
+                    tu = {"type": "tool_use", "id": b.id, "name": b.name, "input": b.input}
+                    assistant_blocks.append(tu)
+                    tool_uses.append((b.id, b.name, b.input))
+
+            # Append assistant turn
+            api_messages.append({"role": "assistant", "content": assistant_blocks})
+
+            if stop_reason == "tool_use" and tool_uses:
+                tool_results = []
+                for tu_id, tu_name, tu_input in tool_uses:
+                    if tu_name in ("read_file", "list_dir"):
+                        result = _brain_execute_read_tool(tu_name, tu_input or {})
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tu_id,
+                            "content": result.get("output") or f"Error: {result.get('error')}",
+                            "is_error": "error" in result,
+                        })
+                    elif tu_name == "propose_edit":
+                        proposals.append({
+                            "kind": "edit",
+                            "tool_use_id": tu_id,
+                            "payload": tu_input,
+                        })
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tu_id,
+                            "content": "Proposal queued. Awaiting user approval in the UI.",
+                        })
+                    elif tu_name == "propose_bash":
+                        proposals.append({
+                            "kind": "bash",
+                            "tool_use_id": tu_id,
+                            "payload": tu_input,
+                        })
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tu_id,
+                            "content": "Proposal queued. Awaiting user approval in the UI.",
+                        })
+                    else:
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tu_id,
+                            "content": f"Unknown tool: {tu_name}",
+                            "is_error": True,
+                        })
+                api_messages.append({"role": "user", "content": tool_results})
+                # Loop continues — Claude will respond to tool results
+                continue
+
+            # Done — Claude returned end_turn or max_tokens
+            text = "\n".join(text_parts).strip() or "(no response)"
+            usage = getattr(resp, "usage", None)
+            usage_dict: dict = {}
+            if usage:
+                usage_dict = {
+                    "input_tokens": getattr(usage, "input_tokens", 0),
+                    "output_tokens": getattr(usage, "output_tokens", 0),
+                    "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+                    "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+                }
+            return jsonify({
+                "success": True,
+                "response": text,
+                "proposals": proposals,
+                "model": model,
+                "usage": usage_dict,
+            })
+
+        # Loop cap hit
+        return jsonify({
+            "success": True,
+            "response": "(tool-use loop cap reached)",
+            "proposals": proposals,
+        })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

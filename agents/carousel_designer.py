@@ -1,7 +1,7 @@
 """
 Carousel Designer — OffGrid Marketing OS
 Agent ID: 18 | Class-2 (generation)
-Model: claude-sonnet-4-6
+Model: claude-opus-4-6
 Rule 1: Zero assumptions. Reads brand_profile + voice_profile + content_calendar.
 Rule 9: AutoResearch Loop — slide variants tested internally before render.
 Rule 10: Provenance tracking — every slide cites source from brand inputs.
@@ -53,7 +53,7 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-opus-4-6"
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -180,9 +180,17 @@ class CarouselDesigner:
                             post_id: str | None = None) -> dict:
         self.log(f"Generating {slide_count}-slide {platform} spec: {topic}")
 
+        # Token optimization: extract only voice-DNA fields (not full file).
         voice_block = ""
         if self.voice_profile:
-            voice_block = f"\n\nBRAND VOICE DNA (match this in every line of slide copy):\n{json.dumps(self.voice_profile, indent=2)[:3500]}\n"
+            vp_core = {
+                "voice_dna_summary": self.voice_profile.get("voice_dna_summary_for_script_writer"),
+                "scripts_must": self.voice_profile.get("scripts_must"),
+                "scripts_must_not": self.voice_profile.get("scripts_must_not"),
+                "vocabulary_signature": (self.voice_profile.get("vocabulary") or {}).get("signature_phrases"),
+                "cta_style": self.voice_profile.get("cta_style"),
+            }
+            voice_block = f"\n\nBRAND VOICE DNA (match this in every line of slide copy):\n{json.dumps(vp_core, indent=2)}\n"
 
         brand_context = {
             "brand_name": self.brand_profile.get("brand_name"),

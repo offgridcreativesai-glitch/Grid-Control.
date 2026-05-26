@@ -193,12 +193,31 @@ def rule_what_to_never_say_violation(brand: dict) -> list:
         "Script Writer":   brand.get("scripts", []),
     }
 
+    # Citation-context regex: phrases inside meta-rule lists like "do not use: leverage, ..." or
+    # "never say: ..." or "forbidden: ..." or "what_to_never_say: [...]" should NOT count as violations.
+    # The output is CITING the rule, not violating it. Strip those segments before searching.
+    CITATION_PREFIXES = (
+        r"do\s*not\s*(?:use|say|write)",
+        r"never\s*(?:use|say|write)",
+        r"avoid",
+        r"forbidden",
+        r"banned",
+        r"what[_\s]to[_\s]never[_\s]say",
+        r"never[_\s]use",
+    )
+    citation_re = re.compile(
+        r"(?:" + "|".join(CITATION_PREFIXES) + r")\s*[:\-]?\s*[^.\n]{0,400}",
+        re.IGNORECASE,
+    )
+
     for guideline in banned:
         forbidden_phrases = _extract_quoted_or_distinctive(guideline)
         if not forbidden_phrases:
             continue
         for agent_name, output in targets.items():
-            output_text = _flatten_text(output).lower()
+            full_text = _flatten_text(output).lower()
+            # Strip citation segments before checking violations
+            output_text = citation_re.sub(" ", full_text)
             hit_phrases = [p for p in forbidden_phrases if p in output_text]
             if hit_phrases:
                 findings.append({

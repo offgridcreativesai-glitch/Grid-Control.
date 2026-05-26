@@ -1,4 +1,7 @@
-claude-agent-sdk
+flask
+flask-cors
+gunicorn
+supabase
 anthropic
 apify-client
 python-dotenv
@@ -12,5 +15,4 @@ google-api-python-client
 google-auth
 google-auth-oauthlib
 fal-client
-moviepy
-ffmpeg-python
+playwright

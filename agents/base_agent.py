@@ -1,13 +1,16 @@
 import os
 import sys
 import json
+import time
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Add project root so supabase/db.py is importable from any agent
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _PROJECT_ROOT)
 
 
 class BaseAgent:
@@ -15,6 +18,8 @@ class BaseAgent:
         self.agent_name = agent_name
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.output_dir = "outputs/pending_approval"
+        self._session_context: dict | None = None
+        self._session_start_time: float = time.time()
 
         # Supabase available flag — agents use memory only when DB is live
         try:
@@ -137,6 +142,60 @@ class BaseAgent:
             self.log(f"[cost] recorded — API=${cost:.4f} fal={fal_generations} apify={apify_runs}")
         except Exception as e:
             self.log(f"[cost] record failed: {e}")
+
+    # ── memory persistence hooks ─────────────────────────────────────────────
+    # Hook 0a from CLIENT_READY_BUILD_PLAN.md
+    # SessionStart: load _state.json + recent learnings (~3KB vs 50-100KB)
+    # PreCompact: save state before context compression
+    # SessionEnd: persist learnings + update _state.json
+
+    def session_start(self, brand_slug: str) -> dict:
+        """Load compact brand context + recent learnings. Call at agent boot.
+
+        Returns a dict with 'state' (compact brand summary) and 'learnings'
+        (formatted text block). Agents inject these into their system prompt
+        instead of loading 7+ full JSON files.
+        """
+        from agents._state import load_brand_state
+        from agents._learnings import render_recent_for_prompt
+
+        state = load_brand_state(brand_slug)
+        learnings = render_recent_for_prompt(
+            brand_slug, n=8, agent_filter=self._agent_slug()
+        )
+        self._session_context = {
+            "state": state,
+            "learnings": learnings,
+            "brand_slug": brand_slug,
+        }
+        self._session_start_time = time.time()
+        self.log(f"[session] loaded compact state + {len(learnings)} chars of learnings")
+        return self._session_context
+
+    def session_save(self, brand_slug: str) -> None:
+        """Save current brand state to disk. Call before context compression
+        or any long pause to avoid re-deriving state."""
+        from agents._state import write_brand_state
+        write_brand_state(brand_slug)
+        self.log("[session] state snapshot saved")
+
+    def session_end(self, brand_slug: str, learnings: list[str] | None = None) -> None:
+        """Persist session learnings + refresh _state.json. Call at agent completion.
+
+        learnings: list of plain-text insight strings to persist.
+        """
+        from agents._state import write_brand_state
+        from agents._learnings import append as append_learning
+
+        if learnings:
+            slug = self._agent_slug()
+            for text in learnings:
+                append_learning(brand_slug, slug, text, kind="insight")
+            self.log(f"[session] persisted {len(learnings)} learnings")
+
+        write_brand_state(brand_slug)
+        elapsed = time.time() - self._session_start_time
+        self.log(f"[session] ended ({elapsed:.0f}s)")
 
     # ── file I/O ──────────────────────────────────────────────────────────────
 

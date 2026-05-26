@@ -1,7 +1,7 @@
 """
 Script Writer — OffGrid Marketing OS
 Agent ID: 3 | Sequence position: 4 (runs after content-planner is approved)
-Model: claude-sonnet-4-6
+Model: claude-opus-4-6
 Rule 1: Zero assumptions. Reads real calendar + trend data only.
 Rule 9: AutoResearch Loop — Pain-first / Result-first / Curiosity variants per piece.
 Reads:  brands/{slug}/content_calendar.json + trends_live.json + brand_profile.json
@@ -34,7 +34,7 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-opus-4-6"
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 
@@ -62,12 +62,163 @@ def _escape_literal_newlines_in_strings(json_str: str) -> str:
     return ''.join(result)
 
 
+def _extract_first_json_object(raw: str) -> str:
+    """Find the first balanced { ... } block. Strips trailing prose Claude appended."""
+    start = raw.find("{")
+    if start < 0:
+        return raw
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(raw)):
+        c = raw[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\" and in_string:
+            escape = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return raw[start:i + 1]
+    return raw[start:]
+
+
 def _safe_json_loads(raw: str):
-    """json.loads with literal-newline repair fallback."""
+    """json.loads with literal-newline repair + JSON-extract fallbacks."""
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
+        pass
+    try:
         return json.loads(_escape_literal_newlines_in_strings(raw))
+    except json.JSONDecodeError:
+        pass
+    extracted = _extract_first_json_object(raw)
+    try:
+        return json.loads(extracted)
+    except json.JSONDecodeError:
+        return json.loads(_escape_literal_newlines_in_strings(extracted))
+
+
+def _build_citable_reference(source_index: dict, post: dict, max_keys: int = 80) -> str:
+    """
+    Build a CITABLE KEYS reference block from the source index so Claude can see
+    exactly which source_file#source_path keys exist and what values they hold.
+
+    Prioritisation:
+      1. Keys from brand_profile.json (always relevant — audience, tone, rules)
+      2. Keys from content_calendar.json matching this post's week/topic
+      3. Keys from trends_live.json (trend signals, competitor intel)
+
+    Each entry is: source_file | source_path | value (truncated to 120 chars)
+    """
+    if not source_index:
+        return ""
+
+    # Categorise keys by file
+    brand_keys = {}
+    calendar_keys = {}
+    trend_keys = {}
+    for k, v in source_index.items():
+        if k.startswith("brand_profile.json#"):
+            brand_keys[k] = v
+        elif k.startswith("content_calendar.json#"):
+            calendar_keys[k] = v
+        elif k.startswith("trends_live.json#"):
+            trend_keys[k] = v
+
+    # Budget per file — ensure all 3 sources are represented
+    brand_budget = max_keys // 3        # ~26
+    calendar_budget = max_keys // 3     # ~26
+    trend_budget = max_keys - brand_budget - calendar_budget  # remainder ~28
+
+    # --- Brand profile: auto-detect top-level keys (brand-agnostic) ---
+    # Instead of hardcoding ASKGauravAI field names, extract ALL unique
+    # top-level stems from the actual brand_profile keys in the source index.
+    # This works for ANY brand's schema.
+    auto_stems: set[str] = set()
+    for k in brand_keys:
+        path = k.split("#", 1)[1] if "#" in k else k
+        top = path.split(".")[0].split("[")[0]  # "audience[0].pain" → "audience"
+        auto_stems.add(top)
+
+    # High-value stems to prioritise (common across brands)
+    high_value = {
+        "audience", "target_audience", "not_for_audience",
+        "unique_tension", "brand_brief", "tone", "tone_of_voice",
+        "product", "product_name", "product_description",
+        "founder_identity", "phase", "what_to_never_say",
+        "lived_history_sources", "lived_history_NOT_allowed",
+        "back_end_weapons", "content_model", "platforms",
+    }
+    # Sort: high-value first, then everything else alphabetically
+    brand_priority_stems = sorted(auto_stems, key=lambda s: (0 if s in high_value else 1, s))
+
+    brand_selected: list[tuple[str, str]] = []
+    for k, v in brand_keys.items():
+        path = k.split("#", 1)[1] if "#" in k else k
+        if any(path.startswith(stem) for stem in brand_priority_stems):
+            brand_selected.append((k, v))
+    brand_selected = brand_selected[:brand_budget]
+
+    # --- Calendar: week-level meta + all post entries for this week ---
+    cal_selected: list[tuple[str, str]] = []
+    for k, v in calendar_keys.items():
+        cal_selected.append((k, v))
+    cal_selected = cal_selected[:calendar_budget]
+
+    # --- Trends: top hooks, competitor intel, topic clusters first ---
+    trend_priority_stems = [
+        "instagram_trends.top_hooks", "instagram_trends.competitor_intel",
+        "instagram_trends.content_angles", "topic_clusters",
+        "recommended_topic", "google_trends", "instagram_trends.engagement_patterns",
+    ]
+    trend_priority: list[tuple[str, str]] = []
+    trend_rest: list[tuple[str, str]] = []
+    for k, v in trend_keys.items():
+        path = k.split("#", 1)[1] if "#" in k else k
+        if any(path.startswith(stem) for stem in trend_priority_stems):
+            trend_priority.append((k, v))
+        else:
+            trend_rest.append((k, v))
+    trend_selected = (trend_priority + trend_rest)[:trend_budget]
+
+    # Combine all — deduplicate preserving order
+    combined = brand_selected + cal_selected + trend_selected
+    seen = set()
+    selected: list[tuple[str, str]] = []
+    for k, v in combined:
+        if k not in seen:
+            seen.add(k)
+            selected.append((k, v))
+
+    if not selected:
+        return ""
+
+    lines = [
+        "CITABLE SOURCE KEYS — use ONLY these exact source_file and source_path values in data_provenance.",
+        "Copy source_value verbatim (≥30 chars) from the value column.",
+        "Format: source_file | source_path | value",
+        "---",
+    ]
+    for full_key, val in selected:
+        parts = full_key.split("#", 1)
+        source_file = parts[0]
+        source_path = parts[1] if len(parts) > 1 else ""
+        # Truncate long values but keep enough for verbatim citation
+        display_val = val[:200] if len(val) > 200 else val
+        lines.append(f"{source_file} | {source_path} | {display_val}")
+
+    return "\n".join(lines)
 
 
 class ScriptWriter:
@@ -81,7 +232,7 @@ class ScriptWriter:
 
         if not ANTHROPIC_API_KEY:
             raise ValueError("ANTHROPIC_API_KEY not found in .env")
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, timeout=180.0, max_retries=1)
 
         self.brands_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -98,7 +249,7 @@ class ScriptWriter:
 
     def log(self, message: str):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[Script Writer | {timestamp}] {message}")
+        print(f"[Script Writer | {timestamp}] {message}", flush=True)
 
     def _load_voice_profile(self):
         """Load voice_profile.json for this brand if it exists. Sets self.voice_profile."""
@@ -167,10 +318,24 @@ class ScriptWriter:
         brand_ctx = {
             "brand_name": self.brand_profile.get("brand_name"),
             "product": self.brand_profile.get("product"),
-            "product_description": self.brand_profile.get("product_description"),
+            "founder_identity": self.brand_profile.get("founder_identity"),
+            "unique_tension": self.brand_profile.get("unique_tension"),
+            "back_end_weapons": self.brand_profile.get("back_end_weapons"),
             "target_audience": self.brand_profile.get("target_audience"),
-            "tone": self.brand_profile.get("tone"),
-            "platforms": self.brand_profile.get("platforms")
+            "audience_primary": self.brand_profile.get("audience_primary"),
+            "not_for_audience": self.brand_profile.get("not_for_audience"),
+            "tone": self.brand_profile.get("tone_of_voice") or self.brand_profile.get("tone"),
+            "tone_specifics": self.brand_profile.get("tone_specifics"),
+            "platforms": self.brand_profile.get("platforms"),
+            "primary_platform_phase_1": self.brand_profile.get("primary_platform_phase_1"),
+            "what_to_never_say": self.brand_profile.get("what_to_never_say"),
+            "lived_history_sources": self.brand_profile.get("lived_history_sources"),
+            "lived_history_NOT_allowed": self.brand_profile.get("lived_history_NOT_allowed"),
+            "grid_control_naming_rule": self.brand_profile.get("grid_control_naming_rule"),
+            "hire_signal_rule": self.brand_profile.get("hire_signal_rule"),
+            "freebie_strategy": self.brand_profile.get("freebie_strategy"),
+            "week_1_cta_rule": self.brand_profile.get("week_1_cta_rule"),
+            "dm_automation_required": self.brand_profile.get("dm_automation_required"),
         }
 
         # Pull relevant trend signals for this post
@@ -181,12 +346,23 @@ class ScriptWriter:
             if top_hooks:
                 trend_signals = f"Top performing hooks this week: {json.dumps(top_hooks[:3])}"
 
-        # Build voice DNA injection block if profile exists
+        # Token optimization: extract only the voice fields the writer actually uses.
+        # Full voice_profile.json is referenced by name if Claude needs deeper detail.
         voice_dna_block = ""
         if self.voice_profile:
+            vp_core = {
+                "voice_dna_summary": self.voice_profile.get("voice_dna_summary_for_script_writer"),
+                "blend_directive": self.voice_profile.get("voice_blend_directive"),
+                "scripts_must": self.voice_profile.get("scripts_must"),
+                "scripts_must_not": self.voice_profile.get("scripts_must_not"),
+                "vocabulary": self.voice_profile.get("vocabulary"),
+                "platform_voice_delta": self.voice_profile.get("platform_voice_delta"),
+                "cta_style": self.voice_profile.get("cta_style"),
+                "blend_rules_for_scripts": self.voice_profile.get("blend_rules_for_scripts"),
+            }
             voice_dna_block = f"""
 BRAND VOICE DNA (read and match exactly):
-{json.dumps(self.voice_profile, indent=2)}
+{json.dumps(vp_core, indent=2)}
 
 Match sentence_length, energy, and hinglish_pattern exactly.
 Never use any word in vocabulary.never_use.
@@ -215,6 +391,9 @@ Apply +15% confidence boost to any hook that matches a WINNING pattern.
 Apply -20% confidence penalty to any hook that matches a DEAD pattern.
 """
 
+
+        # Rule 10: Build citable reference so Claude sees exact valid paths + values
+        citable_reference_block = _build_citable_reference(source_index, post) if source_index else ""
 
         prompt = f"""You are the Script Writer for OffGrid Marketing OS.
 Write a complete script for one content piece using the BEAT structure.
@@ -287,10 +466,23 @@ IMPORTANT RULES:
 - beat_1 sets up the tension or context
 - beat_2 delivers the core idea or proof point
 - beat_3 is the payoff, twist, or emotional close
-- cta must always be a comment trigger (e.g. "Comment 'AD' and I'll send you the breakdown")
+- CTA rules (READ THE BRAND CONTEXT — these vary by week and freebie-build status):
+    * Week 1 (week_number == 1): NO comment-gated CTAs ("comment WORD"), NO promised deliverables. Use OPEN-LOOP DIAGNOSTIC engagement only — examples: "drop your AI tool stack — I'll tell you where it's breaking", "what's your biggest AI question you can't get a straight answer to?". Listener gives data, no deliverable promised. See brand_profile.week_1_cta_rule.
+    * Week 2-4: NO freebie CTAs unless brand_profile.freebie_strategy says the freebie is built AND brand_profile.dm_automation_required.status == "BUILT". Use diagnostic open-loop CTAs same as Week 1 by default.
+    * Week 5+: Freebie CTAs allowed IF the freebie + DM automation are confirmed built. Format: "comment WORD and I'll send you [specific deliverable name]" — only if brand_profile.freebie_strategy.first_freebie_built is true.
+    * NEVER use hire-me CTAs ("DM to work with me", "I'm available", "taking on clients") — banned forever per brand_profile.hire_signal_rule.
 - script object must have ONLY keys: beat_1, beat_2, beat_3, cta, platform, format, topic, caption, hashtags, production_notes
 - If this piece requires a human face on camera, flag it clearly
-- Caption must end with a specific CTA (not generic "follow for more")
+- Caption must end with a specific CTA aligned to the week-rule above (NOT generic "follow for more").
+
+🚨 HARD CONTENT CONSTRAINTS (read brand_profile, violations = REJECTED):
+- NEVER name "Third Gen Tribe", "TGT", "my T-shirt brand". The lived-history reference is "the brands I ran" (UNNAMED).
+- NEVER frame TGT as AI-built — it was agency-run, NOT Gaurav's AI build experience.
+- NEVER name "Grid Control" or specific multi-agent system in Week 1-4. Reference as "a multi-agent system I'm building" or "the back-end I'm building". Grid Control becomes nameable Week 5+ ONLY (see brand_profile.grid_control_naming_rule).
+- NEVER use AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer.
+- NEVER promise a deliverable (PDF, framework, template) that doesn't exist yet — see brand_profile.freebie_strategy.
+- NEVER use hire-me language. The listener self-identifies through content depth.
+- USE only the lived-history sources listed in brand_profile.lived_history_sources.
 
 ---
 
@@ -308,14 +500,17 @@ beat_2 (core idea/proof — must cite the source data point that justifies the p
 Each provenance entry needs:
   - "claim": the hook text OR the script beat text it grounds
   - "source_file": one of content_calendar.json | trends_live.json | brand_profile.json
-  - "source_path": dot.notation path
-  - "source_value": verbatim ≥30-char snippet from the source
+  - "source_path": MUST be an EXACT path from the CITABLE SOURCE KEYS table below
+  - "source_value": copy VERBATIM ≥30-char snippet from the value column in the table below
 
-If you cannot cite a source for a hook or proof beat, you must REMOVE it. Do not invent
-audience pain points or behaviors not in the brand_profile or trends data.
-Validation will reject claims with <30% token-overlap with the cited source.
+⚠️ CRITICAL: source_path must EXACTLY match a path from the table below.
+Do NOT invent paths. Do NOT guess. Pick from the table. If no path fits your claim, REMOVE the claim.
+Validation will reject any source_path that doesn't exist in the index and any source_value
+with <30% token-overlap with the real indexed value.
 
 Aim for 6+ provenance entries (5 hooks + at least 1 for beat_2).
+
+{citable_reference_block}
 
 ---
 
@@ -363,6 +558,28 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
     "caption": "",
     "hashtags": [],
     "production_notes": ""
+  }},
+  "production_instructions_for_gaurav": {{
+    "who_records": "GAURAV — record this script yourself. Do NOT use ElevenLabs or any synthetic voice. Brand voice = your real recorded voice.",
+    "gear": {{
+      "primary_camera": "iPhone 13 Pro Max (4K HDR talking-head) — set to 4K 30fps, exposure locked, focus on eyes",
+      "broll_camera": "GoPro Hero 7 Black (only if the script needs B-roll: hands, screen, behind-the-scenes)",
+      "audio": "Wireless mic on shirt collar, ~6 inches from mouth. Test playback before recording the take.",
+      "lighting": "Face the largest window. NO ring light. NO ceiling light directly overhead. Soft natural light only."
+    }},
+    "framing": "specify: talking-head close-up | mid-shot at desk | screen-record + voiceover | walk-and-talk | static + voiceover",
+    "beat_direction": [
+      "Beat 1 — setup: deliver as a calm reflection. Slow start. No raised energy. Pause for 1 sec after the last word.",
+      "Beat 2 — core idea/proof: lean slightly forward. This is the diagnostic moment. Specific numbers/specifics here.",
+      "Beat 3 — payoff/twist: voice drops half a tone. The principle lands quietly, not loud. This is the line they remember."
+    ],
+    "duration_target": "specify: short ≤30s | medium 30-60s | long-form 10-15 min (cut into 4 Reels + 2 YouTube Shorts later)",
+    "retake_rules": [
+      "If you stumble on a beat — restart that beat from the top, not the whole script. Editor can stitch.",
+      "Record 2 alternate hook takes (different inflection) — Reel cut decisions are made later.",
+      "Sound test BEFORE the take. One bad audio file = whole reshoot."
+    ],
+    "post_production_handoff": "After recording, drop the raw .mov + audio files in brands/askgauravai/raw_recordings/{{week_N}}/{{post_id}}/ and ping the Brand Manager. Creative Director runs ONLY after raw recordings are uploaded — not before."
   }}
 }}"""
 
@@ -375,15 +592,27 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
 
         while attempt < max_attempts:
             attempt += 1
-            response = self.client.messages.create(
-                model=MODEL,
-                max_tokens=12000,  # bumped for provenance entries
-                messages=messages,
-            )
-            self._total_input_tokens += response.usage.input_tokens
-            self._total_output_tokens += response.usage.output_tokens
+            # NON-streaming — gives real per-call timeout (streaming SDK timeout only covers initial connect)
+            self.log(f"  Calling Claude {MODEL} (attempt {attempt}/{max_attempts}) — non-streaming, 240s timeout...")
+            try:
+                final_message = self.client.messages.create(
+                    model=MODEL,
+                    max_tokens=10000,
+                    messages=messages,
+                    timeout=240.0,
+                )
+            except Exception as e:
+                self.log(f"  Claude call failed: {type(e).__name__}: {str(e)[:200]}")
+                if attempt < max_attempts:
+                    continue
+                raise
 
-            raw = response.content[0].text.strip()
+            raw_text = "".join(b.text for b in final_message.content if hasattr(b, "text"))
+            self._total_input_tokens += final_message.usage.input_tokens
+            self._total_output_tokens += final_message.usage.output_tokens
+            self.log(f"  Got response: {len(raw_text)} chars, stop_reason={final_message.stop_reason}")
+
+            raw = raw_text.strip()
             if "```" in raw:
                 for part in raw.split("```"):
                     part = part.strip()
@@ -414,10 +643,29 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
 
             violation_msg = build_violation_message(missing)
             self.log(f"Re-prompting Claude with {len(missing)} citation violations...")
+
+            # Build a mini citable-keys rescue block: show 15 keys most likely to help
+            # fix the failing citations (from each source file)
+            rescue_keys = ""
+            if source_index:
+                rescue_lines = ["Here are valid source paths you can use (copy source_value VERBATIM):"]
+                # Pick ~5 keys per source file for variety
+                for prefix in ["brand_profile.json#", "trends_live.json#", "content_calendar.json#"]:
+                    file_keys = [(k, v) for k, v in source_index.items() if k.startswith(prefix)]
+                    for k, v in file_keys[:5]:
+                        parts = k.split("#", 1)
+                        rescue_lines.append(f"  {parts[0]} | {parts[1]} | {v[:150]}")
+                rescue_keys = "\n".join(rescue_lines)
+
             messages.append({"role": "assistant", "content": json.dumps(result)})
             messages.append({"role": "user", "content": (
                 f"Your previous output failed Rule 10 source-citation validation.\n\n"
                 f"{violation_msg}\n\n"
+                f"CRITICAL RULES FOR FIXING:\n"
+                f"1. source_path must EXACTLY match a path from the CITABLE SOURCE KEYS table.\n"
+                f"2. source_value must be copied VERBATIM (≥30 chars) from the table — do NOT paraphrase.\n"
+                f"3. If you can't find an exact match, REMOVE the claim from data_provenance entirely.\n\n"
+                f"{rescue_keys}\n\n"
                 f"Re-emit the COMPLETE corrected JSON with EITHER fixed citations OR "
                 f"the offending hooks/claims removed. Do not add new claims you can't cite. "
                 f"Return strict JSON only."

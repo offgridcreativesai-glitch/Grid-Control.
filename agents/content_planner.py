@@ -1,7 +1,7 @@
 """
 Content Planner — OffGrid Marketing OS
 Agent ID: 2 | Sequence position: 3 (runs after strategy-agent is approved)
-Model: claude-sonnet-4-6
+Model: claude-opus-4-6
 Rule 1: Zero assumptions. Reads real strategy + trend data only.
 Rule 9: AutoResearch Loop — Education / Social Proof / Curiosity variants.
 Reads:  brands/{slug}/strategy_90day.json + trends_live.json + brand_profile.json
@@ -32,7 +32,7 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-opus-4-6"
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 
@@ -59,11 +59,50 @@ def _escape_literal_newlines_in_strings(json_str: str) -> str:
     return ''.join(result)
 
 
+def _extract_first_json_object(raw: str) -> str:
+    """Find the first balanced { ... } block. Strips any trailing prose Claude appended."""
+    start = raw.find("{")
+    if start < 0:
+        return raw
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(raw)):
+        c = raw[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\" and in_string:
+            escape = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return raw[start:i + 1]
+    return raw[start:]
+
+
 def _safe_json_loads(raw: str):
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
+        pass
+    try:
         return json.loads(_escape_literal_newlines_in_strings(raw))
+    except json.JSONDecodeError:
+        pass
+    extracted = _extract_first_json_object(raw)
+    try:
+        return json.loads(extracted)
+    except json.JSONDecodeError:
+        return json.loads(_escape_literal_newlines_in_strings(extracted))
 
 
 class ContentPlanner:
@@ -125,12 +164,29 @@ class ContentPlanner:
         brand_ctx = json.dumps({
             "brand_name": self.brand_profile.get("brand_name"),
             "product": self.brand_profile.get("product"),
-            "product_description": self.brand_profile.get("product_description"),
+            "founder_identity": self.brand_profile.get("founder_identity"),
+            "unique_tension": self.brand_profile.get("unique_tension"),
+            "back_end_weapons": self.brand_profile.get("back_end_weapons"),
             "target_audience": self.brand_profile.get("target_audience"),
+            "audience_primary": self.brand_profile.get("audience_primary"),
+            "not_for_audience": self.brand_profile.get("not_for_audience"),
             "platforms": self.brand_profile.get("platforms"),
-            "tone": self.brand_profile.get("tone"),
+            "primary_platform_phase_1": self.brand_profile.get("primary_platform_phase_1"),
+            "youtube_format": self.brand_profile.get("youtube_format"),
+            "weekly_volume_target": self.brand_profile.get("weekly_volume_target"),
+            "tone": self.brand_profile.get("tone_of_voice") or self.brand_profile.get("tone"),
             "bottlenecks": self.brand_profile.get("bottlenecks"),
             "phase": self.brand_profile.get("phase"),
+            "what_to_never_say": self.brand_profile.get("what_to_never_say"),
+            "lived_history_sources": self.brand_profile.get("lived_history_sources"),
+            "lived_history_NOT_allowed": self.brand_profile.get("lived_history_NOT_allowed"),
+            "grid_control_naming_rule": self.brand_profile.get("grid_control_naming_rule"),
+            "hire_signal_rule": self.brand_profile.get("hire_signal_rule"),
+            "freebie_strategy": self.brand_profile.get("freebie_strategy"),
+            "week_1_cta_rule": self.brand_profile.get("week_1_cta_rule"),
+            "north_star_metric": self.brand_profile.get("north_star_metric"),
+            "north_star_metric_definition": self.brand_profile.get("north_star_metric_definition"),
+            "deprecated_metrics": self.brand_profile.get("deprecated_metrics"),
         }, indent=2)
 
         strategy_summary = json.dumps(strategy, indent=2)
@@ -187,10 +243,37 @@ Majority of posts use pattern interrupts, contrarian takes, bold claims.
 High reach potential. Drives saves and shares. Works even with zero social proof.
 
 SELECTION METRIC:
-better = which calendar maximises saves + direct DM inquiries about the product
-in the first 30 days, for a brand with no existing audience and no social proof
+better = which calendar maximises QUALIFIED FOUNDER DMs PER WEEK (the brand's north_star_metric)
+in the first 30 days, for a brand with no existing audience and no social proof.
+DO NOT optimize for follower-count benchmarks (deprecated metric per brand_profile.deprecated_metrics).
 
 Select the winner. One-line reason.
+
+---
+
+🚨 HARD CONTENT CALENDAR CONSTRAINTS (read brand_profile, violations = REJECTED):
+
+PLATFORM + VOLUME:
+- PRIMARY platforms: Instagram + YouTube. NOT LinkedIn-primary. (See brand_profile.primary_platform_phase_1.)
+- Volume per week: 1 long-form YouTube (10-15 min) → cut into 4 IG Reels + 2 YouTube Shorts. PLUS 3 IG carousels (independent). TOTAL ~9 published units/week. (See brand_profile.weekly_volume_target.)
+- Do NOT plan more than ~9-12 units/week in Week 1. Less is better. Quality > volume.
+- LinkedIn + Twitter = repurpose-only from primary content. Don't plan original LinkedIn-first content.
+
+CTA RULES BY WEEK:
+- Week 1: NO comment-gated CTAs ("comment WORD"), NO promised deliverables. Only OPEN-LOOP DIAGNOSTIC engagement: "drop your AI tool stack", "what's your AI question". (See brand_profile.week_1_cta_rule.)
+- Week 2-4: Same as Week 1 by default. Freebie CTAs allowed ONLY IF brand_profile.freebie_strategy.first_freebie_built becomes true AND dm_automation_required.status becomes BUILT.
+- Week 5+: Freebie CTAs allowed. Grid Control nameable as proof point.
+- NEVER plan hire-me CTAs at any week. Banned forever per brand_profile.hire_signal_rule.
+
+LIVED-HISTORY + NAMING RULES:
+- NEVER name "Third Gen Tribe", "TGT", "T-shirt brand". Reference is "the brands I ran" (UNNAMED).
+- NEVER frame TGT as AI-built — it was agency-run.
+- Week 1-4: NEVER name "Grid Control". Reference as "a multi-agent system I'm building" / "the back-end I'm building".
+- Week 5+: Grid Control nameable. Approved framing: "I'm building this brand using Grid Control — a multi-agent system I built with Claude as a non-coder."
+- Use ONLY the lived-history sources in brand_profile.lived_history_sources.
+
+NEVER-USE WORDS (from brand_profile.what_to_never_say):
+- AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer, paradigm shift, master AI in 7 days
 
 ---
 
@@ -291,19 +374,26 @@ Each post must have: week, day, platform, format, topic, hook, caption_direction
 
         while attempt < max_attempts:
             attempt += 1
-            self.log(f"Calling Claude {MODEL} (attempt {attempt}/{max_attempts})...")
-            response = self.client.messages.create(
+            self.log(f"Calling Claude {MODEL} (attempt {attempt}/{max_attempts}) — streaming mode...")
+            # SDK 0.96+ requires streaming for large max_tokens. Bumped 21000 -> 24000 now that
+            # streaming is enabled — gives provenance + retry headroom for full 30-day calendars.
+            raw_text = ""
+            with self.client.messages.stream(
                 model=MODEL,
-                max_tokens=21000,  # max non-streaming SDK allows; tight prompt keeps under
+                max_tokens=24000,
                 messages=messages,
-            )
-            self._total_input_tokens += response.usage.input_tokens
-            self._total_output_tokens += response.usage.output_tokens
+            ) as stream:
+                for text_chunk in stream.text_stream:
+                    raw_text += text_chunk
+                final_message = stream.get_final_message()
 
-            if response.stop_reason == "max_tokens":
-                self.log(f"WARNING: Claude hit max_tokens cap")
+            self._total_input_tokens += final_message.usage.input_tokens
+            self._total_output_tokens += final_message.usage.output_tokens
 
-            raw = response.content[0].text.strip()
+            if final_message.stop_reason == "max_tokens":
+                self.log(f"WARNING: Claude hit max_tokens cap ({final_message.usage.output_tokens} out)")
+
+            raw = raw_text.strip()
             if "```" in raw:
                 for part in raw.split("```"):
                     part = part.strip()

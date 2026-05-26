@@ -60,11 +60,53 @@ def _escape_literal_newlines_in_strings(json_str: str) -> str:
     return ''.join(result)
 
 
+def _extract_first_json_object(raw: str) -> str:
+    """Find the first balanced { ... } block. Strips any trailing prose Claude appended."""
+    start = raw.find("{")
+    if start < 0:
+        return raw
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(raw)):
+        c = raw[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\" and in_string:
+            escape = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return raw[start:i + 1]
+    return raw[start:]
+
+
 def _safe_json_loads(raw: str):
+    # Try strict parse first
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
+        pass
+    # Try after escaping literal newlines inside string values
+    try:
         return json.loads(_escape_literal_newlines_in_strings(raw))
+    except json.JSONDecodeError:
+        pass
+    # Last resort: extract first balanced JSON object (strips trailing prose)
+    extracted = _extract_first_json_object(raw)
+    try:
+        return json.loads(extracted)
+    except json.JSONDecodeError:
+        return json.loads(_escape_literal_newlines_in_strings(extracted))
 
 
 class StrategyAgent:
@@ -131,16 +173,41 @@ class StrategyAgent:
         brand_ctx = json.dumps({
             "brand_name": self.brand_profile.get("brand_name"),
             "product": self.brand_profile.get("product"),
-            "product_description": self.brand_profile.get("product_description"),
+            "founder_identity": self.brand_profile.get("founder_identity"),
+            "unique_tension": self.brand_profile.get("unique_tension"),
+            "back_end_weapons": self.brand_profile.get("back_end_weapons"),
             "target_audience": self.brand_profile.get("target_audience"),
+            "audience_primary": self.brand_profile.get("audience_primary"),
+            "audience_secondary_1": self.brand_profile.get("audience_secondary_1"),
+            "audience_secondary_2": self.brand_profile.get("audience_secondary_2"),
+            "not_for_audience": self.brand_profile.get("not_for_audience"),
             "platforms": self.brand_profile.get("platforms"),
+            "primary_platform_phase_1": self.brand_profile.get("primary_platform_phase_1"),
+            "secondary_platform_phase_1": self.brand_profile.get("secondary_platform_phase_1"),
+            "youtube_format": self.brand_profile.get("youtube_format"),
+            "weekly_volume_target": self.brand_profile.get("weekly_volume_target"),
             "bottlenecks": self.brand_profile.get("bottlenecks"),
             "phase": self.brand_profile.get("phase"),
             "budget_phase": self.brand_profile.get("budget_phase"),
-            "goal": self.brand_profile.get("goal"),
-            "price": self.brand_profile.get("price"),
-            "tone": self.brand_profile.get("tone"),
-            "existing_pipeline": self.brand_profile.get("existing_pipeline")
+            "goal": self.brand_profile.get("90_day_target"),
+            "price": self.brand_profile.get("price_india"),
+            "tone": self.brand_profile.get("tone_of_voice"),
+            "existing_pipeline": self.brand_profile.get("existing_pipeline"),
+            "what_to_never_say": self.brand_profile.get("what_to_never_say"),
+            "lived_history_sources": self.brand_profile.get("lived_history_sources"),
+            "lived_history_NOT_allowed": self.brand_profile.get("lived_history_NOT_allowed"),
+            "grid_control_naming_rule": self.brand_profile.get("grid_control_naming_rule"),
+            "hire_signal_rule": self.brand_profile.get("hire_signal_rule"),
+            "freebie_strategy": self.brand_profile.get("freebie_strategy"),
+            "week_1_cta_rule": self.brand_profile.get("week_1_cta_rule"),
+            "dm_automation_required": self.brand_profile.get("dm_automation_required"),
+            "revenue_paths": self.brand_profile.get("revenue_paths"),
+            "north_star_metric": self.brand_profile.get("north_star_metric"),
+            "north_star_metric_definition": self.brand_profile.get("north_star_metric_definition"),
+            "deprecated_metrics": self.brand_profile.get("deprecated_metrics"),
+            "entry_offer": self.brand_profile.get("entry_offer"),
+            "full_audit_offer": self.brand_profile.get("full_audit_offer"),
+            "retainer_offer": self.brand_profile.get("retainer_offer"),
         }, indent=2)
 
         trends_summary = json.dumps(trends, indent=2)
@@ -187,10 +254,44 @@ Phase 3 (Days 61-90): Paid amplification of best performers
 Each phase has a measurable gate before unlocking the next.
 
 SELECTION METRIC:
-better = which strategy gives the highest probability of 10 paying beta clients
-in 90 days, given current zero-budget constraints and a new brand with no social proof
+better = which strategy maximises QUALIFIED FOUNDER DMs PER WEEK (the brand's north_star_metric)
+over 90 days, given current zero-budget constraints and a new brand with no social proof.
+DO NOT optimize for follower count or generic reach. (See brand_profile.deprecated_metrics — follower-count benchmarks are explicitly OUT.)
 
 Select the winner. One-line reason.
+
+---
+
+🚨 HARD CONSTRAINTS — VIOLATIONS = STRATEGY REJECTED 🚨
+
+PLATFORM PRIORITY (Phase 1):
+- PRIMARY: Instagram + YouTube (parallel). NOT LinkedIn-primary. NOT Twitter-primary.
+- SECONDARY (repurpose-only, NOT original content): LinkedIn + Twitter/X.
+- See brand_profile.primary_platform_phase_1 and brand_profile.secondary_platform_phase_1.
+- Strategy MUST reflect: 1 long-form YouTube/week → cut into 4 IG Reels + 2 YouTube Shorts. PLUS 3 IG carousels/week (independent). LinkedIn + Twitter = repurpose ONLY.
+- DO NOT propose 4-5 LinkedIn posts/week as the top channel. That violates the brand's locked positioning.
+
+VOLUME (per brand_profile.weekly_volume_target):
+- Phase 1 weekly_output target: ~9 published units/week from 1 long-form recording session.
+- DO NOT inflate volume beyond this in Phase 1. Quality over volume.
+- Phase 2-3 ramps are allowed but stay grounded in 1-recording-session-per-week budget.
+
+CTA RULES (per brand_profile.week_1_cta_rule + freebie_strategy):
+- Phase 1 (Days 1-30): NO comment-gated CTAs ("comment WORD"), NO promised deliverables, NO freebies. ONLY open-loop diagnostic engagement ("drop your AI tool stack", "what's your AI question?").
+- Phase 1 build window (Days 8-28): freebie inventory + DM automation get built. Freebie CTAs unlock Day 29+.
+- Phase 2-3: Freebie CTAs allowed once freebies + DM automation are confirmed BUILT.
+- NEVER plan hire-me CTAs at any phase. Banned forever (brand_profile.hire_signal_rule).
+- NEVER plan paid_amplification in Phase 2 unless brand_profile says budget exists. ASKGauravAI is zero-budget; only organic.
+
+NAMING + LIVED HISTORY:
+- Phase 1 (Days 1-28): Grid Control SILENT. Reference as "a multi-agent system I'm building".
+- Phase 1 transition (Day 29 onward) + Phase 2: Grid Control nameable as proof point.
+- NEVER name "Third Gen Tribe" / "TGT" / "T-shirt brand". Reference as "the brands I ran" (UNNAMED).
+- NEVER frame TGT as AI-built (it was agency-run).
+- Use ONLY brand_profile.lived_history_sources for lived examples.
+
+NEVER-USE (from brand_profile.what_to_never_say):
+- AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer.
 
 ---
 
@@ -290,19 +391,27 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
 
         while attempt < max_attempts:
             attempt += 1
-            self.log(f"Calling Claude {MODEL} (attempt {attempt}/{max_attempts})...")
-            response = self.client.messages.create(
+            self.log(f"Calling Claude {MODEL} (attempt {attempt}/{max_attempts}) — streaming mode...")
+            # SDK 0.96+ requires streaming for max_tokens that could exceed 10-min budget.
+            # Accumulate the streamed text, then read final usage + stop_reason from the
+            # completed message object — preserves the existing token-counting + truncation-warn behaviour.
+            raw_text = ""
+            with self.client.messages.stream(
                 model=MODEL,
                 max_tokens=24000,  # 90-day strategy + provenance entries + retry headroom
                 messages=messages,
-            )
-            self._total_input_tokens += response.usage.input_tokens
-            self._total_output_tokens += response.usage.output_tokens
+            ) as stream:
+                for text_chunk in stream.text_stream:
+                    raw_text += text_chunk
+                final_message = stream.get_final_message()
 
-            if response.stop_reason == "max_tokens":
-                self.log(f"WARNING: Claude hit max_tokens cap ({response.usage.output_tokens} out)")
+            self._total_input_tokens += final_message.usage.input_tokens
+            self._total_output_tokens += final_message.usage.output_tokens
 
-            raw = response.content[0].text.strip()
+            if final_message.stop_reason == "max_tokens":
+                self.log(f"WARNING: Claude hit max_tokens cap ({final_message.usage.output_tokens} out)")
+
+            raw = raw_text.strip()
             if "```" in raw:
                 for part in raw.split("```"):
                     part = part.strip()

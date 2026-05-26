@@ -181,9 +181,33 @@ class BrandGuardian:
         if len(scripts_summary) > 12000:
             scripts_summary = scripts_summary[:12000] + "\n... [truncated]"
 
+        # Token optimization: use compact _state.json instead of dumping full
+        # brand_profile (17KB) + voice_profile (12KB). Saves ~7000 tokens/run.
+        # Specific deep fields can be referenced by key but the SOUL audit only
+        # needs the core voice + audience + positioning summary.
+        try:
+            from _state import load_brand_state  # type: ignore
+            _state = load_brand_state(self.brand_slug)
+            state_block = json.dumps(_state, indent=2)
+        except Exception:
+            state_block = json.dumps({
+                "brand_name": self.brand_profile.get("brand_name"),
+                "audience": self.brand_profile.get("audience"),
+                "tone_of_voice": self.brand_profile.get("tone_of_voice"),
+                "what_to_never_say": self.brand_profile.get("what_to_never_say"),
+            }, indent=2)
+
+        # Voice profile core fields only (full file referenced by name if needed)
         voice_block = ""
         if self.voice_profile:
-            voice_block = f"\nBRAND VOICE DNA:\n{json.dumps(self.voice_profile, indent=2)}\n"
+            vp_core = {
+                "voice_dna_summary": self.voice_profile.get("voice_dna_summary_for_script_writer"),
+                "scripts_must": self.voice_profile.get("scripts_must"),
+                "scripts_must_not": self.voice_profile.get("scripts_must_not"),
+                "vocabulary_signature": (self.voice_profile.get("vocabulary") or {}).get("signature_phrases"),
+                "cta_style": self.voice_profile.get("cta_style"),
+            }
+            voice_block = f"\nBRAND VOICE DNA (core):\n{json.dumps(vp_core, indent=2)}\n"
 
         prompt = f"""You are the Brand Guardian for {self.brand_profile.get('brand_name', self.brand_slug)}.
 Your only job: audit all generated content for brand SOUL — voice consistency, audience-tone match,
@@ -192,8 +216,8 @@ positioning fidelity, and forbidden-phrase compliance.
 You are NOT a rule-checker (the Contradiction Detector handles hard rules).
 You are the SOUL check — does this content sound like the brand a real founder would publish?
 
-BRAND PROFILE (the truth source):
-{json.dumps(self.brand_profile, indent=2)}
+BRAND STATE (compact — full files in brand dir if needed):
+{state_block}
 {voice_block}
 APPROVED 90-DAY STRATEGY:
 {json.dumps(outputs.get('strategy', {}), indent=2)[:3000]}

@@ -316,7 +316,12 @@ def test_notion_connection() -> bool:
     Returns True if Notion is reachable and credentials are valid.
     """
     test_url = f"https://api.notion.com/v1/pages/{NOTION_PAGE_ID}"
-    response = requests.get(test_url, headers=HEADERS, timeout=10)
+    try:
+        response = requests.get(test_url, headers=HEADERS, timeout=10)
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+        print(f"[NotionPusher] ❌ Notion connection failed: {type(e).__name__}")
+        print(f"[NotionPusher] DNS or network issue — Notion offline but agents can continue")
+        return False
 
     if response.status_code == 200:
         print("[NotionPusher] ✅ Notion connection verified")

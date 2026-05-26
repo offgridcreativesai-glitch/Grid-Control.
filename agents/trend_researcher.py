@@ -90,14 +90,63 @@ def _escape_literal_newlines_in_strings(json_str: str) -> str:
 
 def _safe_json_loads(raw: str):
     """
-    Try json.loads; if it fails, repair literal newlines inside string values and retry.
-    Raises original exception if both fail.
+    Try json.loads; if it fails, attempt multiple repair strategies:
+    1. Escape literal newlines inside string values
+    2. Extract first complete JSON object/array (strip trailing garbage)
+    3. Strip markdown code fences
+    Raises original exception if all fail.
     """
+    # Strategy 0: direct parse
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        repaired = _escape_literal_newlines_in_strings(raw)
+        pass
+
+    # Strategy 1: strip markdown code fences
+    stripped = raw.strip()
+    if stripped.startswith("```"):
+        lines = stripped.split("\n")
+        # Remove first line (```json) and last line (```)
+        if lines[-1].strip() == "```":
+            stripped = "\n".join(lines[1:-1])
+        else:
+            stripped = "\n".join(lines[1:])
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            pass
+
+    # Strategy 2: escape literal newlines
+    repaired = _escape_literal_newlines_in_strings(raw)
+    try:
         return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 3: extract first complete JSON object/array via decoder
+    decoder = json.JSONDecoder()
+    text = raw.strip()
+    # Find start of JSON
+    for i, c in enumerate(text):
+        if c in ('{', '['):
+            try:
+                obj, end = decoder.raw_decode(text, i)
+                return obj
+            except json.JSONDecodeError:
+                continue
+
+    # Strategy 4: same as 3 but on newline-repaired text
+    repaired_stripped = repaired.strip()
+    for i, c in enumerate(repaired_stripped):
+        if c in ('{', '['):
+            try:
+                obj, end = decoder.raw_decode(repaired_stripped, i)
+                return obj
+            except json.JSONDecodeError:
+                continue
+
+    # All strategies failed — raise with original text
+    return json.loads(raw)
 
 def _build_niche_hashtags(brand_profile: dict) -> list:
     """

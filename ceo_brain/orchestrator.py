@@ -141,6 +141,30 @@ WINNER: {loop_header.get('winner', '')}
 
         self.log(f"Output saved locally: {filepath}")
 
+        # ── Auto-record learning at every successful agent output ───────────
+        # Single capture point for all 18 agents. Writes to local file
+        # (read by The Brain) AND Anthropic Managed Memory (cross-session).
+        # Best-effort — never blocks the save.
+        try:
+            import sys as __sys
+            from pathlib import Path as __Path
+            __sys.path.insert(0, str(__Path(__file__).resolve().parent.parent / "agents"))
+            from _record_learning import record as __record  # type: ignore
+            winner = (loop_header or {}).get("winner") or output_type
+            metric = (loop_header or {}).get("metric") or ""
+            summary = f"{output_type}: {winner}"
+            if metric:
+                summary += f" (metric: {metric})"
+            __record(
+                self.brand_slug,
+                agent_folder,
+                summary[:500],
+                kind="win",
+                context={"file": os.path.basename(filepath)},
+            )
+        except Exception as __e:
+            self.log(f"[learning-record] skipped: {__e}")
+
         # ── BUILD H — Auto-block CRITICAL contradictions ──────────────────
         # Skip self-check for the contradiction detector itself + Brand Guardian
         # (avoid infinite loop / double-audit)

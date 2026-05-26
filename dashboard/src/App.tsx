@@ -1,51 +1,44 @@
-import { Component, type ReactNode } from "react"
+import { Component, useEffect, type ReactNode } from "react"
+import { Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { Sidebar } from "@/components/Sidebar"
-import { CommandSpace } from "@/spaces/CommandSpace"
-import { ReviewSpace }  from "@/spaces/ReviewSpace"
-import { AgentsSpace }  from "@/spaces/AgentsSpace"
-import { BrandSpace }   from "@/spaces/BrandSpace"
-import { SystemSpace }  from "@/spaces/SystemSpace"
-import { InsightsSpace } from "@/spaces/InsightsSpace"
-import { useBrandStore } from "@/store/brandStore"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { CommandPage } from "@/pages/CommandPage"
+import { ReviewPage } from "@/pages/ReviewPage"
+import { AgentsPage } from "@/pages/AgentsPage"
+import { CalendarPage } from "@/pages/CalendarPage"
+import { PublishedPage } from "@/pages/PublishedPage"
+import { InsightsPage } from "@/pages/InsightsPage"
+import { SystemPage } from "@/pages/SystemPage"
+import { AuthPage } from "@/pages/AuthPage"
+import { OnboardingPage } from "@/pages/OnboardingPage"
+import { useAppStore } from "@/store/appStore"
+import { useAuthStore } from "@/store/authStore"
+import { useSSE } from "@/hooks/useSSE"
 
-// ── Phase 5 Step 1 — Error Boundary ───────────────────────────────────────────
-
-interface ErrorBoundaryState {
-  hasError: boolean
-  error: Error | null
-}
-
-class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props)
     this.state = { hasError: false, error: null }
   }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-
   componentDidCatch(error: Error) {
     console.error("[GRID CONTROL] React error boundary caught:", error)
   }
-
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-screen items-center justify-center bg-[hsl(var(--background))]">
-          <div className="max-w-md w-full mx-4 rounded-xl border border-red-800 bg-red-950/30 p-8 text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-red-950 border border-red-800 flex items-center justify-center mx-auto">
-              <span className="text-2xl">⚠</span>
-            </div>
-            <h2 className="text-white font-bold text-lg">Something went wrong</h2>
-            <p className="text-red-300 text-sm font-mono break-words">
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="max-w-md w-full mx-4 rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center space-y-4">
+            <h2 className="text-foreground font-bold text-lg">Something went wrong</h2>
+            <p className="text-destructive text-sm font-mono break-words">
               {this.state.error?.message ?? "An unexpected error occurred"}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-2 px-6 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+              className="mt-2 px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
             >
               Reload
             </button>
@@ -57,37 +50,50 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   }
 }
 
-// ── App ───────────────────────────────────────────────────────────────────────
-
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      refetchInterval: 10000,
-      retry: 1,
-    },
+    queries: { refetchInterval: 10000, retry: 1 },
   },
 })
 
-const SCREENS: Record<number, ReactNode> = {
-  1: <CommandSpace  />,
-  2: <ReviewSpace   />,
-  3: <AgentsSpace   />,
-  4: <BrandSpace    />,
-  5: <SystemSpace   />,
-  6: <InsightsSpace />,
+function ShortcutBindings() {
+  const { toggleCommand, toggleBrain } = useAppStore()
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        toggleCommand()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "j") {
+        e.preventDefault()
+        toggleBrain()
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [toggleCommand, toggleBrain])
+  return null
 }
 
-function AppLayout() {
-  const { activeScreen, navigate } = useBrandStore()
+function AuthGate({ children }: { children: ReactNode }) {
+  const { user, loading, init } = useAuthStore()
+  useEffect(() => { init() }, [init])
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))]">
-      <Sidebar activeScreen={activeScreen} onNavigate={navigate} />
-      <main className="flex-1 overflow-hidden flex flex-col">
-        {SCREENS[activeScreen] ?? <CommandSpace />}
-      </main>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground text-sm">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!user) return <AuthPage />
+  return <SSEProvider>{children}</SSEProvider>
+}
+
+function SSEProvider({ children }: { children: ReactNode }) {
+  useSSE()
+  return <>{children}</>
 }
 
 export default function App() {
@@ -95,7 +101,22 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AppLayout />
+          <AuthGate>
+            <ShortcutBindings />
+            <DashboardLayout>
+              <Routes>
+                <Route path="/" element={<CommandPage />} />
+                <Route path="/review" element={<ReviewPage />} />
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/agents/:id" element={<AgentsPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/published" element={<PublishedPage />} />
+                <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/system" element={<SystemPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              </Routes>
+            </DashboardLayout>
+          </AuthGate>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

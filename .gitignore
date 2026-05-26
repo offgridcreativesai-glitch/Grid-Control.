@@ -46,3 +46,4 @@ dashboard/.env.local
 
 # Managed agents registry (contains agent IDs — sensitive)
 managed_agents/registry.json
+brands/*/visuals/cuts/*.mp4

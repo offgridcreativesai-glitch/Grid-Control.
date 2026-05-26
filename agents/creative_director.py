@@ -107,16 +107,21 @@ class CreativeDirector:
     # ── Data loaders ──────────────────────────────────────────────────────────
 
     def load_scripts(self) -> list[dict]:
-        """Load most recent Script Writer output from pending_approval/."""
-        script_dir = self.brand_dir / "outputs" / "pending_approval" / "Script Writer"
-        if not script_dir.exists():
-            self.log("No Script Writer outputs found in pending_approval/. Checking approved/...")
-            script_dir = self.brand_dir / "outputs" / "approved" / "Script Writer"
-        if not script_dir.exists():
+        """Load most recent Script Writer output from pending_approval/ (slug-cased path)."""
+        # Try slug-cased folder first (current convention), fall back to legacy spaces format
+        candidates = [
+            self.brand_dir / "outputs" / "pending_approval" / "script-writer",
+            self.brand_dir / "outputs" / "pending_approval" / "Script Writer",
+            self.brand_dir / "outputs" / "approved" / "script-writer",
+            self.brand_dir / "outputs" / "approved" / "Script Writer",
+        ]
+        script_dir = next((p for p in candidates if p.exists()), None)
+        if script_dir is None:
             raise FileNotFoundError(
                 "No Script Writer outputs found in pending_approval/ or approved/. "
                 "Run script_writer.py first."
             )
+        self.log(f"Loading scripts from: {script_dir}")
         files = sorted(script_dir.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
         if not files:
             raise FileNotFoundError("No JSON files found in Script Writer output directory.")
