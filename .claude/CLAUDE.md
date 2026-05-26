@@ -96,9 +96,8 @@ All API endpoints take `?brand_slug=`. All TanStack queries keyed by `activeBran
 
 ## Pending in Priority Order
 
-1. **SUPABASE_SERVICE_ROLE_KEY** — add to .env from Supabase dashboard. Without it, Flask backend can't bypass RLS.
-2. **Deploy** — Vercel (dashboard) + Railway (Flask API). Custom domain.
-3. **Browser publishing** — Chrome automation for posting approved content.
+1. **Custom domain** — point a domain at Vercel (dashboard) and Railway (API).
+2. **Browser publishing** — Chrome automation for posting approved content (needs Gaurav hands-on).
 4. Apply Rule 10 fully to Trend Researcher AutoResearch (partial today).
 5. **META_GRAPH_API_TOKEN** — unblocks live Data Analyst metrics + Performance Tracker.
 6. Subagent orchestration upgrade in CEOBrain.
@@ -106,6 +105,7 @@ All API endpoints take `?brand_slug=`. All TanStack queries keyed by `activeBran
 8. AgentShield security scan before first client.
 
 ### Recently Completed (May 27, 2026)
+- ✅ **Deploy LIVE** — Vercel (dashboard) + Railway (Flask API) + API proxy working
 - ✅ Memory persistence hooks (session_start/save/end in BaseAgent)
 - ✅ Smart model routing (8 Opus / 8 Sonnet / 1 Haiku / 2 None)
 - ✅ Supabase schema + RLS (9 tables, brand_members, proper policies)
@@ -135,6 +135,15 @@ http://localhost:5173
 ```
 
 Production build: `cd dashboard && npm run build`.
+
+## Production URLs
+
+- **Dashboard**: `v0-grid-control-dashboard.vercel.app`
+- **API**: `web-production-175d5.up.railway.app`
+- **API proxy**: Dashboard `/api/*` → Railway via Vercel rewrites
+- **Git**: `github.com/offgridcreativesai-glitch/Grid-Control.`
+- Railway project: `9a2157e3-ac1d-4e24-8573-a659302a492b`
+- Vercel project: `grid-control` (team: `gauravkhanna110-1327s-projects`)
 
 ## What Never Changes
 
