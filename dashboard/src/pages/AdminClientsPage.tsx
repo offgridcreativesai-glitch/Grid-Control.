@@ -1,4 +1,4 @@
-import { Loader2, Building2, ExternalLink } from "lucide-react"
+import { Loader2, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAdminClients } from "@/hooks/useAdmin"
 

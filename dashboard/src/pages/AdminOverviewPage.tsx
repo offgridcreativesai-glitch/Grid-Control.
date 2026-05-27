@@ -1,5 +1,5 @@
 import { Loader2, Building2, Users, CreditCard, Cpu, TrendingUp, DollarSign, Activity } from "lucide-react"
-import { cn, formatNumber } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { useAdminOverview } from "@/hooks/useAdmin"
 
 function KpiCard({

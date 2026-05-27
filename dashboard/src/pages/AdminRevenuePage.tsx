@@ -1,4 +1,4 @@
-import { Loader2, TrendingUp, CreditCard, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Loader2, TrendingUp, CreditCard, ArrowUpRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAdminRevenue } from "@/hooks/useAdmin"
 

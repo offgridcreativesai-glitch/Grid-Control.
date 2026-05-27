@@ -19,7 +19,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
 import { useAuthStore } from "@/store/authStore";
-import type { LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
