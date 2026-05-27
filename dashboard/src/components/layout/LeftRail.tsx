@@ -1,20 +1,18 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   CheckSquare,
-  Bot,
   Calendar,
-  Send,
   BarChart3,
-  Settings,
-  CreditCard,
-  Users,
   ChevronDown,
   LogOut,
   ShieldCheck,
   Building2,
   TrendingUp,
   Cpu,
+  MessageSquare,
+  Eye,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -28,16 +26,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const navItems = [
-  { path: "/", icon: Home, label: "Command" },
+const clientNavItems = [
+  { path: "/", icon: MessageSquare, label: "The Brain" },
   { path: "/review", icon: CheckSquare, label: "Review" },
-  { path: "/agents", icon: Bot, label: "Agents" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
-  { path: "/published", icon: Send, label: "Published" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
-  { path: "/billing", icon: CreditCard, label: "Billing" },
-  { path: "/team", icon: Users, label: "Team" },
-  { path: "/system", icon: Settings, label: "System" },
 ];
 
 const adminNavItems = [
@@ -49,7 +42,16 @@ const adminNavItems = [
 
 export function LeftRail() {
   const { activeBrand, brands, setActiveBrand } = useBrandStore();
-  const { user, signOut, isSuperAdmin } = useAuthStore();
+  const { user, signOut, isSuperAdmin, viewMode, setViewMode } = useAuthStore();
+  const navigate = useNavigate();
+
+  const navItems = viewMode === "admin" ? adminNavItems : clientNavItems;
+
+  const handleViewSwitch = () => {
+    const next = viewMode === "admin" ? "client" : "admin";
+    setViewMode(next);
+    navigate(next === "admin" ? "/admin" : "/");
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -94,6 +96,18 @@ export function LeftRail() {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* View mode indicator */}
+        {isSuperAdmin && (
+          <div className="mb-2 px-1">
+            <span className={cn(
+              "text-[9px] font-mono uppercase tracking-wider",
+              viewMode === "admin" ? "text-primary" : "text-muted-foreground"
+            )}>
+              {viewMode}
+            </span>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex flex-1 flex-col items-center gap-1">
           {navItems.map((item) => (
@@ -101,11 +115,14 @@ export function LeftRail() {
               <TooltipTrigger asChild>
                 <NavLink
                   to={item.path}
+                  end={item.path === "/" || item.path === "/admin"}
                   className={({ isActive }) =>
                     cn(
                       "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
                       isActive
-                        ? "bg-secondary text-foreground"
+                        ? viewMode === "admin"
+                          ? "bg-primary/20 text-primary"
+                          : "bg-secondary text-foreground"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )
                   }
@@ -119,32 +136,32 @@ export function LeftRail() {
             </Tooltip>
           ))}
 
-          {/* Admin section — super_admin only */}
+          {/* "Enter as client" / "Back to admin" toggle — super admin only */}
           {isSuperAdmin && (
             <>
-              <div className="my-1 w-6 border-t border-border" />
-              {adminNavItems.map((item) => (
-                <Tooltip key={item.path}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.path}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
-                          isActive
-                            ? "bg-primary/20 text-primary"
-                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                        )
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                    </NavLink>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    Admin · {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+              <div className="my-2 w-6 border-t border-border" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleViewSwitch}
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+                      viewMode === "admin"
+                        ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        : "text-primary hover:bg-primary/10"
+                    )}
+                  >
+                    {viewMode === "admin" ? (
+                      <Eye className="h-5 w-5" />
+                    ) : (
+                      <ArrowLeftRight className="h-5 w-5" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {viewMode === "admin" ? "Enter as client" : "Back to admin"}
+                </TooltipContent>
+              </Tooltip>
             </>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Check, X, Edit3, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, X, Edit3, Send, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import { type PendingApproval } from "@/data/mock";
 import { type Platform } from "@/store/appStore";
@@ -7,6 +8,8 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { Button } from "@/components/ui/button";
 import { usePendingOutputs, useApproveOutput, useRejectOutput, type PendingOutput } from "@/hooks/useGridApi";
+import { useBrainStore } from "@/store/brainStore";
+import { useBrandStore } from "@/store/brandStore";
 
 function inferPlatform(po: PendingOutput): Platform {
   const hay = `${po.platform ?? ""} ${po.filename} ${po.agent_slug}`.toLowerCase();
@@ -38,6 +41,9 @@ export function ReviewPage() {
   const { data } = usePendingOutputs();
   const approveMut = useApproveOutput();
   const rejectMut = useRejectOutput();
+  const navigate = useNavigate();
+  const { activeBrand } = useBrandStore();
+  const { appendMessage } = useBrainStore();
 
   const approvals: PendingApproval[] = useMemo(
     () => (data?.outputs ?? []).map(adaptOutput),
@@ -79,6 +85,28 @@ export function ReviewPage() {
     navigateToNext();
   }, [selectedId, navigateToNext, rejectMut]);
 
+  const handleRequestChanges = useCallback(() => {
+    if (!selected) return;
+    const context = [
+      `I want changes to this ${selected.platform} post from ${selected.draftedBy}:`,
+      selected.title ? `Title: "${selected.title}"` : null,
+      `Caption: "${selected.caption.slice(0, 200)}${selected.caption.length > 200 ? "..." : ""}"`,
+      "",
+      "Here's what I'd like changed: ",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    appendMessage(activeBrand.slug, "global", {
+      id: Date.now().toString(),
+      role: "user",
+      content: context,
+      createdAt: Date.now(),
+    });
+
+    navigate("/");
+  }, [selected, activeBrand.slug, appendMessage, navigate]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,6 +119,9 @@ export function ReviewPage() {
         case "r":
           handleReject();
           break;
+        case "e":
+          handleRequestChanges();
+          break;
         case "j":
           if (!e.metaKey && !e.ctrlKey) navigateToNext();
           break;
@@ -102,7 +133,7 @@ export function ReviewPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, navigateToNext, navigateToPrev]);
+  }, [handleApprove, handleReject, handleRequestChanges, navigateToNext, navigateToPrev]);
 
   if (pendingApprovals.length === 0) {
     return (
@@ -253,9 +284,9 @@ export function ReviewPage() {
                 <X className="h-4 w-4 mr-1" />
                 Reject
               </Button>
-              <Button variant="outline" size="sm">
-                <Edit3 className="h-4 w-4 mr-1" />
-                Edit
+              <Button variant="outline" size="sm" onClick={handleRequestChanges}>
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Request Changes
               </Button>
               <Button variant="outline" size="sm" onClick={handleApprove}>
                 <Check className="h-4 w-4 mr-1" />

@@ -197,6 +197,116 @@ class BaseAgent:
         elapsed = time.time() - self._session_start_time
         self.log(f"[session] ended ({elapsed:.0f}s)")
 
+    # ── skill learning loop ────────────────────────────────────────────────────
+
+    def _skills_dir(self, brand_slug: str) -> Path:
+        return Path(f"brands/{brand_slug}/skills/{self._agent_slug()}")
+
+    def load_skills(self, brand_slug: str, max_tokens: int = 3000) -> str:
+        """Load skill metadata for this agent+brand. Returns formatted text
+        for injection into the system prompt. Stays under max_tokens chars."""
+        skills_dir = self._skills_dir(brand_slug)
+        if not skills_dir.exists():
+            return ""
+
+        skills = []
+        total_chars = 0
+        for f in sorted(skills_dir.glob("*.md")):
+            content = f.read_text(encoding="utf-8").strip()
+            if total_chars + len(content) > max_tokens:
+                break
+            skills.append(content)
+            total_chars += len(content)
+
+        if not skills:
+            return ""
+
+        self.log(f"[skills] loaded {len(skills)} skills ({total_chars} chars)")
+        return "\n## Learned Skills\n" + "\n---\n".join(skills) + "\n"
+
+    def save_skill(
+        self,
+        brand_slug: str,
+        skill_name: str,
+        content: str,
+        tags: list[str] | None = None,
+        version: int = 1,
+    ) -> Path:
+        """Save or update a skill file."""
+        import re
+
+        skills_dir = self._skills_dir(brand_slug)
+        skills_dir.mkdir(parents=True, exist_ok=True)
+
+        slug = re.sub(r"[^a-z0-9-]", "", skill_name.lower().replace(" ", "-"))
+        path = skills_dir / f"{slug}.md"
+
+        tag_str = ", ".join(tags) if tags else ""
+        frontmatter = (
+            f"---\n"
+            f"name: {skill_name}\n"
+            f"version: {version}\n"
+            f"tags: [{tag_str}]\n"
+            f"updated: {datetime.now().isoformat()}\n"
+            f"---\n\n"
+        )
+
+        path.write_text(frontmatter + content, encoding="utf-8")
+        self.log(f"[skills] saved: {slug} (v{version})")
+        return path
+
+    def patch_skill(
+        self,
+        brand_slug: str,
+        skill_name: str,
+        lesson: str,
+    ) -> bool:
+        """Append a lesson learned to an existing skill file.
+        Returns True if skill was found and patched."""
+        import re
+
+        slug = re.sub(r"[^a-z0-9-]", "", skill_name.lower().replace(" ", "-"))
+        path = self._skills_dir(brand_slug) / f"{slug}.md"
+        if not path.exists():
+            return False
+
+        content = path.read_text(encoding="utf-8")
+        patch = f"\n\n### Lesson ({datetime.now().strftime('%Y-%m-%d')})\n{lesson}\n"
+        path.write_text(content + patch, encoding="utf-8")
+        self.log(f"[skills] patched: {slug}")
+        return True
+
+    def extract_skill_on_approval(
+        self,
+        brand_slug: str,
+        skill_name: str,
+        pattern: str,
+        tags: list[str] | None = None,
+    ) -> Path:
+        """Called when an output is approved — extract the working pattern as a skill."""
+        return self.save_skill(brand_slug, skill_name, pattern, tags=tags)
+
+    def patch_skill_on_rejection(
+        self,
+        brand_slug: str,
+        skill_name: str,
+        rejection_reason: str,
+    ) -> bool:
+        """Called when an output is rejected — patch the skill with the lesson."""
+        return self.patch_skill(brand_slug, skill_name, f"REJECTED: {rejection_reason}")
+
+    # ── program.md (experimentation guardrails) ──────────────────────────────
+
+    def load_program(self) -> str:
+        """Load this agent's program.md — defines experimentation boundaries.
+        Returns empty string if no program.md exists."""
+        path = Path(f"agents/programs/{self._agent_slug()}.md")
+        if not path.exists():
+            return ""
+        content = path.read_text(encoding="utf-8").strip()
+        self.log(f"[program] loaded ({len(content)} chars)")
+        return "\n## Experimentation Program\n" + content + "\n"
+
     # ── file I/O ──────────────────────────────────────────────────────────────
 
     def load_brand_profile(self):

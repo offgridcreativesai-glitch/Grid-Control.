@@ -732,6 +732,30 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
                     result["original_post"] = post
                     result["week"] = week_num
                     result["week_theme"] = week_theme
+
+                    # Council evaluation on top hooks
+                    try:
+                        from agents.council import Council, SCRIPT_CRITERIA
+                        hooks = result.get("hook_block", {}).get("hooks", [])
+                        if len(hooks) >= 3:
+                            hook_texts = [h.get("text", "") for h in hooks[:3] if h.get("text")]
+                            if len(hook_texts) >= 2:
+                                council = Council(agent_name="script-writer")
+                                council_result = council.evaluate(
+                                    variants=hook_texts,
+                                    criteria=SCRIPT_CRITERIA,
+                                    brand_slug=self.brand_slug,
+                                    output_type=f"hooks_{post.get('platform', 'unknown')}_{i+1}",
+                                )
+                                result["council_evaluation"] = {
+                                    "winner_index": council_result.winner_index,
+                                    "synthesis": council_result.synthesis,
+                                    "recommended_hook": council_result.winner_index + 1,
+                                }
+                                self.log(f"  Council: hook {council_result.winner_index + 1} wins — {council_result.synthesis[:80]}")
+                    except Exception as e:
+                        self.log(f"  Council evaluation skipped: {e}")
+
                     week_scripts.append(result)
                     scripted_posts += 1
 

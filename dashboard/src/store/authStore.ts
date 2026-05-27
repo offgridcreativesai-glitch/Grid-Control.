@@ -3,11 +3,15 @@ import { supabase } from "@/lib/supabase"
 import { apiFetch } from "@/lib/api"
 import type { User, Session } from "@supabase/supabase-js"
 
+export type ViewMode = "admin" | "client"
+
 interface AuthState {
   user: User | null
   session: Session | null
   loading: boolean
   isSuperAdmin: boolean
+  viewMode: ViewMode
+  setViewMode: (mode: ViewMode) => void
   init: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>
@@ -30,30 +34,34 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   loading: true,
   isSuperAdmin: false,
+  viewMode: "client" as ViewMode,
+  setViewMode: (mode) => set({ viewMode: mode }),
 
   init: async () => {
     const { data } = await supabase.auth.getSession()
     const user = data.session?.user ?? null
+
+    let isAdmin = false
+    if (user) {
+      isAdmin = await checkSuperAdmin()
+    }
+
     set({
       session: data.session,
       user,
       loading: false,
+      isSuperAdmin: isAdmin,
+      viewMode: isAdmin ? "admin" : "client",
     })
-
-    // Check super admin status after session loads
-    if (user) {
-      const isAdmin = await checkSuperAdmin()
-      set({ isSuperAdmin: isAdmin })
-    }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       const newUser = session?.user ?? null
       set({ session, user: newUser })
       if (newUser) {
         const isAdmin = await checkSuperAdmin()
-        set({ isSuperAdmin: isAdmin })
+        set({ isSuperAdmin: isAdmin, viewMode: isAdmin ? "admin" : "client" })
       } else {
-        set({ isSuperAdmin: false })
+        set({ isSuperAdmin: false, viewMode: "client" })
       }
     })
   },

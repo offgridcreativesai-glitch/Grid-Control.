@@ -3392,6 +3392,51 @@ def get_all_outputs():
     return jsonify({"success": True, "data": items})
 
 
+# ── Skill learning hooks ─────────────────────────────────────────────────────
+
+_SLUG_TO_AGENT_NAME = {v: k for k, v in _FOLDER_TO_SLUG.items()}
+
+def _skill_on_approve(brand_slug: str, agent_slug: str, filepath: str):
+    """Extract approved output as a learned skill (fire-and-forget)."""
+    try:
+        from agents.base_agent import BaseAgent
+        agent_name = _SLUG_TO_AGENT_NAME.get(agent_slug, agent_slug)
+        agent = BaseAgent(agent_name)
+        src = Path(filepath)
+        if not src.exists():
+            return
+        content = src.read_text(encoding="utf-8")[:2000]
+        filename = src.stem
+        agent.extract_skill_on_approval(
+            brand_slug=brand_slug,
+            skill_name=f"approved-{filename}",
+            pattern=f"Approved output ({filename}):\n{content}",
+            tags=["auto-extracted", "approved"],
+        )
+    except Exception as e:
+        print(f"[skill-learn] approve extraction failed: {e}")
+
+def _skill_on_reject(brand_slug: str, agent_slug: str, reason: str):
+    """Patch agent skill with rejection lesson (fire-and-forget)."""
+    try:
+        from agents.base_agent import BaseAgent
+        agent_name = _SLUG_TO_AGENT_NAME.get(agent_slug, agent_slug)
+        agent = BaseAgent(agent_name)
+        skills_dir = agent._skills_dir(brand_slug)
+        if not skills_dir.exists() or not list(skills_dir.glob("*.md")):
+            agent.save_skill(
+                brand_slug=brand_slug,
+                skill_name="rejection-lessons",
+                content=f"### Rejection ({datetime.now().strftime('%Y-%m-%d')})\n{reason}",
+                tags=["rejection", "lesson"],
+            )
+        else:
+            latest = sorted(skills_dir.glob("*.md"))[-1]
+            agent.patch_skill(brand_slug, latest.stem, reason)
+    except Exception as e:
+        print(f"[skill-learn] rejection patch failed: {e}")
+
+
 @app.route("/api/outputs/approve", methods=["POST"])
 @require_auth
 def approve_output():
@@ -3431,6 +3476,18 @@ def approve_output():
             if resolved_agent_slug:
                 next_agent_slug = _unlock_next_agent(brand_id, resolved_agent_slug)
 
+    # Resolve agent slug from filepath if not already resolved
+    if not next_agent_slug and filepath:
+        parts = Path(filepath).parts
+        folder_nm = parts[-2] if len(parts) >= 2 else ""
+        resolved_agent_slug = resolved_agent_slug or _FOLDER_TO_SLUG.get(folder_nm, "")
+
+    # Skill learning — extract approved pattern
+    if filepath and resolved_agent_slug:
+        src_for_skill = _safe_path(BASE_DIR, filepath)
+        if src_for_skill and src_for_skill.exists():
+            _skill_on_approve(brand_slug, resolved_agent_slug, str(src_for_skill))
+
     # Also move the file for filesystem consistency
     if filepath:
         src = _safe_path(BASE_DIR, filepath)
@@ -3462,6 +3519,8 @@ def reject_output():
     brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
     filepath = body.get("filepath", "")
     output_id = body.get("output_id", "")  # Supabase UUID — optional
+    reason = body.get("reason", "")
+    agent_slug_key = ""
 
     if _DB_AVAILABLE:
         brand_id = _get_brand_id(brand_slug)
@@ -3469,6 +3528,11 @@ def reject_output():
             if output_id:
                 _db.reject_output(output_id)
                 _db.log_audit(brand_id, "output_rejected", "user", {"output_id": output_id})
+                try:
+                    res = _db._client.table("agent_outputs").select("agent_slug").eq("id", output_id).single().execute()
+                    agent_slug_key = res.data.get("agent_slug", "") if res.data else ""
+                except Exception:
+                    pass
             elif filepath:
                 parts = Path(filepath).parts
                 folder_name = parts[-2] if len(parts) >= 2 else ""
@@ -3479,6 +3543,10 @@ def reject_output():
                     if match:
                         _db.reject_output(match["id"])
                         _db.log_audit(brand_id, "output_rejected", "user", {"agent": agent_slug_key, "file": Path(filepath).name})
+
+    # Skill learning — patch with rejection lesson
+    if reason and agent_slug_key:
+        _skill_on_reject(brand_slug, agent_slug_key, reason)
 
     if filepath:
         src = _safe_path(BASE_DIR, filepath)

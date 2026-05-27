@@ -1,25 +1,22 @@
 import { Component, useEffect, type ReactNode } from "react"
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { CommandPage } from "@/pages/CommandPage"
+import { ClientDashboardPage } from "@/pages/ClientDashboardPage"
 import { ReviewPage } from "@/pages/ReviewPage"
-import { AgentsPage } from "@/pages/AgentsPage"
 import { CalendarPage } from "@/pages/CalendarPage"
-import { PublishedPage } from "@/pages/PublishedPage"
 import { InsightsPage } from "@/pages/InsightsPage"
-import { SystemPage } from "@/pages/SystemPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
-import { BillingPage } from "@/pages/BillingPage"
-import { TeamPage } from "@/pages/TeamPage"
 import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
 import { AdminClientsPage } from "@/pages/AdminClientsPage"
 import { AdminRevenuePage } from "@/pages/AdminRevenuePage"
 import { AdminSystemPage } from "@/pages/AdminSystemPage"
 import { useAppStore } from "@/store/appStore"
 import { useAuthStore } from "@/store/authStore"
+import { useBrandStore } from "@/store/brandStore"
+import { useBrands } from "@/hooks/useGridApi"
 import { useSSE } from "@/hooks/useSSE"
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -102,6 +99,38 @@ function SSEProvider({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function AdminGuard({ children }: { children: ReactNode }) {
+  const { isSuperAdmin } = useAuthStore()
+  if (!isSuperAdmin) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
+function OnboardingGuard({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const { data } = useBrands()
+  const { setBrands, setActiveBrand, brands } = useBrandStore()
+  const { isSuperAdmin } = useAuthStore()
+
+  useEffect(() => {
+    if (data?.brands && data.brands.length > 0) {
+      const mapped = data.brands.map((b) => ({ slug: b.slug, name: b.name, handle: b.handle }))
+      setBrands(mapped)
+      if (!brands.find((b) => b.slug === mapped[0].slug)) {
+        setActiveBrand(mapped[0])
+      }
+    }
+  }, [data, setBrands, setActiveBrand, brands])
+
+  if (isSuperAdmin) return <>{children}</>
+
+  const hasBrands = (data?.brands?.length ?? 0) > 0
+  if (!hasBrands && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  return <>{children}</>
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -109,25 +138,27 @@ export default function App() {
         <TooltipProvider>
           <AuthGate>
             <ShortcutBindings />
+            <OnboardingGuard>
             <DashboardLayout>
               <Routes>
-                <Route path="/" element={<CommandPage />} />
+                {/* Client routes — accessible to all */}
+                <Route path="/" element={<ClientDashboardPage />} />
                 <Route path="/review" element={<ReviewPage />} />
-                <Route path="/agents" element={<AgentsPage />} />
-                <Route path="/agents/:id" element={<AgentsPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/published" element={<PublishedPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
-                <Route path="/billing" element={<BillingPage />} />
-                <Route path="/team" element={<TeamPage />} />
-                <Route path="/system" element={<SystemPage />} />
-                <Route path="/admin" element={<AdminOverviewPage />} />
-                <Route path="/admin/clients" element={<AdminClientsPage />} />
-                <Route path="/admin/revenue" element={<AdminRevenuePage />} />
-                <Route path="/admin/system" element={<AdminSystemPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
+
+                {/* Admin routes — super admin only */}
+                <Route path="/admin" element={<AdminGuard><AdminOverviewPage /></AdminGuard>} />
+                <Route path="/admin/clients" element={<AdminGuard><AdminClientsPage /></AdminGuard>} />
+                <Route path="/admin/revenue" element={<AdminGuard><AdminRevenuePage /></AdminGuard>} />
+                <Route path="/admin/system" element={<AdminGuard><AdminSystemPage /></AdminGuard>} />
+
+                {/* Catch-all */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </DashboardLayout>
+            </OnboardingGuard>
           </AuthGate>
         </TooltipProvider>
       </QueryClientProvider>
