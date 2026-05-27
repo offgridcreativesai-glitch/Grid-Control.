@@ -413,22 +413,11 @@ def get_conversation(brand_id: str, agent_slug: str) -> list:
         return []
 
 
-# ── Cost Tracking ─────────────────────────────────────────────────────────────
-
-_PRICING: dict[str, dict[str, float]] = {
-    "claude-sonnet-4-6":        {"input": 3.00,  "output": 15.00},
-    "claude-opus-4-6":          {"input": 15.00, "output": 75.00},
-    "claude-haiku-4-5-20251001":{"input": 0.80,  "output": 4.00},
-}
-_DEFAULT_PRICING = {"input": 3.00, "output": 15.00}
-
-FAL_COST_PER_IMAGE  = 0.008
-APIFY_COST_PER_RUN  = 0.35
-
-
-def calc_api_cost(model: str, input_tokens: int, output_tokens: int) -> float:
-    p = _PRICING.get(model, _DEFAULT_PRICING)
-    return (input_tokens * p["input"] + output_tokens * p["output"]) / 1_000_000
+# ── Cost Tracking — single source of truth in utils/pricing.py ────────────────
+import sys as _sys
+from pathlib import Path as _CostPath
+_sys.path.insert(0, str(_CostPath(__file__).resolve().parent.parent))
+from utils.pricing import MODEL_COSTS as _PRICING, DEFAULT_COSTS as _DEFAULT_PRICING, FAL_COST_PER_IMAGE, APIFY_COST_PER_RUN, estimate_cost as calc_api_cost  # noqa: E402, F401
 
 
 def update_agent_run_costs(

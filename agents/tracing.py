@@ -9,17 +9,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-# ── Cost table (USD per 1M tokens, May 2026) ────────────────
-MODEL_COSTS = {
-    "opus-4-6":   {"input": 15.00, "output": 75.00},
-    "sonnet-4-6": {"input": 3.00,  "output": 15.00},
-    "haiku":      {"input": 0.25,  "output": 1.25},
-}
-
-def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Estimate USD cost for a single call."""
-    costs = MODEL_COSTS.get(model, MODEL_COSTS["sonnet-4-6"])
-    return (input_tokens * costs["input"] / 1_000_000) + (output_tokens * costs["output"] / 1_000_000)
+# ── Cost table — single source of truth in utils/pricing.py ──
+import sys
+from pathlib import Path as _Path
+sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+from utils.pricing import MODEL_COSTS, estimate_cost  # noqa: E402, F401
 
 
 # ── Langfuse (optional) ─────────────────────────────────────

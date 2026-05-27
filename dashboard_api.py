@@ -41,9 +41,12 @@ CORS(app)
 
 # ── Rate Limiting (AgentShield) ───────────────────────────────────────────────
 _rate_store: dict[str, list[float]] = {}
+_RATE_STORE_MAX_KEYS = 10_000  # Prevent unbounded memory growth
 
 def rate_limit(max_requests: int = 30, window_seconds: int = 60):
-    """Simple in-memory rate limiter per IP. Returns 429 on excess."""
+    """In-memory rate limiter per IP. Returns 429 on excess.
+    Note: resets on deploy — acceptable for single-worker Railway deploy.
+    Evicts stale keys when store exceeds _RATE_STORE_MAX_KEYS."""
     from functools import wraps
     def decorator(f):
         @wraps(f)
@@ -57,6 +60,11 @@ def rate_limit(max_requests: int = 30, window_seconds: int = 60):
                 return jsonify({"success": False, "error": "Rate limit exceeded"}), 429
             hits.append(now)
             _rate_store[key] = hits
+            # Evict stale keys periodically
+            if len(_rate_store) > _RATE_STORE_MAX_KEYS:
+                stale = [k for k, v in _rate_store.items() if not v or now - v[-1] > window_seconds]
+                for k in stale:
+                    del _rate_store[k]
             return f(*args, **kwargs)
         return decorated
     return decorator
@@ -120,22 +128,27 @@ def require_auth(f):
 
 def require_brand_access(f):
     """Decorator — verifies the authenticated user has access to the requested brand.
-    Must be used after require_auth. Reads brand_slug from query params."""
+    Must be used after require_auth. Reads brand_slug from query params.
+    Deny-by-default: if user or DB is unavailable, reject the request."""
     from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         user = getattr(request, "user", None)
-        if not user or not _DB_AVAILABLE:
-            return f(*args, **kwargs)
-        brand_slug = request.args.get("brand_slug") or request.json.get("brand_slug", "") if request.is_json else request.args.get("brand_slug", "")
+        if not user:
+            return jsonify({"success": False, "error": "Authentication required"}), 401
+        if not _DB_AVAILABLE:
+            return jsonify({"success": False, "error": "Database unavailable"}), 503
+        brand_slug = request.args.get("brand_slug") or (request.json.get("brand_slug", "") if request.is_json else "")
         if not brand_slug:
+            # No brand context — allow (some endpoints don't need brand scope)
             return f(*args, **kwargs)
         brand = _db.get_brand(brand_slug)
-        if brand:
-            role = _db.check_brand_access(user["id"], brand["id"])
-            if not role:
-                return jsonify({"success": False, "error": "No access to this brand"}), 403
-            request.brand_role = role
+        if not brand:
+            return jsonify({"success": False, "error": "Brand not found"}), 404
+        role = _db.check_brand_access(user["id"], brand["id"])
+        if not role:
+            return jsonify({"success": False, "error": "No access to this brand"}), 403
+        request.brand_role = role
         return f(*args, **kwargs)
     return decorated
 

@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Users, UserPlus, Shield, Eye, Pencil, Trash2, Loader2, AlertCircle, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTeamMembers, useInviteMember, useUpdateRole, useRemoveMember, type TeamMember } from "@/hooks/useTeam"
+import { useAuthStore } from "@/store/authStore"
 
 const roleConfig = {
   admin: { label: "Admin", icon: Shield, color: "text-primary", bg: "bg-primary/10" },
@@ -101,6 +102,7 @@ function MemberRow({
 }
 
 export function TeamPage() {
+  const { user } = useAuthStore()
   const { data: members, isLoading } = useTeamMembers()
   const inviteMember = useInviteMember()
   const [email, setEmail] = useState("")
@@ -229,7 +231,7 @@ export function TeamPage() {
               <MemberRow
                 key={member.id}
                 member={member}
-                isCurrentUser={false}
+                isCurrentUser={user?.id === member.user_id}
               />
             ))}
           </div>
