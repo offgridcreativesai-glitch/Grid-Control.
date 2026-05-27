@@ -39,6 +39,28 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
+# ── Rate Limiting (AgentShield) ───────────────────────────────────────────────
+_rate_store: dict[str, list[float]] = {}
+
+def rate_limit(max_requests: int = 30, window_seconds: int = 60):
+    """Simple in-memory rate limiter per IP. Returns 429 on excess."""
+    from functools import wraps
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            ip = request.remote_addr or "unknown"
+            now = time.time()
+            key = f"{ip}:{f.__name__}"
+            hits = _rate_store.get(key, [])
+            hits = [t for t in hits if now - t < window_seconds]
+            if len(hits) >= max_requests:
+                return jsonify({"success": False, "error": "Rate limit exceeded"}), 429
+            hits.append(now)
+            _rate_store[key] = hits
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
 # ── Authentication ─────────────────────────────────────────────────────────────
 # All mutating / sensitive endpoints require X-Dashboard-Secret header.
 # Set DASHBOARD_SECRET in .env — frontend sends it with every request.
@@ -1020,11 +1042,13 @@ def get_agents_status():
     return jsonify({"success": True, "data": result})
 
 
+@require_auth
 @app.route("/api/agents/list", methods=["GET"])
 def get_agents_list():
     return jsonify({"success": True, "data": AGENTS_ENRICHED})
 
 
+@rate_limit(max_requests=5, window_seconds=60)
 @app.route("/api/agents/run", methods=["POST"])
 @require_auth
 def run_agent():
@@ -1123,6 +1147,7 @@ def run_agent():
     }})
 
 
+@require_auth
 @app.route("/api/agents/run/status", methods=["GET"])
 def agent_run_status():
     """
@@ -1161,6 +1186,7 @@ def agent_run_status():
 
 # ── CAROUSEL DESIGNER ──────────────────────────────────────────────────────────
 
+@rate_limit(max_requests=3, window_seconds=60)
 @app.route("/api/carousel/generate", methods=["POST"])
 @require_auth
 def carousel_generate():
@@ -1258,6 +1284,7 @@ def carousel_generate():
 
 # ── DAILY PIPELINE RUN ─────────────────────────────────────────────────────────
 
+@rate_limit(max_requests=2, window_seconds=60)
 @app.route("/api/pipeline/daily-run", methods=["POST"])
 @require_auth
 def daily_pipeline_run():
@@ -1541,6 +1568,7 @@ Extract this exact schema:
     return jsonify({"success": True, "data": profile})
 
 
+@require_auth
 @app.route("/api/voice/profile", methods=["GET"])
 def voice_get_profile():
     """Return voice_profile.json for a brand, or {exists: false} if not created yet."""
@@ -1637,6 +1665,7 @@ def performance_log_post():
     })
 
 
+@require_auth
 @app.route("/api/performance/history", methods=["GET"])
 def performance_history():
     """Return current performance_history.json or empty skeleton if not yet computed."""
@@ -1663,6 +1692,7 @@ def performance_history():
 
 # ── BRAND FILE READER (used by InsightsSpace provenance audit) ───────────────
 
+@require_auth
 @app.route("/api/brand/file", methods=["GET"])
 def brand_file():
     """
@@ -1699,6 +1729,7 @@ def brand_file():
 
 # ── BUILD D — CROSS-AGENT CONTRADICTION DETECTOR ─────────────────────────────
 
+@require_auth
 @app.route("/api/contradictions/check", methods=["POST", "GET"])
 def contradictions_check():
     """
@@ -1740,6 +1771,7 @@ def contradictions_check():
         return jsonify({"success": False, "error": f"Detector failed: {e}"}), 500
 
 
+@require_auth
 @app.route("/api/contradictions/latest", methods=["GET"])
 def contradictions_latest():
     """Return the most recent contradictions.json report for a brand (or empty if never run)."""
@@ -1763,6 +1795,7 @@ def contradictions_latest():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@require_auth
 @app.route("/api/performance/inbox", methods=["GET"])
 def performance_inbox():
     """Return current performance_inbox.json (queued, not-yet-ingested entries)."""
@@ -1831,6 +1864,7 @@ def _save_conversation(brand_slug: str, agent_slug: str, history: list) -> None:
         print(f"[dashboard_api] conversation json-save failed: {e}")
 
 
+@require_auth
 @app.route("/api/agents/conversation", methods=["GET"])
 def get_conversation():
     """Return persisted conversation history for a brand+agent pair."""
@@ -2262,6 +2296,7 @@ def agent_group_chat():
     return jsonify({"success": True, "data": {"responses": responses}})
 
 
+@require_auth
 @app.route("/api/agents/request-changes", methods=["POST"])
 def agent_request_changes():
     """Save feedback for an agent, reset its status to idle so it can be re-run."""
@@ -2316,6 +2351,7 @@ def agent_request_changes():
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
+@require_auth
 @app.route("/api/agents/train", methods=["POST"])
 def agent_train():
     body = request.get_json() or {}
@@ -2345,6 +2381,7 @@ def agent_train():
 
 # ── Cost Tracking ─────────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/brands/<brand_slug>/costs", methods=["GET"])
 def brand_costs(brand_slug: str):
     """
@@ -2367,6 +2404,7 @@ def brand_costs(brand_slug: str):
     return jsonify({"success": True, "data": data})
 
 
+@require_auth
 @app.route("/api/brands/<brand_slug>/costs/record", methods=["POST"])
 def record_agent_cost(brand_slug: str):
     """
@@ -2395,6 +2433,7 @@ def record_agent_cost(brand_slug: str):
 
 # ── n8n Webhook Receiver ───────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/webhooks/n8n", methods=["POST"])
 def n8n_webhook():
     """
@@ -2485,6 +2524,7 @@ def n8n_webhook():
 
 # ── Brand Memory API ──────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/brands/<brand_slug>/memory/db", methods=["GET"])
 def get_brand_memory_db(brand_slug: str):
     """Return all stored memory entries from Supabase for a brand (all agents or filtered by agent_slug)."""
@@ -2506,6 +2546,7 @@ def get_brand_memory_db(brand_slug: str):
 
 # ── Brands ────────────────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/brands", methods=["GET"])
 def get_brands():
     # DB-WIRED Step 5 — try Supabase first, fall back to filesystem
@@ -2880,6 +2921,7 @@ def _extract_output_meta(agent_slug: str, data: dict) -> dict:
     return out
 
 
+@require_auth
 @app.route("/api/outputs/pending", methods=["GET"])
 def get_pending_outputs():
     from utils.output_formatter import format_for_notion
@@ -3059,6 +3101,7 @@ def _parse_agent_output_file(filepath: Path) -> dict | None:
         return None
 
 
+@require_auth
 @app.route("/api/agents/output/history", methods=["GET"])
 def get_agent_output_history():
     """Return version history for an agent's outputs. Phase 1 Step 3."""
@@ -3076,6 +3119,7 @@ def get_agent_output_history():
     return jsonify({"success": True, "data": []})
 
 
+@require_auth
 @app.route("/api/agents/output", methods=["GET"])
 def get_agent_output():
     # DB-WIRED Step 5 + Phase 1 Step 3
@@ -3203,6 +3247,7 @@ def get_agent_output():
     })
 
 
+@require_auth
 @app.route("/api/published", methods=["GET"])
 def get_published():
     """Approved + scheduled + published posts across all platforms.
@@ -3292,6 +3337,7 @@ def get_published():
     return jsonify({"success": True, "data": items})
 
 
+@require_auth
 @app.route("/api/outputs/all", methods=["GET"])
 def get_all_outputs():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3471,6 +3517,7 @@ _MIME_MAP: dict[str, str] = {
 }
 
 
+@require_auth
 @app.route("/api/outputs/download/<path:filepath>", methods=["GET"])
 def download_file(filepath):
     """Force-download any output file."""
@@ -3482,6 +3529,7 @@ def download_file(filepath):
                      download_name=fpath.name)
 
 
+@require_auth
 @app.route("/api/outputs/media/<path:filepath>", methods=["GET"])
 def serve_media(filepath):
     """Serve an output file inline (for browser preview — images, video, audio)."""
@@ -3494,6 +3542,7 @@ def serve_media(filepath):
 
 # ── Brand profile / dashboard ─────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/brand/profile", methods=["GET"])
 def get_brand_profile():
     # DB-WIRED Step 5
@@ -3512,6 +3561,7 @@ def get_brand_profile():
     return jsonify({"success": True, "data": data})
 
 
+@require_auth
 @app.route("/api/brand/profile", methods=["POST"])
 def save_brand_profile():
     # DB-WIRED Step 5
@@ -3528,6 +3578,7 @@ def save_brand_profile():
     return jsonify({"success": True, "data": {"message": "Brand profile saved."}})
 
 
+@require_auth
 @app.route("/api/brand/dashboard", methods=["GET"])
 def get_brand_dashboard():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3543,6 +3594,7 @@ def get_brand_dashboard():
 
 # ── Brand Summary ─────────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/brand/summary", methods=["GET"])
 def get_brand_summary():
     """
@@ -3648,6 +3700,7 @@ def get_brand_summary():
 
 # ── Dashboard Output Bundle ───────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/dashboard-output", methods=["GET"])
 def get_dashboard_output():
     from utils.output_formatter import format_scripts, format_calendar, format_strategy
@@ -3679,6 +3732,7 @@ def get_dashboard_output():
 
 # ── Agent Log ─────────────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/ceo/next-agent", methods=["GET"])
 def ceo_next_agent():
     """
@@ -3747,6 +3801,7 @@ def ceo_next_agent():
     }})
 
 
+@require_auth
 @app.route("/api/agents/log", methods=["GET"])
 def get_agent_log():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3764,6 +3819,7 @@ def get_agent_log():
 
 # ── Notion Approval Cards ─────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/notion/cards", methods=["GET"])
 def get_notion_cards():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3777,6 +3833,7 @@ def get_notion_cards():
     return jsonify({"success": True, "data": cards})
 
 
+@require_auth
 @app.route("/api/notion/approve", methods=["POST"])
 def approve_notion_card():
     body = request.get_json() or {}
@@ -3796,6 +3853,7 @@ def approve_notion_card():
     return jsonify({"success": True, "data": {"message": "Approved in Notion"}})
 
 
+@require_auth
 @app.route("/api/notion/reject", methods=["POST"])
 def reject_notion_card():
     body = request.get_json() or {}
@@ -3815,6 +3873,7 @@ def reject_notion_card():
     return jsonify({"success": True, "data": {"message": "Rejected in Notion"}})
 
 
+@require_auth
 @app.route("/api/notion/sync", methods=["GET"])
 def sync_notion_approvals():
     """
@@ -3966,6 +4025,8 @@ def _brain_execute_read_tool(name: str, args: dict) -> dict:
     return {"error": f"Unknown read tool: {name}"}
 
 
+@require_auth
+@rate_limit(max_requests=5, window_seconds=60)
 @app.route("/api/brain/execute", methods=["POST"])
 def brain_execute_proposal():
     """
@@ -4105,6 +4166,8 @@ def _build_brain_brand_summary(brand_slug: str) -> str:
         return f"(failed to load state for {brand_slug}: {e})"
 
 
+@require_auth
+@rate_limit(max_requests=10, window_seconds=60)
 @app.route("/api/brain/chat", methods=["POST"])
 def brain_chat():
     """
@@ -4294,6 +4357,7 @@ def health():
     return jsonify({"success": True, "data": {"status": "GRID CONTROL API running", "port": 5001}})
 
 
+@require_auth
 @app.route("/api/config/keys", methods=["GET"])
 def get_key_status():
     """Returns which API keys are configured (never exposes the keys themselves)."""
@@ -4311,6 +4375,7 @@ def get_key_status():
     }})
 
 
+@require_auth
 @app.route("/api/connections/check", methods=["GET"])
 def check_connections():
     """
@@ -4538,6 +4603,7 @@ def save_connection_token():
 
 # ── Team Standup ──────────────────────────────────────────────────────────────
 
+@require_auth
 @app.route("/api/standup", methods=["POST"])
 def team_standup():
     """Generate a brief team standup summary from session state + recent agent activity."""
@@ -4745,6 +4811,7 @@ def billing_plans():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/billing/subscription", methods=["GET"])
 def billing_get_subscription():
     """Get the active subscription for a brand."""
@@ -4759,6 +4826,8 @@ def billing_get_subscription():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
+@rate_limit(max_requests=3, window_seconds=60)
 @app.route("/api/billing/subscribe", methods=["POST"])
 def billing_subscribe():
     """Create a Razorpay subscription for a brand."""
@@ -4825,6 +4894,7 @@ def billing_subscribe():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/billing/verify", methods=["POST"])
 def billing_verify():
     """Verify subscription payment after Razorpay checkout."""
@@ -4870,6 +4940,7 @@ def billing_verify():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/billing/cancel", methods=["POST"])
 def billing_cancel():
     """Cancel a subscription (at end of billing cycle)."""
@@ -4897,6 +4968,7 @@ def billing_cancel():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/billing/usage", methods=["GET"])
 def billing_usage():
     """Get usage stats for a brand (current month)."""
@@ -4935,6 +5007,7 @@ def billing_usage():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/billing/payments", methods=["GET"])
 def billing_payments():
     """Get payment history for a brand."""
@@ -5025,6 +5098,7 @@ def billing_webhook():
 # REVISION LOOP — Client feedback → agent re-run with constraint
 # ============================================================
 
+@require_auth
 @app.route("/api/outputs/revise", methods=["POST"])
 def output_revise():
     """Request a revision on a rejected/approved output.
@@ -5074,6 +5148,7 @@ def output_revise():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/outputs/revisions", methods=["GET"])
 def output_revisions():
     """Get revision history for a brand."""
@@ -5093,6 +5168,7 @@ def output_revisions():
 # TEAM ROLES — Admin / Editor / Viewer per brand
 # ============================================================
 
+@require_auth
 @app.route("/api/team/members", methods=["GET"])
 def team_members():
     """List team members for a brand."""
@@ -5108,6 +5184,8 @@ def team_members():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
+@rate_limit(max_requests=10, window_seconds=60)
 @app.route("/api/team/invite", methods=["POST"])
 def team_invite():
     """Invite a user to a brand team.
@@ -5154,6 +5232,7 @@ def team_invite():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/team/update-role", methods=["POST"])
 def team_update_role():
     """Update a team member's role.
@@ -5180,6 +5259,7 @@ def team_update_role():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/team/remove", methods=["POST"])
 def team_remove():
     """Remove a team member from a brand.
@@ -5207,6 +5287,7 @@ def team_remove():
 # EMAIL NOTIFICATIONS — Approval alerts
 # ============================================================
 
+@require_auth
 @app.route("/api/notifications/pending-summary", methods=["GET"])
 def notifications_pending_summary():
     """Get count of pending approvals per brand for email digest."""
@@ -5232,6 +5313,7 @@ def notifications_pending_summary():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/notifications/send-digest", methods=["POST"])
 def notifications_send_digest():
     """Send an email digest of pending approvals.
@@ -5291,6 +5373,7 @@ Review them now: {dashboard_url}
 # CONTINUOUS LEARNING — Auto-capture agent patterns per brand
 # ============================================================
 
+@require_auth
 @app.route("/api/learning/capture", methods=["POST"])
 def learning_capture():
     """Capture a learning/pattern from an agent run.
@@ -5337,6 +5420,7 @@ def learning_capture():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/learning/list", methods=["GET"])
 def learning_list():
     """List captured learnings for a brand, optionally filtered by agent."""
@@ -5358,6 +5442,7 @@ def learning_list():
         return jsonify(success=False, error=str(e)), 500
 
 
+@require_auth
 @app.route("/api/learning/stats", methods=["GET"])
 def learning_stats():
     """Get learning stats for a brand — 'your agents learned X things this month'."""
