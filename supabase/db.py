@@ -127,6 +127,104 @@ def get_profile(user_id: str) -> dict | None:
         return None
 
 
+# ── Super Admin ───────────────────────────────────────────────────────────────
+
+def is_super_admin(user_id: str) -> bool:
+    """Check if user has super_admin flag."""
+    try:
+        res = _svc().table("profiles").select("is_super_admin").eq("id", user_id).single().execute()
+        return bool(res.data and res.data.get("is_super_admin"))
+    except Exception:
+        return False
+
+
+def get_all_brands() -> list[dict]:
+    """Return all brands (super admin only)."""
+    try:
+        res = _svc().table("brands").select("*").order("created_at", desc=True).execute()
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_all_brands error: {e}")
+        return []
+
+
+def get_all_brand_members() -> list[dict]:
+    """Return all brand memberships with profile + brand info."""
+    try:
+        res = (
+            _svc().table("brand_members")
+            .select("*, profiles(email, full_name), brands(slug, name)")
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_all_brand_members error: {e}")
+        return []
+
+
+def get_all_subscriptions() -> list[dict]:
+    """Return all subscriptions with plan info."""
+    try:
+        res = (
+            _svc().table("subscriptions")
+            .select("*, billing_plans(name, slug, amount_paise, interval), brands(slug, name)")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_all_subscriptions error: {e}")
+        return []
+
+
+def get_all_payments(limit: int = 50) -> list[dict]:
+    """Return recent payments across all brands."""
+    try:
+        res = (
+            _svc().table("payments")
+            .select("*, brands(slug, name)")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_all_payments error: {e}")
+        return []
+
+
+def get_global_usage_stats(month_start: str) -> list[dict]:
+    """Return usage logs across all brands from month_start."""
+    try:
+        res = (
+            _svc().table("usage_logs")
+            .select("agent_slug, brand_id, model_used, estimated_cost_usd, input_tokens, output_tokens, created_at")
+            .gte("created_at", month_start)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_global_usage_stats error: {e}")
+        return []
+
+
+def get_all_agent_runs(limit: int = 100) -> list[dict]:
+    """Return recent agent runs across all brands."""
+    try:
+        res = (
+            _svc().table("agent_runs")
+            .select("*, brands(slug, name)")
+            .order("started_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_all_agent_runs error: {e}")
+        return []
+
+
 # ── Brands ────────────────────────────────────────────────────────────────────
 
 def upsert_brand(slug: str, name: str, profile_dict: dict) -> dict | None:

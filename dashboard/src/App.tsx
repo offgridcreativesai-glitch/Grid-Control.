@@ -14,6 +14,10 @@ import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { BillingPage } from "@/pages/BillingPage"
 import { TeamPage } from "@/pages/TeamPage"
+import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
+import { AdminClientsPage } from "@/pages/AdminClientsPage"
+import { AdminRevenuePage } from "@/pages/AdminRevenuePage"
+import { AdminSystemPage } from "@/pages/AdminSystemPage"
 import { useAppStore } from "@/store/appStore"
 import { useAuthStore } from "@/store/authStore"
 import { useSSE } from "@/hooks/useSSE"
@@ -117,6 +121,10 @@ export default function App() {
                 <Route path="/billing" element={<BillingPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/system" element={<SystemPage />} />
+                <Route path="/admin" element={<AdminOverviewPage />} />
+                <Route path="/admin/clients" element={<AdminClientsPage />} />
+                <Route path="/admin/revenue" element={<AdminRevenuePage />} />
+                <Route path="/admin/system" element={<AdminSystemPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               </Routes>
             </DashboardLayout>

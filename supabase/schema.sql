@@ -10,6 +10,7 @@ create table if not exists profiles (
   email text,
   full_name text,
   avatar_url text,
+  is_super_admin boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

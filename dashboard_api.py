@@ -152,6 +152,20 @@ def require_brand_access(f):
         return f(*args, **kwargs)
     return decorated
 
+
+def require_super_admin(f):
+    """Decorator — only allows super_admin users. Must be used after require_auth."""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = getattr(request, "user", None)
+        if not user or not _DB_AVAILABLE:
+            return jsonify({"success": False, "error": "Unauthorized"}), 401
+        if not _db.is_super_admin(user["id"]):
+            return jsonify({"success": False, "error": "Admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated
+
 # ── JSON repair utility (ported from offgrid-pdf-api/app.py) ──────────────────
 def escape_literal_newlines_in_strings(json_str: str) -> str:
     """
@@ -5480,6 +5494,233 @@ def learning_stats():
             "this_month": total,
             "all_time": all_time.count if hasattr(all_time, 'count') else len(all_time.data),
             "by_agent": by_agent,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+# ============================================================
+# ADMIN — Super Admin Endpoints (Grid Control owner only)
+# ============================================================
+
+@app.route("/api/admin/check", methods=["GET"])
+@require_auth
+def admin_check():
+    """Check if the current user is a super admin."""
+    user = getattr(request, "user", None)
+    if not user or not _DB_AVAILABLE:
+        return jsonify(success=True, data={"is_admin": False})
+    is_admin = _db.is_super_admin(user["id"])
+    return jsonify(success=True, data={"is_admin": is_admin})
+
+
+@app.route("/api/admin/overview", methods=["GET"])
+@require_auth
+@require_super_admin
+def admin_overview():
+    """Business overview — MRR, client count, costs, agent stats."""
+    try:
+        from datetime import datetime
+        now = datetime.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0).isoformat()
+
+        brands = _db.get_all_brands()
+        subscriptions = _db.get_all_subscriptions()
+        usage = _db.get_global_usage_stats(month_start)
+        payments = _db.get_all_payments(limit=50)
+
+        # MRR from active subscriptions
+        active_subs = [s for s in subscriptions if s.get("status") == "active"]
+        mrr_paise = sum(
+            (s.get("billing_plans") or {}).get("amount_paise", 0)
+            for s in active_subs
+        )
+
+        # Total API cost this month
+        total_cost = sum(float(r.get("estimated_cost_usd", 0)) for r in usage)
+        total_runs = len(usage)
+
+        # Agent breakdown
+        agent_breakdown = {}
+        for r in usage:
+            slug = r.get("agent_slug", "unknown")
+            if slug not in agent_breakdown:
+                agent_breakdown[slug] = {"runs": 0, "cost_usd": 0.0}
+            agent_breakdown[slug]["runs"] += 1
+            agent_breakdown[slug]["cost_usd"] += float(r.get("estimated_cost_usd", 0))
+
+        # Brand breakdown
+        brand_map = {b["id"]: b for b in brands}
+        brand_costs = {}
+        for r in usage:
+            bid = r.get("brand_id", "unknown")
+            bname = (brand_map.get(bid) or {}).get("name", bid[:8])
+            if bname not in brand_costs:
+                brand_costs[bname] = {"runs": 0, "cost_usd": 0.0}
+            brand_costs[bname]["runs"] += 1
+            brand_costs[bname]["cost_usd"] += float(r.get("estimated_cost_usd", 0))
+
+        # Revenue from payments this month
+        month_revenue_paise = sum(
+            p.get("amount_paise", 0)
+            for p in payments
+            if p.get("status") == "captured" and p.get("created_at", "") >= month_start
+        )
+
+        return jsonify(success=True, data={
+            "total_brands": len(brands),
+            "active_subscriptions": len(active_subs),
+            "mrr_paise": mrr_paise,
+            "mrr_inr": round(mrr_paise / 100, 2),
+            "month_revenue_paise": month_revenue_paise,
+            "month_revenue_inr": round(month_revenue_paise / 100, 2),
+            "total_cost_usd": round(total_cost, 4),
+            "total_runs_this_month": total_runs,
+            "agent_breakdown": agent_breakdown,
+            "brand_costs": brand_costs,
+            "profit_margin_pct": round(
+                ((month_revenue_paise / 100 * 0.012) - total_cost) / max(total_cost, 0.01) * 100, 1
+            ) if total_cost > 0 else 0,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/admin/clients", methods=["GET"])
+@require_auth
+@require_super_admin
+def admin_clients():
+    """All brands with owner info, plan, status, costs."""
+    try:
+        from datetime import datetime
+        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0).isoformat()
+
+        brands = _db.get_all_brands()
+        members = _db.get_all_brand_members()
+        subscriptions = _db.get_all_subscriptions()
+        usage = _db.get_global_usage_stats(month_start)
+
+        # Index subscriptions by brand_id
+        sub_by_brand = {}
+        for s in subscriptions:
+            sub_by_brand[s.get("brand_id")] = s
+
+        # Index members by brand_id (find admin/owner)
+        owners_by_brand = {}
+        for m in members:
+            if m.get("role") == "admin":
+                profile = m.get("profiles") or {}
+                owners_by_brand[m.get("brand_id")] = {
+                    "email": profile.get("email", ""),
+                    "name": profile.get("full_name", ""),
+                }
+
+        # Cost by brand this month
+        cost_by_brand = {}
+        for r in usage:
+            bid = r.get("brand_id", "")
+            cost_by_brand[bid] = cost_by_brand.get(bid, 0) + float(r.get("estimated_cost_usd", 0))
+
+        clients = []
+        for b in brands:
+            bid = b["id"]
+            sub = sub_by_brand.get(bid) or {}
+            plan = sub.get("billing_plans") or {}
+            owner = owners_by_brand.get(bid) or {}
+            clients.append({
+                "id": bid,
+                "slug": b["slug"],
+                "name": b["name"],
+                "created_at": b.get("created_at"),
+                "owner_name": owner.get("name", "—"),
+                "owner_email": owner.get("email", "—"),
+                "plan": plan.get("name", "Free"),
+                "plan_amount_paise": plan.get("amount_paise", 0),
+                "subscription_status": sub.get("status", "none"),
+                "cost_usd_this_month": round(cost_by_brand.get(bid, 0), 4),
+            })
+
+        return jsonify(success=True, data=clients)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/admin/revenue", methods=["GET"])
+@require_auth
+@require_super_admin
+def admin_revenue():
+    """Payment history + MRR timeline."""
+    try:
+        payments = _db.get_all_payments(limit=100)
+        subscriptions = _db.get_all_subscriptions()
+
+        active_subs = [s for s in subscriptions if s.get("status") == "active"]
+        mrr_paise = sum(
+            (s.get("billing_plans") or {}).get("amount_paise", 0)
+            for s in active_subs
+        )
+
+        return jsonify(success=True, data={
+            "mrr_paise": mrr_paise,
+            "mrr_inr": round(mrr_paise / 100, 2),
+            "active_subscriptions": len(active_subs),
+            "total_subscriptions": len(subscriptions),
+            "recent_payments": payments,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/admin/system", methods=["GET"])
+@require_auth
+@require_super_admin
+def admin_system():
+    """System health — agent runs, error rates, cost breakdown."""
+    try:
+        runs = _db.get_all_agent_runs(limit=200)
+
+        total = len(runs)
+        errors = sum(1 for r in runs if r.get("status") == "error")
+        successes = sum(1 for r in runs if r.get("status") == "success")
+        running = sum(1 for r in runs if r.get("status") == "running")
+
+        # Cost by model
+        cost_by_model = {}
+        for r in runs:
+            model = r.get("model", "unknown")
+            cost = float(r.get("api_cost_usd", 0) or 0)
+            if model not in cost_by_model:
+                cost_by_model[model] = {"runs": 0, "cost_usd": 0.0}
+            cost_by_model[model]["runs"] += 1
+            cost_by_model[model]["cost_usd"] += cost
+
+        # Recent errors
+        recent_errors = [
+            {
+                "agent": r.get("agent_slug"),
+                "brand": (r.get("brands") or {}).get("name", ""),
+                "error": (r.get("error_message") or "")[:200],
+                "at": r.get("started_at"),
+            }
+            for r in runs if r.get("status") == "error"
+        ][:10]
+
+        total_api_cost = sum(float(r.get("api_cost_usd", 0) or 0) for r in runs)
+        total_fal_cost = sum(float(r.get("fal_cost_usd", 0) or 0) for r in runs)
+        total_apify_cost = sum(float(r.get("apify_cost_usd", 0) or 0) for r in runs)
+
+        return jsonify(success=True, data={
+            "total_runs": total,
+            "successes": successes,
+            "errors": errors,
+            "running": running,
+            "error_rate_pct": round(errors / max(total, 1) * 100, 1),
+            "cost_by_model": cost_by_model,
+            "total_api_cost_usd": round(total_api_cost, 4),
+            "total_fal_cost_usd": round(total_fal_cost, 4),
+            "total_apify_cost_usd": round(total_apify_cost, 4),
+            "total_cost_usd": round(total_api_cost + total_fal_cost + total_apify_cost, 4),
+            "recent_errors": recent_errors,
         })
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
