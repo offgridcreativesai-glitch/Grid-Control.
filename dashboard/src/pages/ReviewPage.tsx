@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X, Edit3, Send, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { Check, X, Send, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import { type PendingApproval } from "@/data/mock";
 import { type Platform } from "@/store/appStore";

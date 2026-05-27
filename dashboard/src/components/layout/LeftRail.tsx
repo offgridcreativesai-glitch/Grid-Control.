@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  Home,
   CheckSquare,
   Calendar,
   BarChart3,

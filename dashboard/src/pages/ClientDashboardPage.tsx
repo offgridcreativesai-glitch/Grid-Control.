@@ -24,7 +24,7 @@ interface QuickAction {
   color: string
 }
 
-function getQuickActions(pendingCount: number, hasCalendar: boolean): QuickAction[] {
+function getQuickActions(pendingCount: number, _hasCalendar: boolean): QuickAction[] {
   const actions: QuickAction[] = [
     {
       label: "Create content plan",
@@ -80,7 +80,7 @@ export function ClientDashboardPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const { data: pending } = usePendingOutputs()
-  const { data: perf } = usePerformanceHistory()
+  const { data: _perf } = usePerformanceHistory()
   const { data: agentStatus } = useAgentStatus()
 
   const pendingCount = pending?.outputs?.length ?? 0
