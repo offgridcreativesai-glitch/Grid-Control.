@@ -13,6 +13,7 @@ import { SystemPage } from "@/pages/SystemPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { BillingPage } from "@/pages/BillingPage"
+import { TeamPage } from "@/pages/TeamPage"
 import { useAppStore } from "@/store/appStore"
 import { useAuthStore } from "@/store/authStore"
 import { useSSE } from "@/hooks/useSSE"
@@ -114,6 +115,7 @@ export default function App() {
                 <Route path="/published" element={<PublishedPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
+                <Route path="/team" element={<TeamPage />} />
                 <Route path="/system" element={<SystemPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               </Routes>

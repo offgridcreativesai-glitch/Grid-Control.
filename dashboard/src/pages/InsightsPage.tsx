@@ -14,6 +14,7 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerformanceHistory } from "@/hooks/useGridApi";
+import { LearningPanel } from "@/components/LearningPanel";
 
 const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"];
 
@@ -315,6 +316,9 @@ export function InsightsPage() {
           </table>
         </div>
       </div>
+
+      {/* Agent Learning */}
+      <LearningPanel />
 
       {/* Patterns */}
       <div className="grid grid-cols-2 gap-6">

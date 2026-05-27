@@ -8,6 +8,7 @@ import {
   BarChart3,
   Settings,
   CreditCard,
+  Users,
   ChevronDown,
   LogOut,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const navItems = [
   { path: "/published", icon: Send, label: "Published" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
   { path: "/billing", icon: CreditCard, label: "Billing" },
+  { path: "/team", icon: Users, label: "Team" },
   { path: "/system", icon: Settings, label: "System" },
 ];
 

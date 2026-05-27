@@ -5021,6 +5021,372 @@ def billing_webhook():
     return jsonify(success=True), 200
 
 
+# ============================================================
+# REVISION LOOP — Client feedback → agent re-run with constraint
+# ============================================================
+
+@app.route("/api/outputs/revise", methods=["POST"])
+def output_revise():
+    """Request a revision on a rejected/approved output.
+    Body: { brand_slug, output_id, feedback, agent_slug }
+    Creates a revision record and queues a re-run with the feedback as constraint.
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    output_id = body.get("output_id", "")
+    feedback = body.get("feedback", "")
+    agent_slug = body.get("agent_slug", "")
+
+    if not brand_slug or not feedback or not agent_slug:
+        return jsonify(success=False, error="brand_slug, agent_slug, and feedback required"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        # Store revision request in audit_log
+        _db._client.table("audit_log").insert({
+            "brand_id": brand_id,
+            "action": "revision_requested",
+            "details": {
+                "output_id": output_id,
+                "agent_slug": agent_slug,
+                "feedback": feedback,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+            },
+        }).execute()
+
+        # Queue agent re-run with feedback constraint
+        _db._client.table("agent_runs").insert({
+            "brand_id": brand_id,
+            "agent_slug": agent_slug,
+            "status": "queued",
+            "config": {
+                "revision": True,
+                "original_output_id": output_id,
+                "constraint": feedback,
+            },
+        }).execute()
+
+        return jsonify(success=True, data={"status": "revision_queued", "agent_slug": agent_slug})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/outputs/revisions", methods=["GET"])
+def output_revisions():
+    """Get revision history for a brand."""
+    brand_slug = request.args.get("brand_slug", "")
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        rows = _db._client.table("audit_log").select("*").eq("brand_id", brand_id).eq("action", "revision_requested").order("created_at", desc=True).limit(20).execute()
+        return jsonify(success=True, data=rows.data)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+# ============================================================
+# TEAM ROLES — Admin / Editor / Viewer per brand
+# ============================================================
+
+@app.route("/api/team/members", methods=["GET"])
+def team_members():
+    """List team members for a brand."""
+    brand_slug = request.args.get("brand_slug", "")
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        rows = _db._client.table("brand_members").select("*, profiles(email, display_name)").eq("brand_id", brand_id).execute()
+        return jsonify(success=True, data=rows.data)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/team/invite", methods=["POST"])
+def team_invite():
+    """Invite a user to a brand team.
+    Body: { brand_slug, email, role }  role = admin | editor | viewer
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    email = body.get("email", "")
+    role = body.get("role", "viewer")
+
+    if not brand_slug or not email:
+        return jsonify(success=False, error="brand_slug and email required"), 400
+    if role not in ("admin", "editor", "viewer"):
+        return jsonify(success=False, error="role must be admin, editor, or viewer"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        # Find user by email
+        profile_rows = _db._client.table("profiles").select("id").eq("email", email).execute()
+        if not profile_rows.data:
+            return jsonify(success=False, error=f"No user found with email {email}"), 404
+
+        user_id = profile_rows.data[0]["id"]
+
+        # Check if already a member
+        existing = _db._client.table("brand_members").select("id").eq("brand_id", brand_id).eq("user_id", user_id).execute()
+        if existing.data:
+            # Update role
+            _db._client.table("brand_members").update({"role": role}).eq("brand_id", brand_id).eq("user_id", user_id).execute()
+            return jsonify(success=True, data={"status": "role_updated", "role": role})
+
+        # Insert new member
+        _db._client.table("brand_members").insert({
+            "brand_id": brand_id,
+            "user_id": user_id,
+            "role": role,
+        }).execute()
+
+        return jsonify(success=True, data={"status": "invited", "role": role})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/team/update-role", methods=["POST"])
+def team_update_role():
+    """Update a team member's role.
+    Body: { brand_slug, user_id, role }
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    user_id = body.get("user_id", "")
+    role = body.get("role", "")
+
+    if not brand_slug or not user_id or not role:
+        return jsonify(success=False, error="brand_slug, user_id, and role required"), 400
+    if role not in ("admin", "editor", "viewer"):
+        return jsonify(success=False, error="role must be admin, editor, or viewer"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        _db._client.table("brand_members").update({"role": role}).eq("brand_id", brand_id).eq("user_id", user_id).execute()
+        return jsonify(success=True, data={"status": "updated", "role": role})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/team/remove", methods=["POST"])
+def team_remove():
+    """Remove a team member from a brand.
+    Body: { brand_slug, user_id }
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    user_id = body.get("user_id", "")
+
+    if not brand_slug or not user_id:
+        return jsonify(success=False, error="brand_slug and user_id required"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        _db._client.table("brand_members").delete().eq("brand_id", brand_id).eq("user_id", user_id).execute()
+        return jsonify(success=True, data={"status": "removed"})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+# ============================================================
+# EMAIL NOTIFICATIONS — Approval alerts
+# ============================================================
+
+@app.route("/api/notifications/pending-summary", methods=["GET"])
+def notifications_pending_summary():
+    """Get count of pending approvals per brand for email digest."""
+    brand_slug = request.args.get("brand_slug", "")
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        rows = _db._client.table("agent_outputs").select("id, agent_slug, created_at").eq("brand_id", brand_id).eq("approval_status", "pending").execute()
+        pending_count = len(rows.data)
+        by_agent = {}
+        for r in rows.data:
+            slug = r.get("agent_slug", "unknown")
+            by_agent[slug] = by_agent.get(slug, 0) + 1
+
+        return jsonify(success=True, data={
+            "pending_count": pending_count,
+            "by_agent": by_agent,
+            "brand_id": brand_id,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/notifications/send-digest", methods=["POST"])
+def notifications_send_digest():
+    """Send an email digest of pending approvals.
+    Body: { brand_slug, recipient_email }
+    Uses Gmail MCP if available, otherwise returns the email content for manual send.
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    recipient = body.get("recipient_email", "")
+
+    if not brand_slug:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        rows = _db._client.table("agent_outputs").select("agent_slug, created_at").eq("brand_id", brand_id).eq("approval_status", "pending").execute()
+        pending_count = len(rows.data)
+
+        if pending_count == 0:
+            return jsonify(success=True, data={"status": "no_pending", "message": "No pending approvals"})
+
+        # Build email content
+        by_agent = {}
+        for r in rows.data:
+            slug = r.get("agent_slug", "unknown")
+            by_agent[slug] = by_agent.get(slug, 0) + 1
+
+        agent_lines = "\n".join([f"  • {slug}: {count} item{'s' if count > 1 else ''}" for slug, count in by_agent.items()])
+        dashboard_url = "https://v0-grid-control-dashboard.vercel.app/review"
+
+        email_subject = f"[Grid Control] {pending_count} items awaiting your approval"
+        email_body = f"""Hi,
+
+You have {pending_count} content item{'s' if pending_count > 1 else ''} waiting for approval in Grid Control:
+
+{agent_lines}
+
+Review them now: {dashboard_url}
+
+— Grid Control AI"""
+
+        return jsonify(success=True, data={
+            "status": "digest_ready",
+            "pending_count": pending_count,
+            "subject": email_subject,
+            "body": email_body,
+            "recipient": recipient,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+# ============================================================
+# CONTINUOUS LEARNING — Auto-capture agent patterns per brand
+# ============================================================
+
+@app.route("/api/learning/capture", methods=["POST"])
+def learning_capture():
+    """Capture a learning/pattern from an agent run.
+    Body: { brand_slug, agent_slug, learning_type, content, source_run_id }
+    learning_type: winning_pattern | dead_pattern | audience_insight | voice_refinement
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    agent_slug = body.get("agent_slug", "")
+    learning_type = body.get("learning_type", "")
+    content = body.get("content", "")
+    source_run_id = body.get("source_run_id", "")
+
+    if not brand_slug or not agent_slug or not content:
+        return jsonify(success=False, error="brand_slug, agent_slug, and content required"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        memory_key = f"{learning_type or 'general'}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        _db._client.table("brand_memory").insert({
+            "brand_id": brand_id,
+            "agent_slug": agent_slug,
+            "memory_key": memory_key,
+            "content": content,
+        }).execute()
+
+        # Also log to audit
+        _db._client.table("audit_log").insert({
+            "brand_id": brand_id,
+            "action": "learning_captured",
+            "details": {
+                "agent_slug": agent_slug,
+                "learning_type": learning_type,
+                "memory_key": memory_key,
+                "source_run_id": source_run_id,
+            },
+        }).execute()
+
+        return jsonify(success=True, data={"status": "captured", "memory_key": memory_key})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/learning/list", methods=["GET"])
+def learning_list():
+    """List captured learnings for a brand, optionally filtered by agent."""
+    brand_slug = request.args.get("brand_slug", "")
+    agent_slug = request.args.get("agent_slug", "")
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        q = _db._client.table("brand_memory").select("*").eq("brand_id", brand_id)
+        if agent_slug:
+            q = q.eq("agent_slug", agent_slug)
+        rows = q.order("created_at", desc=True).limit(50).execute()
+
+        return jsonify(success=True, data=rows.data)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/learning/stats", methods=["GET"])
+def learning_stats():
+    """Get learning stats for a brand — 'your agents learned X things this month'."""
+    brand_slug = request.args.get("brand_slug", "")
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0).isoformat()
+        rows = _db._client.table("brand_memory").select("agent_slug, created_at").eq("brand_id", brand_id).gte("created_at", month_start).execute()
+
+        total = len(rows.data)
+        by_agent = {}
+        for r in rows.data:
+            slug = r.get("agent_slug", "unknown")
+            by_agent[slug] = by_agent.get(slug, 0) + 1
+
+        all_time = _db._client.table("brand_memory").select("id", count="exact").eq("brand_id", brand_id).execute()
+
+        return jsonify(success=True, data={
+            "this_month": total,
+            "all_time": all_time.count if hasattr(all_time, 'count') else len(all_time.data),
+            "by_agent": by_agent,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
 if __name__ == "__main__":
     print("GRID CONTROL Flask API — port 5001")
     app.run(host="0.0.0.0", port=5001, debug=False)
