@@ -7,6 +7,7 @@ import {
   Send,
   BarChart3,
   Settings,
+  CreditCard,
   ChevronDown,
   LogOut,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const navItems = [
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/published", icon: Send, label: "Published" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
+  { path: "/billing", icon: CreditCard, label: "Billing" },
   { path: "/system", icon: Settings, label: "System" },
 ];
 

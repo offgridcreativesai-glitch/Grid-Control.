@@ -16,3 +16,4 @@ google-auth
 google-auth-oauthlib
 fal-client
 playwright
+razorpay
