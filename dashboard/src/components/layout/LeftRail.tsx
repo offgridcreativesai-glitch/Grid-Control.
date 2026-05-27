@@ -11,6 +11,10 @@ import {
   Users,
   ChevronDown,
   LogOut,
+  ShieldCheck,
+  Building2,
+  TrendingUp,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -36,9 +40,16 @@ const navItems = [
   { path: "/system", icon: Settings, label: "System" },
 ];
 
+const adminNavItems = [
+  { path: "/admin", icon: ShieldCheck, label: "Overview" },
+  { path: "/admin/clients", icon: Building2, label: "Clients" },
+  { path: "/admin/revenue", icon: TrendingUp, label: "Revenue" },
+  { path: "/admin/system", icon: Cpu, label: "System" },
+];
+
 export function LeftRail() {
   const { activeBrand, brands, setActiveBrand } = useBrandStore();
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, isSuperAdmin } = useAuthStore();
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -107,6 +118,35 @@ export function LeftRail() {
               </TooltipContent>
             </Tooltip>
           ))}
+
+          {/* Admin section — super_admin only */}
+          {isSuperAdmin && (
+            <>
+              <div className="my-1 w-6 border-t border-border" />
+              {adminNavItems.map((item) => (
+                <Tooltip key={item.path}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+                          isActive
+                            ? "bg-primary/20 text-primary"
+                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                        )
+                      }
+                    >
+                      <item.icon className="h-5 w-5" />
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Admin · {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Sign out + Grid Control Logo */}
