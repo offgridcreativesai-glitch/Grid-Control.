@@ -212,6 +212,43 @@ except Exception as _db_err:
     _DB_AVAILABLE = False
     print(f"[GRID CONTROL] ⚠️  Supabase db.py not loaded: {_db_err}")
 
+# ── Phase 1 — role model, Brain guardrails, cost governance, agent config ──────
+import dashboard_roles as _roles  # noqa: E402
+
+
+def _grid_role_for(user, brand_slug: str) -> str:
+    """Resolve the caller's grid role for a brand. Deny-by-default for unknowns."""
+    if not user or not _DB_AVAILABLE:
+        return _roles.MANAGED_CLIENT
+    try:
+        if _db.is_super_admin(user["id"]):
+            return _roles.OPERATOR
+        brand = _db.get_brand(brand_slug) if brand_slug else None
+        brand_role = _db.check_brand_access(user["id"], brand["id"]) if brand else None
+        return _roles.resolve_grid_role(False, brand_role)
+    except Exception:
+        return _roles.MANAGED_CLIENT
+
+
+def _brain_tokens_used_today(brand_slug: str) -> int:
+    """Sum brain_usage tokens for a brand for the current UTC day. 0 on any failure."""
+    if not (_DB_AVAILABLE and brand_slug):
+        return 0
+    try:
+        from datetime import datetime, timezone
+        start = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00")
+        res = (
+            _db._client.table("brain_usage")
+            .select("input_tokens, output_tokens")
+            .eq("brand_slug", brand_slug)
+            .gte("created_at", start)
+            .execute()
+        )
+        rows = res.data or []
+        return sum((r.get("input_tokens") or 0) + (r.get("output_tokens") or 0) for r in rows)
+    except Exception:
+        return 0
+
 # ── SSE Event Bus — live agent activity stream ────────────────────────────────
 import queue as _queue_mod
 
@@ -235,7 +272,24 @@ def broadcast_event(event_type: str, data: dict) -> None:
 
 @app.route("/api/events", methods=["GET"])
 def sse_events():
-    """Global SSE stream — client subscribes to get live agent activity updates."""
+    """Global SSE stream — client subscribes to get live agent activity updates.
+
+    EventSource cannot set Authorization headers, so auth is via ?token= (Supabase
+    JWT) or ?secret= (legacy dashboard secret). Deny-by-default.
+    """
+    token = request.args.get("token", "")
+    secret = request.args.get("secret", "")
+    authed = False
+    if token and _DB_AVAILABLE:
+        try:
+            authed = bool(_db.verify_jwt(token))
+        except Exception:
+            authed = False
+    if not authed and _DASHBOARD_SECRET and secret == _DASHBOARD_SECRET:
+        authed = True
+    if not authed:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
     q: _queue_mod.Queue = _queue_mod.Queue(maxsize=100)
     with _sse_lock:
         _sse_subscribers.append(q)
@@ -1348,6 +1402,85 @@ def carousel_generate():
 
 # ── DAILY PIPELINE RUN ─────────────────────────────────────────────────────────
 
+def run_daily_pipeline(brand_slug: str) -> None:
+    """Trend Researcher + Data Analyst (parallel) → Trend Sentinel → contradiction
+    detector. Stamps session_state.last_pipeline_run on completion. Module-level so
+    both the HTTP endpoint and the background scheduler reuse it."""
+    def _run_one(agent_name: str, script_rel: str) -> None:
+        if not script_rel:
+            print(f"[daily-run] Skipping {agent_name} — no script path configured")
+            return
+        script_path = BASE_DIR / script_rel
+        if not script_path.exists():
+            print(f"[daily-run] Skipping {agent_name} — script not found: {script_path}")
+            return
+        print(f"[daily-run] Starting: {agent_name} for {brand_slug}")
+        _run_agent_subprocess(str(script_path), brand_slug, agent_name, None)
+        print(f"[daily-run] Completed: {agent_name}")
+
+    # Phase 1: Trend Researcher + Data Analyst in parallel (independent inputs).
+    t_trend = threading.Thread(target=_run_one,
+                               args=("Trend Researcher", AGENT_SCRIPTS.get("Trend Researcher")), daemon=True)
+    t_data = threading.Thread(target=_run_one,
+                              args=("Data Analyst", AGENT_SCRIPTS.get("Data Analyst")), daemon=True)
+    t_trend.start(); t_data.start(); t_trend.join(); t_data.join()
+    print("[daily-run] Phase 1 complete (Trend + Data parallel)")
+
+    # Phase 2: Trend Sentinel — needs trends_live.json from Phase 1.
+    _run_one("Trend Sentinel", AGENT_SCRIPTS.get("Trend Sentinel"))
+
+    # Auto-run contradiction detector at end of pipeline.
+    try:
+        sys.path.insert(0, str(BASE_DIR / "ceo_brain"))
+        from contradiction_detector import detect_contradictions, save_contradictions_report
+        print(f"[daily-run] Running contradiction detector for {brand_slug}...")
+        report = detect_contradictions(brand_slug, project_root=BASE_DIR)
+        save_contradictions_report(brand_slug, report, project_root=BASE_DIR)
+        print(f"[daily-run] Contradictions: {report.get('counts', {})} | blocking: {report.get('blocking', False)}")
+    except Exception as e:
+        print(f"[daily-run] Contradiction check failed: {e}")
+
+    # Stamp last_pipeline_run so the Digest can show freshness.
+    try:
+        ss_path = BRANDS_DIR / brand_slug / "session_state.json"
+        ss = json.loads(ss_path.read_text()) if ss_path.exists() else {}
+        ss["last_pipeline_run"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        ss_path.parent.mkdir(parents=True, exist_ok=True)
+        ss_path.write_text(json.dumps(ss, indent=2))
+    except Exception as e:
+        print(f"[daily-run] Failed to stamp last_pipeline_run: {e}")
+
+
+def _daily_scheduler_loop() -> None:
+    """Opt-in (ENABLE_DAILY_SCHEDULER=1). Runs the daily pipeline once per UTC day for
+    every brand with a directory. Checks hourly; skips brands already run today."""
+    last_run_day: dict[str, str] = {}
+    while True:
+        try:
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if BRANDS_DIR.exists():
+                for bdir in BRANDS_DIR.iterdir():
+                    if not bdir.is_dir():
+                        continue
+                    slug = bdir.name
+                    if last_run_day.get(slug) == today:
+                        continue
+                    print(f"[scheduler] Daily pipeline for {slug} ({today})")
+                    try:
+                        run_daily_pipeline(slug)
+                    except Exception as e:
+                        print(f"[scheduler] pipeline failed for {slug}: {e}")
+                    last_run_day[slug] = today
+        except Exception as e:
+            print(f"[scheduler] loop error: {e}")
+        time.sleep(3600)  # re-check hourly
+
+
+if os.getenv("ENABLE_DAILY_SCHEDULER", "").strip() in ("1", "true", "True"):
+    threading.Thread(target=_daily_scheduler_loop, daemon=True).start()
+    print("[GRID CONTROL] ✅ Daily pipeline scheduler enabled")
+
+
 @rate_limit(max_requests=2, window_seconds=60)
 @app.route("/api/pipeline/daily-run", methods=["POST"])
 @require_auth
@@ -1377,56 +1510,7 @@ def daily_pipeline_run():
         ("Data Analyst",     AGENT_SCRIPTS.get("Data Analyst")),
     ]
 
-    def _run_pipeline():
-        # PARALLELIZATION (May 5 2026): Trend Researcher + Data Analyst are independent
-        # (Trend reads scrape data, Data reads brand metrics — no shared inputs).
-        # Run them in parallel. Trend Sentinel runs AFTER Trend Researcher completes
-        # (it depends on trends_live.json).
-
-        def _run_one(agent_name: str, script_rel: str) -> None:
-            if not script_rel:
-                print(f"[daily-run] Skipping {agent_name} — no script path configured")
-                return
-            script_path = BASE_DIR / script_rel
-            if not script_path.exists():
-                print(f"[daily-run] Skipping {agent_name} — script not found: {script_path}")
-                return
-            print(f"[daily-run] Starting: {agent_name} for {brand_slug}")
-            _run_agent_subprocess(str(script_path), brand_slug, agent_name, None)
-            print(f"[daily-run] Completed: {agent_name}")
-
-        # Phase 1: Trend Researcher + Data Analyst in parallel
-        t_trend = threading.Thread(
-            target=_run_one,
-            args=("Trend Researcher", AGENT_SCRIPTS.get("Trend Researcher")),
-            daemon=True,
-        )
-        t_data = threading.Thread(
-            target=_run_one,
-            args=("Data Analyst", AGENT_SCRIPTS.get("Data Analyst")),
-            daemon=True,
-        )
-        t_trend.start()
-        t_data.start()
-        t_trend.join()
-        t_data.join()
-        print("[daily-run] Phase 1 complete (Trend + Data parallel)")
-
-        # Phase 2: Trend Sentinel — needs trends_live.json from Phase 1
-        _run_one("Trend Sentinel", AGENT_SCRIPTS.get("Trend Sentinel"))
-
-        # BUILD D — Auto-run contradiction detector at end of pipeline
-        try:
-            sys.path.insert(0, str(BASE_DIR / "ceo_brain"))
-            from contradiction_detector import detect_contradictions, save_contradictions_report
-            print(f"[daily-run] Running contradiction detector for {brand_slug}...")
-            report = detect_contradictions(brand_slug, project_root=BASE_DIR)
-            save_contradictions_report(brand_slug, report, project_root=BASE_DIR)
-            print(f"[daily-run] Contradictions: {report.get('counts', {})} | blocking: {report.get('blocking', False)}")
-        except Exception as e:
-            print(f"[daily-run] Contradiction check failed: {e}")
-
-    t = threading.Thread(target=_run_pipeline, daemon=True)
+    t = threading.Thread(target=run_daily_pipeline, args=(brand_slug,), daemon=True)
     t.start()
 
     return jsonify({
@@ -4200,6 +4284,15 @@ def brain_execute_proposal():
     Execute a proposed action AFTER user approval in the UI.
     Body: { kind: 'edit' | 'bash', payload: {...} }
     """
+    # ── Layer-1 hard wall — only an operator with operator-mode ON may execute ───
+    _u = getattr(request, "user", None)
+    _is_super = bool(_DB_AVAILABLE and _u and _db.is_super_admin(_u["id"]))
+    if not _roles.brain_full_tools_allowed(_is_super, _u["id"] if _u else None):
+        return jsonify({
+            "success": False,
+            "error": "Operator mode required. Enable operator mode to run edits/commands."
+        }), 403
+
     body = request.get_json(silent=True) or {}
     kind = body.get("kind")
     payload = body.get("payload") or {}
@@ -4333,10 +4426,9 @@ def _build_brain_brand_summary(brand_slug: str) -> str:
         return f"(failed to load state for {brand_slug}: {e})"
 
 
-@require_auth
-@rate_limit(max_requests=10, window_seconds=60)
 @app.route("/api/brain/chat", methods=["POST"])
 @require_auth
+@rate_limit(max_requests=10, window_seconds=60)
 def brain_chat():
     """
     Embedded Claude chat for The Brain right-rail panel.
@@ -4358,12 +4450,51 @@ def brain_chat():
     if not api_key:
         return jsonify({"success": False, "error": "ANTHROPIC_API_KEY not set"}), 400
 
-    # ── Role detection ────────────────────────────────────────────────────────
+    # ── Role detection (Phase 1) ──────────────────────────────────────────────
+    # is_super  = super-admin (Gaurav).  operator_active = super-admin WITH operator
+    # mode toggled ON → only then are edit/bash tools + off-topic unlocked (D8).
     user = getattr(request, "user", None)
-    is_admin = _DB_AVAILABLE and user and _db.is_super_admin(user["id"])
+    is_super = bool(_DB_AVAILABLE and user and _db.is_super_admin(user["id"]))
+    operator_active = _roles.brain_full_tools_allowed(is_super, user["id"] if user else None)
+    grid_role = _grid_role_for(user, brand_slug)
+    is_admin = operator_active  # capability gate downstream (tools/opus/proposals)
+
+    # ── Layer-2 topical guardrail (cheap pre-check, before the paid model) ─────
+    # Operators in operator mode are exempt; everyone else is held to marketing topics.
+    if not operator_active:
+        last = messages[-1] if messages else {}
+        last_content = last.get("content") if isinstance(last, dict) else None
+        last_text = ""
+        if isinstance(last_content, str):
+            last_text = last_content
+        elif isinstance(last_content, list):
+            last_text = " ".join(
+                b.get("text", "") for b in last_content if isinstance(b, dict) and b.get("type") == "text"
+            )
+        if _roles.is_offtopic(last_text):
+            brand_name = ""
+            try:
+                bp = get_brand_dir(brand_slug) / "brand_profile.json"
+                if bp.exists():
+                    brand_name = json.loads(bp.read_text()).get("brand_name", "")
+            except Exception:
+                pass
+            return jsonify({
+                "success": True,
+                "response": _roles.offtopic_refusal(brand_name),
+                "proposals": [],
+                "refused": True,
+            })
+
+        # ── Cost governance — per-role daily token budget ─────────────────────
+        if brand_slug and _roles.over_token_budget(grid_role, _brain_tokens_used_today(brand_slug)):
+            return jsonify({
+                "success": False,
+                "error": "Daily AI usage limit reached for this brand. Resets at 00:00 UTC."
+            }), 429
 
     # ── Rate limiting for clients (30 messages/hour per brand) ────────────────
-    if not is_admin and brand_slug:
+    if not is_super and brand_slug:
         cache_key = f"brain_rate:{brand_slug}:{user['id'] if user else 'anon'}"
         count = _brain_rate_counts.get(cache_key, {"count": 0, "reset": time.time() + 3600})
         if time.time() > count["reset"]:
@@ -4581,6 +4712,133 @@ def brain_chat():
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── Operator mode toggle (D8 — locked by default, every flip audit-logged) ────
+@app.route("/api/operator-mode", methods=["GET", "POST"])
+@require_auth
+def operator_mode_endpoint():
+    user = getattr(request, "user", None)
+    is_super = bool(_DB_AVAILABLE and user and _db.is_super_admin(user["id"]))
+    if not is_super:
+        return jsonify({"success": False, "error": "Operator mode is available to operators only."}), 403
+    uid = user["id"]
+
+    if request.method == "GET":
+        return jsonify({"success": True, "data": {
+            "on": _roles.operator_mode_on(uid), "user_id": uid,
+        }})
+
+    body = request.get_json(silent=True) or {}
+    on = bool(body.get("on", False))
+    state = _roles.set_operator_mode(uid, on)
+    # Audit every flip (security + trust).
+    if _DB_AVAILABLE:
+        try:
+            _db.log_audit(None, f"operator_mode_{'on' if on else 'off'}", actor=uid,
+                          payload={"on": on})
+        except Exception:
+            pass
+    return jsonify({"success": True, "data": {"on": state["on"]}})
+
+
+# ── Daily Intelligence Digest (cockpit hero) ──────────────────────────────────
+@app.route("/api/digest", methods=["GET"])
+@require_auth
+@require_brand_access
+def get_digest():
+    """Aggregates Trend Sentinel watchlist + new trends + contradictions + last-run
+    timestamps for the command-center hero. Real data only — empty states, never fakes."""
+    brand_slug = request.args.get("brand_slug", "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    bdir = BRANDS_DIR / brand_slug
+
+    def _load(name):
+        p = bdir / name
+        if p.exists():
+            try:
+                return json.loads(p.read_text())
+            except Exception:
+                return None
+        return None
+
+    # Sentinel watchlist → tracked signals (label, day_count, reason).
+    sentinel = _load("trend_sentinel_watchlist.json") or {}
+    sig_map = sentinel.get("signals") or {}
+    signals = []
+    for key, v in sig_map.items() if isinstance(sig_map, dict) else []:
+        if isinstance(v, dict):
+            signals.append({
+                "label": v.get("label") or key,
+                "day_count": v.get("day_count", 0),
+                "reason": v.get("reason", ""),
+                "last_seen": v.get("last_seen", ""),
+            })
+    signals.sort(key=lambda s: s.get("day_count", 0), reverse=True)
+
+    # New trends from trends_live.json.
+    trends_live = _load("trends_live.json") or {}
+    raw_trends = trends_live.get("trends") or trends_live.get("signals") or []
+    trends = []
+    if isinstance(raw_trends, list):
+        for t in raw_trends[:8]:
+            if isinstance(t, dict):
+                trends.append({
+                    "title": t.get("title") or t.get("trend") or t.get("label") or "",
+                    "relevance": t.get("relevance_score") or t.get("relevance") or t.get("score"),
+                    "classification": t.get("classification") or t.get("type") or "",
+                })
+
+    # Contradictions (counts + findings).
+    contra = _load("contradictions.json") or {}
+    contra_counts = contra.get("counts") or {"CRITICAL": 0, "WARNING": 0, "INFO": 0}
+    contra_findings = (contra.get("findings") or [])[:5]
+
+    # Last pipeline / update timestamps.
+    session = _load("session_state.json") or {}
+    last_run = (session.get("last_pipeline_run")
+                or trends_live.get("last_updated")
+                or trends_live.get("generated_at")
+                or sentinel.get("last_updated") or "")
+
+    return jsonify({"success": True, "data": {
+        "brand_slug": brand_slug,
+        "sentinel": {"signals": signals[:10], "tracked_count": len(signals)},
+        "trends": trends,
+        "contradictions": {"counts": contra_counts, "findings": contra_findings,
+                            "blocking": bool(contra.get("blocking"))},
+        "last_pipeline_run": last_run,
+        "has_data": bool(signals or trends or contra_findings),
+    }})
+
+
+# ── Per-brand agent config (which of the 18 agents are on + tuning) ────────────
+@app.route("/api/agent-config", methods=["GET", "PUT"])
+@require_auth
+@require_brand_access
+def agent_config_endpoint():
+    brand_slug = request.args.get("brand_slug", "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+
+    if request.method == "GET":
+        return jsonify({"success": True, "data": _roles.load_agent_config(BASE_DIR, brand_slug)})
+
+    # PUT — only operator or subscriber may change agent config; managed-client cannot.
+    role = getattr(request, "brand_role", None)
+    user = getattr(request, "user", None)
+    is_super = bool(_DB_AVAILABLE and user and _db.is_super_admin(user["id"]))
+    grid_role = _roles.OPERATOR if is_super else _roles.resolve_grid_role(False, role)
+    if grid_role == _roles.MANAGED_CLIENT:
+        return jsonify({"success": False, "error": "Managed clients cannot change agent config."}), 403
+
+    body = request.get_json(silent=True) or {}
+    agents = body.get("agents")
+    if not isinstance(agents, dict):
+        return jsonify({"success": False, "error": "Body must include an 'agents' object."}), 400
+    cfg = _roles.save_agent_config(BASE_DIR, brand_slug, agents)
+    return jsonify({"success": True, "data": cfg})
 
 
 # ── Health + Config ───────────────────────────────────────────────────────────
