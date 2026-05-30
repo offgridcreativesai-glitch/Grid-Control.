@@ -1,16 +1,16 @@
 # Graph Report - offgrid-marketing-os  (2026-05-30)
 
 ## Corpus Check
-- 327 files · ~278,530 words
+- 328 files · ~278,450 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4568 nodes · 7033 edges · 419 communities (352 shown, 67 thin omitted)
+- 4664 nodes · 7126 edges · 411 communities (347 shown, 64 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 50 edges (avg confidence: 0.73)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9f5d8135`
+- Built from commit: `e47bab9a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -253,7 +253,6 @@
 - [[_COMMUNITY_Community 245|Community 245]]
 - [[_COMMUNITY_Community 246|Community 246]]
 - [[_COMMUNITY_Community 247|Community 247]]
-- [[_COMMUNITY_Community 248|Community 248]]
 - [[_COMMUNITY_Community 249|Community 249]]
 - [[_COMMUNITY_Community 250|Community 250]]
 - [[_COMMUNITY_Community 251|Community 251]]
@@ -268,10 +267,8 @@
 - [[_COMMUNITY_Community 260|Community 260]]
 - [[_COMMUNITY_Community 261|Community 261]]
 - [[_COMMUNITY_Community 262|Community 262]]
-- [[_COMMUNITY_Community 263|Community 263]]
 - [[_COMMUNITY_Community 264|Community 264]]
 - [[_COMMUNITY_Community 265|Community 265]]
-- [[_COMMUNITY_Community 266|Community 266]]
 - [[_COMMUNITY_Community 267|Community 267]]
 - [[_COMMUNITY_Community 268|Community 268]]
 - [[_COMMUNITY_Community 269|Community 269]]
@@ -286,10 +283,8 @@
 - [[_COMMUNITY_Community 278|Community 278]]
 - [[_COMMUNITY_Community 279|Community 279]]
 - [[_COMMUNITY_Community 280|Community 280]]
-- [[_COMMUNITY_Community 281|Community 281]]
 - [[_COMMUNITY_Community 282|Community 282]]
 - [[_COMMUNITY_Community 283|Community 283]]
-- [[_COMMUNITY_Community 284|Community 284]]
 - [[_COMMUNITY_Community 285|Community 285]]
 - [[_COMMUNITY_Community 286|Community 286]]
 - [[_COMMUNITY_Community 287|Community 287]]
@@ -310,7 +305,6 @@
 - [[_COMMUNITY_Community 302|Community 302]]
 - [[_COMMUNITY_Community 303|Community 303]]
 - [[_COMMUNITY_Community 304|Community 304]]
-- [[_COMMUNITY_Community 305|Community 305]]
 - [[_COMMUNITY_Community 306|Community 306]]
 - [[_COMMUNITY_Community 307|Community 307]]
 - [[_COMMUNITY_Community 308|Community 308]]
@@ -410,9 +404,7 @@
 - [[_COMMUNITY_Community 402|Community 402]]
 - [[_COMMUNITY_Community 403|Community 403]]
 - [[_COMMUNITY_Community 404|Community 404]]
-- [[_COMMUNITY_Community 405|Community 405]]
 - [[_COMMUNITY_Community 406|Community 406]]
-- [[_COMMUNITY_Community 408|Community 408]]
 - [[_COMMUNITY_Community 409|Community 409]]
 - [[_COMMUNITY_Community 410|Community 410]]
 - [[_COMMUNITY_Community 411|Community 411]]
@@ -435,8 +427,6 @@
 10. `Creative Director Agent` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Trend Researcher — OffGrid Marketing OS Agent ID: 8 | Sequence position: 1 (alwa` --rationale_for--> `Trend Researcher`  [EXTRACTED]
-  agents/trend_researcher.py → .claude/agents/trend-researcher.md
 - `Creative Director — OffGrid Marketing OS Agent ID: 4 | Runs after Script Writer` --rationale_for--> `Creative Director Agent`  [EXTRACTED]
   agents/creative_director.py → .claude/agents/creative-director.md
 - `Website Agent — OffGrid Marketing OS Agent ID: 9 | Runs after Funnel Specialist` --rationale_for--> `Website Agent`  [EXTRACTED]
@@ -445,6 +435,8 @@
   agents/funnel_specialist.py → managed_agents/prompts/funnel_specialist.md
 - `Content Planner — OffGrid Marketing OS Agent ID: 2 | Sequence position: 3 (runs` --rationale_for--> `Content Planner Prompt`  [EXTRACTED]
   agents/content_planner.py → managed_agents/prompts/content_planner.md
+- `Trend Researcher — OffGrid Marketing OS Agent ID: 8 | Sequence position: 1 (alwa` --rationale_for--> `Trend Researcher`  [EXTRACTED]
+  agents/trend_researcher.py → .claude/agents/trend-researcher.md
 
 ## Hyperedges (group relationships)
 - **Daily Pipeline Agent Sequence** — agents_trend_researcher, concept_contradiction_detector, workflows_daily_pipeline [EXTRACTED 1.00]
@@ -466,11 +458,11 @@
 - **6-variant hook A/B/C test** — transcripts_variant_a_safe, transcripts_variant_a_viral, transcripts_variant_b_safe, transcripts_variant_b_viral, transcripts_variant_c_safe, transcripts_variant_c_viral [INFERRED 0.90]
 - **Gaurav pillar video series (S1-S3 + raw recordings)** — transcripts_img_5013_pillar_video, transcripts_img_5015_creator_advice, transcripts_s1_grid_control_origin, transcripts_s2_ai_hallucination_lesson, transcripts_s3_ai_not_threat [INFERRED 0.85]
 
-## Communities (419 total, 67 thin omitted)
+## Communities (411 total, 64 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.04
-Nodes (71): useIsMobile(), cn(), AccordionContent(), AccordionItem(), AccordionTrigger(), Avatar(), AvatarFallback(), AvatarImage() (+63 more)
+Cohesion: 0.02
+Nodes (129): useIsMobile(), cn(), AccordionContent(), AccordionItem(), AccordionTrigger(), Alert(), AlertDescription(), AlertTitle() (+121 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
@@ -481,8 +473,8 @@ Cohesion: 0.03
 Nodes (67): admin_check(), admin_clients(), admin_overview(), admin_revenue(), admin_system(), agent_request_changes(), agent_run_status(), _audit_async() (+59 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.13
-Nodes (38): add_brand_member(), approve_output(), check_brand_access(), create_brand_with_owner(), get_agent_run(), get_all_brand_memory(), get_brand(), get_conversation() (+30 more)
+Cohesion: 0.12
+Nodes (40): add_brand_member(), approve_output(), check_brand_access(), create_brand_with_owner(), get_agent_run(), get_all_brand_members(), get_all_brand_memory(), get_all_subscriptions() (+32 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.04
@@ -501,8 +493,8 @@ Cohesion: 0.08
 Nodes (27): agent_chat(), agent_config_endpoint(), agent_group_chat(), brand_file(), carousel_generate(), contradictions_latest(), delete_brand(), get_conversation() (+19 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.16
-Nodes (23): BrandData, OnboardingPage(), slugify(), Step, Button, ButtonProps, CalendarDayButton(), Card (+15 more)
+Cohesion: 0.09
+Nodes (43): BrandData, OnboardingPage(), slugify(), Step, AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent() (+35 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.12
@@ -517,8 +509,8 @@ Cohesion: 0.11
 Nodes (25): Council, CouncilResult, Path, str, Council Pattern for AutoResearch (Phase 7)  Inspired by Karpathy's LLM Council:, Parse the LLM's review response into a structured CouncilResult., Full council evaluation: build prompt → call Claude → parse → save trace., Save the cross-review scores for auditability. (+17 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.13
-Nodes (21): Trend Researcher, int, Pure deterministic. Reads performance_history.json and returns a flat set of, Filter out posts that look like engagement pods, bought views, or bot-comment-fl, Group top scored posts into named topic clusters using Claude.         Returns d, Write trends_live.json to brands/{slug}/.         This file is read by all downs, Full agent run sequence:         1. Scrape all available data sources         2., Start an Apify actor run. Returns run ID or None on failure. (+13 more)
+Cohesion: 0.06
+Nodes (51): CEO Brain Orchestrator, Trend Researcher, _build_niche_hashtags(), _build_trend_keywords(), _escape_literal_newlines_in_strings(), int, str, Trend Researcher — OffGrid Marketing OS Agent ID: 8 | Sequence position: 1 (alwa (+43 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.12
@@ -577,20 +569,20 @@ Cohesion: 0.13
 Nodes (19): _jaccard(), bool, float, str, Trend Sentinel — OffGrid Marketing OS Agent ID: 16 (NEW) | Sequence position: ru, Returns calendar dict OR empty dict if no calendar exists yet., Returns watchlist dict. Auto-create if missing., Pull today's strongest comparable signals from trends_live.json.         Each si (+11 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.10
-Nodes (19): calendar, upcoming, contradictions_open, _meta, generated_at, generator_version, note, slug (+11 more)
+Cohesion: 0.33
+Nodes (6): voice, blend_directive, cta_style, must, must_not, summary
 
 ### Community 28 - "Community 28"
 Cohesion: 0.12
-Nodes (38): Agent, AGENTS, AgentDef, AgentStatus, BrandProfile, useAgentStatus(), useBrandDashboard(), useConnections() (+30 more)
+Nodes (15): agents_loaded, brand_profile_present, calendar_present, scripts_count, strategy_present, blocking, brand_slug, counts (+7 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.11
 Nodes (34): detect_contradictions(), _flatten_text(), _jaccard(), load_brand_data(), float, Path, str, CEO Brain — Cross-Agent Contradiction Detector (Build D) Per Rule 10 — PURE DETE (+26 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.11
-Nodes (33): LearningPanel(), typeColors, RevisionPanel(), getJson(), postJson(), LearningEntry, LearningStats, useCaptureLearning() (+25 more)
+Cohesion: 0.08
+Nodes (49): LearningPanel(), typeColors, RevisionPanel(), getJson(), postJson(), LearningEntry, LearningStats, useCaptureLearning() (+41 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.14
@@ -625,8 +617,8 @@ Cohesion: 0.20
 Nodes (12): DataAnalyst, _escape_literal_newlines_in_strings(), str, Data Analyst — OffGrid Marketing OS Agent ID: 6 | Runs every week automatically., Read session_state for agent run history and Notion card counts., Check which external APIs are configured., Pull a sample of script writer outputs for hook analysis., 3 variants:         A — Raw metrics summary (what happened)         B — Trend + (+4 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.16
-Nodes (18): CommandPalette(), navItems, Command(), CommandDialog(), CommandEmpty(), CommandGroup(), CommandInput(), CommandItem() (+10 more)
+Cohesion: 0.13
+Nodes (19): AGENTS, CommandPalette(), navItems, Command(), CommandDialog(), CommandEmpty(), CommandGroup(), CommandInput() (+11 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.05
@@ -657,12 +649,12 @@ Cohesion: 0.14
 Nodes (18): CEO Brain — OffGrid Marketing OS Orchestrator. Dynamic router. Session state man, Exception, _get_or_create_database(), NotionAuthError, push_to_notion(), bool, str, NotionPusher — OffGrid Marketing OS Pushes all agent outputs to Notion for human (+10 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.09
-Nodes (28): AdminClient, AdminOverview, AdminRevenue, AdminSystem, useAdminClients(), useAdminOverview(), useAdminRevenue(), useAdminSystem() (+20 more)
+Cohesion: 0.11
+Nodes (27): AdminClient, AdminOverview, AdminRevenue, AdminSystem, useAdminClients(), useAdminOverview(), useAdminRevenue(), useAdminSystem() (+19 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.10
-Nodes (38): ACTIVITY_EVENTS, ActivityEvent, CalendarPost, COMMAND_KPIS, Connection, CONNECTIONS, DEAD_PATTERNS, InsightMetric (+30 more)
+Cohesion: 0.06
+Nodes (86): Agent, ACTIVITY_EVENTS, ActivityEvent, CalendarPost, COMMAND_KPIS, Connection, CONNECTIONS, DEAD_PATTERNS (+78 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.15
@@ -702,7 +694,7 @@ Nodes (27): cta_distribution, comment_gated, dm_request, freebie_offer, link_in_
 
 ### Community 58 - "Community 58"
 Cohesion: 0.07
-Nodes (27): code:bash (mkdir -p graphify-out), code:bash ($(cat graphify-out/.graphify_python) -c "), code:bash (LOCAL_PATH=$(graphify clone <github-url> [--branch <branch>]), code:bash (graphify export obsidian), code:bash (graphify export html  # auto-aggregates to community view if), code:bash (graphify export wiki), code:bash (graphify export neo4j), code:bash (graphify export neo4j --push bolt://localhost:7687 --user ne) (+19 more)
+Nodes (27): code:bash (mkdir -p graphify-out), code:bash ($(cat graphify-out/.graphify_python) -c "), code:bash (LOCAL_PATH=$(graphify clone <github-url> [--branch <branch>]), code:bash (graphify export wiki), code:bash (graphify export neo4j), code:bash (graphify export neo4j --push bolt://localhost:7687 --user ne), code:bash (graphify export svg), code:bash (graphify export graphml) (+19 more)
 
 ### Community 59 - "Community 59"
 Cohesion: 0.12
@@ -713,8 +705,8 @@ Cohesion: 0.08
 Nodes (41): count, examples, pct, count, examples, pct, count, examples (+33 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.20
-Nodes (18): usePerformanceHistory(), DashboardLayout(), DashboardLayoutProps, Message, Proposal, quickActions, TheBrain(), TopBar() (+10 more)
+Cohesion: 0.14
+Nodes (13): code:block1 (Visual direction — non-negotiable:), code:block2 ([Paste global taste guardrails first]), code:block3 ([Paste global taste guardrails first]), code:block4 ([Paste global taste guardrails first]), code:block5 ([Paste global taste guardrails first]), Endpoint map (for Phase 3 wiring — reference only, not used in Claude Design), Global taste guardrails (paste at the top of EVERY screen prompt), Grid Control — Claude Design Brief (Phase 2) (+5 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.12
@@ -761,12 +753,12 @@ Cohesion: 0.18
 Nodes (10): aggregate_handle(), main(), int, ASKGauravAI competitor + reference pattern scrape. Pulls last 30 IG posts from 6, Sync run-and-wait against apify/instagram-scraper., Per-handle pattern stats., run_actor(), summarize_post() (+2 more)
 
 ### Community 73 - "Community 73"
-Cohesion: 0.13
-Nodes (14): CEO Brain Orchestrator, Project Context File, code:block1 (cd /Users/gauravoffgrid/offgrid-marketing-os && claude), code:block2 (# Terminal 1 — Start the Flask backend), code:block3 (offgrid-marketing-os/), Folder map, How to open this window, How to start the dashboard (for testing) (+6 more)
+Cohesion: 0.17
+Nodes (12): bot_comments, bought_views, engagement_pod_signature, quality_gate, bypass_triggered, drop_reasons, dropped, dropped_samples (+4 more)
 
 ### Community 74 - "Community 74"
-Cohesion: 0.20
-Nodes (11): FormControl(), FormDescription(), FormFieldContext, FormFieldContextValue, FormItem(), FormItemContext, FormItemContextValue, FormLabel() (+3 more)
+Cohesion: 0.18
+Nodes (10): content_angles_to_avoid, content_angles_to_pursue, contrarian_opportunities, data_provenance, data_quality_flag, recommendation_reason, recommended_topic, scraped_at (+2 more)
 
 ### Community 75 - "Community 75"
 Cohesion: 0.32
@@ -777,16 +769,16 @@ Cohesion: 0.17
 Nodes (15): Answer Engine Optimization (AEO), Loop Header Format, Agent Pipeline Routing, Locked Visual Direction, Eval Harness (Rule 9), Subagent Orchestration Patterns, Ad Strategist Prompt, Brand Guardian Prompt (+7 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.52
-Nodes (5): ToggleGroup(), ToggleGroupContext, ToggleGroupItem(), Toggle(), toggleVariants
+Cohesion: 0.12
+Nodes (13): Badge(), BadgeProps, badgeVariants, Checkbox(), HoverCard(), HoverCardContent(), HoverCardTrigger(), PopoverContent() (+5 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.12
 Nodes (16): brain_chat(), brain_execute_proposal(), _brain_execute_read_tool(), _brain_safe_path(), _brain_tokens_used_today(), _build_brain_agent_summary(), _build_brain_brand_summary(), _grid_role_for() (+8 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.27
-Nodes (11): float, all_posts(), cta_classify(), hook_extract(), main(), int, str, Mine the scraped 142 posts (5 handles + garyvee when available) for: - Top-engag (+3 more)
+Cohesion: 0.24
+Nodes (12): float, all_posts(), cta_classify(), hook_extract(), main(), float, int, str (+4 more)
 
 ### Community 80 - "Community 80"
 Cohesion: 0.08
@@ -797,12 +789,12 @@ Cohesion: 0.39
 Nodes (8): type_mix, type_mix, type_mix, type_mix, carousel, image, video, type_mix
 
 ### Community 82 - "Community 82"
-Cohesion: 0.15
-Nodes (13): cohort, lifetime_deal, saas, white_label, products, grid_control_future, reporting_project, delivery (+5 more)
+Cohesion: 0.40
+Nodes (5): cohort, lifetime_deal, saas, white_label, grid_control_future
 
 ### Community 83 - "Community 83"
-Cohesion: 0.13
-Nodes (25): price, type, price, type, price, type, price, type (+17 more)
+Cohesion: 0.12
+Nodes (26): price, type, price, type, price, type, price, type (+18 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.18
@@ -869,8 +861,8 @@ Cohesion: 0.43
 Nodes (8): Creative Director Phase B, 12 Hook Patterns (Script Writer), Post 06 — The Real Cost of a 5-Minute AI Build, Post 07 — Assumption Truth Cut: Viral Prompt Context, Post 08 — Close Cut: Finished AI Build vs Tutorial Claims, Post 09 — AI Broke Here, Fixed Manually, Post 10 — Why a Viral Prompt Only Works in Its Context (Carousel), Week 1 Content Theme — AI Honesty / Debunking
 
 ### Community 100 - "Community 100"
-Cohesion: 0.18
-Nodes (14): Strategy Agent, _escape_literal_newlines_in_strings(), _extract_first_json_object(), str, Strategy Agent — OffGrid Marketing OS Agent ID: 1 | Sequence position: 2 (runs a, Load trends_live.json written by Trend Researcher., Write strategy_90day.json to brand directory for downstream agents., Rule 9 — AutoResearch Loop. Rule 10 — Source Citation Enforcement.          Thre (+6 more)
+Cohesion: 0.21
+Nodes (13): Strategy Agent, _escape_literal_newlines_in_strings(), _extract_first_json_object(), str, Strategy Agent — OffGrid Marketing OS Agent ID: 1 | Sequence position: 2 (runs a, Load trends_live.json written by Trend Researcher., Write strategy_90day.json to brand directory for downstream agents., Rule 9 — AutoResearch Loop. Rule 10 — Source Citation Enforcement.          Thre (+5 more)
 
 ### Community 101 - "Community 101"
 Cohesion: 0.14
@@ -933,8 +925,8 @@ Cohesion: 0.47
 Nodes (5): apply_string_rules(), main(), str, ASKGauravAI — humble-positive transformation pass on Week 1 scripts. Pure determ, walk()
 
 ### Community 117 - "Community 117"
-Cohesion: 0.17
-Nodes (20): AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent(), AlertDialogDescription(), AlertDialogFooter(), AlertDialogHeader(), AlertDialogOverlay() (+12 more)
+Cohesion: 0.20
+Nodes (10): thresholds_used, bot_comments_min_sample, bot_comments_short_share_max, bot_comments_short_threshold_chars, bought_views_max_like_view_ratio, bought_views_min_views, engagement_pod_max_comment_like_ratio, engagement_pod_min_likes (+2 more)
 
 ### Community 118 - "Community 118"
 Cohesion: 0.40
@@ -954,7 +946,7 @@ Nodes (20): computation_thresholds, dead_pattern_min_posts, dead_pattern_percent
 
 ### Community 122 - "Community 122"
 Cohesion: 0.15
-Nodes (17): build_source_index(), build_violation_message(), _flatten(), _jaccard(), bool, float, str, Rule 10 — Source Citation Enforcement Shared utility for generation agents (Stra (+9 more)
+Nodes (16): build_source_index(), build_violation_message(), _flatten(), _jaccard(), bool, float, str, Rule 10 — Source Citation Enforcement Shared utility for generation agents (Stra (+8 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.10
@@ -1013,16 +1005,16 @@ Cohesion: 0.17
 Nodes (11): Audio Decision, Cleaned Clips (ready for assembly), Completed Steps, File → Script Section Mapping (confirmed by Gaurav), How to Resume, Key Editing Instructions (from shooting script), PILLAR-FORGE-29MAY — AskGauravAI YouTube Long-Form Edit, Pillar Script Reference (+3 more)
 
 ### Community 138 - "Community 138"
-Cohesion: 0.15
-Nodes (16): ButtonGroup(), ButtonGroupSeparator(), ButtonGroupText(), buttonGroupVariants, Field(), FieldContent(), FieldDescription(), FieldError() (+8 more)
+Cohesion: 0.09
+Nodes (27): ButtonGroup(), ButtonGroupSeparator(), ButtonGroupText(), buttonGroupVariants, Field(), FieldContent(), FieldDescription(), FieldError() (+19 more)
 
 ### Community 139 - "Community 139"
 Cohesion: 0.50
 Nodes (4): accounts, email, instagram_handle, linkedin_url
 
 ### Community 140 - "Community 140"
-Cohesion: 0.12
-Nodes (11): Menubar(), MenubarCheckboxItem(), MenubarContent(), MenubarItem(), MenubarLabel(), MenubarRadioItem(), MenubarSeparator(), MenubarShortcut() (+3 more)
+Cohesion: 0.29
+Nodes (7): provenance_validation, claims_total, claims_validated, engine, fuzzy_match_threshold, missing_citations, passed
 
 ### Community 141 - "Community 141"
 Cohesion: 0.29
@@ -1061,12 +1053,12 @@ Cohesion: 0.67
 Nodes (3): Phase 1: Trust Foundation, Phase 2: Volume Ramp + Grid Control Public, Phase 3: Conversion Engine
 
 ### Community 158 - "Community 158"
-Cohesion: 0.15
-Nodes (13): brand, audience, business_type, founder, handle, industry, name, not_for_audience (+5 more)
+Cohesion: 0.09
+Nodes (21): brand, audience, business_type, founder, handle, industry, name, not_for_audience (+13 more)
 
 ### Community 163 - "Community 163"
 Cohesion: 0.11
-Nodes (18): code:block1 (/graphify                                             # full), code:bash (if [ ! -f graphify-out/.graphify_python ]; then), code:bash (graphify cluster-only .), code:bash ($(cat graphify-out/.graphify_python) -c "), code:bash (python3 -m graphify.watch INPUT_PATH --debounce 3), code:bash (graphify hook install    # install), code:bash (graphify claude install), code:bash (graphify claude uninstall  # remove the section) (+10 more)
+Nodes (18): code:block1 (/graphify                                             # full), code:bash (if [ ! -f graphify-out/.graphify_python ]; then), code:bash (graphify cluster-only .), code:bash (graphify path "NODE_A" "NODE_B"), code:bash ($(cat graphify-out/.graphify_python) -m graphify save-result), code:bash ($(cat graphify-out/.graphify_python) -c "), code:bash (python3 -m graphify.watch INPUT_PATH --debounce 3), code:bash (graphify hook install    # install) (+10 more)
 
 ### Community 172 - "Community 172"
 Cohesion: 0.20
@@ -1081,8 +1073,8 @@ Cohesion: 0.11
 Nodes (18): 1. Capability Eval — does this agent CAN do X?, 2. Regression Eval — did we break what worked?, A. Code-based grader (deterministic), B. Model-based grader (LLM judge), Build status, C. Human grader (flag for review), code:markdown ([CAPABILITY EVAL: <agent>-<feature>]), code:markdown ([REGRESSION EVAL: <agent>]) (+10 more)
 
 ### Community 184 - "Community 184"
-Cohesion: 0.18
-Nodes (12): Item(), ItemActions(), ItemContent(), ItemDescription(), ItemFooter(), ItemGroup(), ItemHeader(), ItemMedia() (+4 more)
+Cohesion: 0.29
+Nodes (7): scrape_status_per_source, google_trends, instagram_brand, instagram_competitors, instagram_hashtags, twitter, youtube_shorts
 
 ### Community 204 - "Community 204"
 Cohesion: 0.09
@@ -1101,8 +1093,8 @@ Cohesion: 0.39
 Nodes (6): BrandGuardian, _escape_literal_newlines_in_strings(), str, Brand Guardian — OffGrid Marketing OS Agent ID: 10 | Sequence: runs after Script, Load strategy + calendar + scripts. Returns dict for prompt injection., _safe_json_loads()
 
 ### Community 208 - "Community 208"
-Cohesion: 0.23
-Nodes (10): _build_niche_hashtags(), _build_trend_keywords(), _escape_literal_newlines_in_strings(), str, Trend Researcher — OffGrid Marketing OS Agent ID: 8 | Sequence position: 1 (alwa, Generate relevant Instagram hashtags from brand profile fields.     Falls back t, Build Google Trends seed keywords from brand profile.     Returns 5 relevant key, Escape literal newline/tab/CR characters that appear inside JSON string     valu (+2 more)
+Cohesion: 0.33
+Nodes (6): competitor_intel, formats_competitors_dominate, gaps_identified, handles_scraped, hashtag_territory_they_own, what_competitors_are_posting
 
 ### Community 209 - "Community 209"
 Cohesion: 0.12
@@ -1125,8 +1117,8 @@ Cohesion: 0.13
 Nodes (14): brand_personality, content_model, cta_style, cta_style_detail, extracted_at, extraction_method, extraction_source, language_directive (+6 more)
 
 ### Community 214 - "Community 214"
-Cohesion: 0.18
-Nodes (6): DrawerContent(), DrawerDescription(), DrawerFooter(), DrawerHeader(), DrawerOverlay(), DrawerTitle()
+Cohesion: 0.40
+Nodes (5): _meta, generated_at, generator_version, note, slug
 
 ### Community 215 - "Community 215"
 Cohesion: 0.14
@@ -1184,17 +1176,13 @@ Nodes (11): Blockers, Competitor Pricing Reference, Grid Control — Client-Read
 Cohesion: 0.17
 Nodes (12): bot_comments, bought_views, engagement_pod_signature, quality_gate, bypass_triggered, drop_reasons, dropped, dropped_samples (+4 more)
 
-### Community 229 - "Community 229"
-Cohesion: 0.18
-Nodes (7): SelectContent(), SelectItem(), SelectLabel(), SelectScrollDownButton(), SelectScrollUpButton(), SelectSeparator(), SelectTrigger()
-
 ### Community 230 - "Community 230"
-Cohesion: 0.29
-Nodes (9): NavigationMenu(), NavigationMenuContent(), NavigationMenuIndicator(), NavigationMenuItem(), NavigationMenuLink(), NavigationMenuList(), NavigationMenuTrigger(), navigationMenuTriggerStyle (+1 more)
+Cohesion: 0.50
+Nodes (4): audience_language, desires_expressed, fears_expressed, phrases_heard_this_week
 
 ### Community 231 - "Community 231"
-Cohesion: 0.42
-Nodes (9): PublishedPost, usePublishedPosts(), formatNumber(), EngagementStat(), formatScheduled(), inferPlatform(), KPIChip(), PLATFORMS (+1 more)
+Cohesion: 0.50
+Nodes (4): google_trends, opportunity, rising_keywords, top_keywords
 
 ### Community 232 - "Community 232"
 Cohesion: 0.18
@@ -1217,16 +1205,16 @@ Cohesion: 0.18
 Nodes (10): Common Research Modes, Competitive Analysis, Investor / Fund Diligence, Market Research, Market Sizing, Output Format, Quality Gate, Research Standards (+2 more)
 
 ### Community 237 - "Community 237"
-Cohesion: 0.29
-Nodes (7): Empty(), EmptyContent(), EmptyDescription(), EmptyHeader(), EmptyMedia(), emptyMediaVariants, EmptyTitle()
+Cohesion: 0.50
+Nodes (4): instagram_trends, sentiment, top_hooks, trending_formats
 
 ### Community 238 - "Community 238"
 Cohesion: 0.18
 Nodes (10): Agent Introspection — 4-Phase Self-Debug, code:markdown (## Failure Capture), code:markdown (## Introspection Report), code:python (try:), How agents invoke this, Phase 1 — Failure Capture, Phase 2 — Root-Cause Diagnosis, Phase 3 — Contained Recovery (+2 more)
 
 ### Community 239 - "Community 239"
-Cohesion: 0.40
-Nodes (4): Constraints (never violate), Experimentation Boundaries, Goal Metric, What to track
+Cohesion: 0.67
+Nodes (3): code:bash (graphify export obsidian), code:bash (graphify export html  # auto-aggregates to community view if), Step 6 - Generate Obsidian vault (opt-in) + HTML
 
 ### Community 240 - "Community 240"
 Cohesion: 0.20
@@ -1253,16 +1241,12 @@ Cohesion: 0.20
 Nodes (9): content_angles_to_avoid, content_angles_to_pursue, contrarian_opportunities, data_provenance, recommendation_reason, recommended_topic, scraped_at, summary (+1 more)
 
 ### Community 246 - "Community 246"
-Cohesion: 0.50
-Nodes (4): Alert(), AlertDescription(), AlertTitle(), alertVariants
+Cohesion: 0.67
+Nodes (3): code:bash (graphify claude install), code:bash (graphify claude uninstall  # remove the section), For native CLAUDE.md integration
 
 ### Community 247 - "Community 247"
 Cohesion: 0.20
 Nodes (10): COMPLETED APRIL 26 — Track 2: Build C — Performance Feedback Loop (closes the learning loop), Cost & Performance, End-to-End Verification (Apr 26), Phase 1A — Performance Tracker Agent (NEW agent ID 17), Phase 1B — Manual-Paste API Endpoints (works while Meta token pending), Phase 2A — Trend Researcher historical_winner_boost, Phase 2B — Script Writer winning/dead hook injection, Phase 2C — Trend Sentinel dead-pattern penalty (+2 more)
-
-### Community 248 - "Community 248"
-Cohesion: 0.40
-Nodes (3): InputOTP(), InputOTPGroup(), InputOTPSlot()
 
 ### Community 249 - "Community 249"
 Cohesion: 0.47
@@ -1321,16 +1305,12 @@ Cohesion: 0.25
 Nodes (7): BRAND SAFETY CHECK (MANDATORY — runs before every asset), NON-NEGOTIABLE RULES, Output Format, VIRAL OPTION RULES, VISUAL DIRECTION FOR OFFGRID, VISUAL PSYCHOLOGY RULES, Your Job
 
 ### Community 264 - "Community 264"
-Cohesion: 0.29
-Nodes (8): grid_control_naming_rule, askgauravai, offgrid_creatives_ai, social_identity_structure, askgauravai, offgrid_creatives_ai, reporting_project, third_gen_tribe
+Cohesion: 0.14
+Nodes (15): grid_control_naming_rule, askgauravai, offgrid_creatives_ai, reporting_project, delivery, name, price_india, social_profile (+7 more)
 
 ### Community 265 - "Community 265"
 Cohesion: 0.52
 Nodes (6): generate_broll(), get_duration(), log(), main(), normalize_clip(), Generate B-roll images via FAL.ai and convert to short video clips.
-
-### Community 266 - "Community 266"
-Cohesion: 0.67
-Nodes (3): Badge(), BadgeProps, badgeVariants
 
 ### Community 267 - "Community 267"
 Cohesion: 0.53
@@ -1384,10 +1364,6 @@ Nodes (8): phase_2, content_focus, days, goal, key_actions, name, primary_platfo
 Cohesion: 0.25
 Nodes (8): phase_3, content_focus, days, goal, key_actions, name, primary_platform, success_gate
 
-### Community 281 - "Community 281"
-Cohesion: 0.83
-Nodes (3): HoverCard(), HoverCardContent(), HoverCardTrigger()
-
 ### Community 282 - "Community 282"
 Cohesion: 0.29
 Nodes (6): ANOMALY DETECTION, CORRELATION REPORTING, METRICS TO TRACK, NON-NEGOTIABLE RULES, Output Format, Your Job
@@ -1395,10 +1371,6 @@ Nodes (6): ANOMALY DETECTION, CORRELATION REPORTING, METRICS TO TRACK, NON-NEGOT
 ### Community 283 - "Community 283"
 Cohesion: 0.29
 Nodes (6): DM STRUCTURE (First message — value only), ICP (Ideal Customer Profile), INTENT SIGNALS TO HUNT FOR, NON-NEGOTIABLE RULES, Output Format, Your Job
-
-### Community 284 - "Community 284"
-Cohesion: 0.67
-Nodes (3): code:bash (graphify path "NODE_A" "NODE_B"), code:bash ($(cat graphify-out/.graphify_python) -m graphify save-result), For /graphify path
 
 ### Community 285 - "Community 285"
 Cohesion: 0.29
@@ -1479,10 +1451,6 @@ Nodes (7): scrape_status_per_source, google_trends, instagram_brand, instagram_c
 ### Community 304 - "Community 304"
 Cohesion: 0.33
 Nodes (5): Output Format, The Contrarian Directive, What You Produce Each Cycle, Your Purpose, Your Rules
-
-### Community 305 - "Community 305"
-Cohesion: 0.67
-Nodes (3): code:bash ($(cat graphify-out/.graphify_python) -c "), code:block7 (Corpus: X files · ~Y words), Step 2 - Detect files
 
 ### Community 306 - "Community 306"
 Cohesion: 0.33
@@ -1812,6 +1780,10 @@ Nodes (6): day_count, first_seen, label, last_seen, reason, gap::lead with ad-sp
 Cohesion: 0.33
 Nodes (6): day_count, first_seen, label, last_seen, reason, gap::own the you do not have to build it positioning in the ai ma
 
+### Community 406 - "Community 406"
+Cohesion: 0.33
+Nodes (4): get_all_brands(), Return all brands (super admin only)., Verify a Supabase JWT and return the user object. None if invalid., verify_jwt()
+
 ### Community 409 - "Community 409"
 Cohesion: 0.50
 Nodes (4): _get_current_user(), get_me(), Return current user profile + their brands. No auth required (returns null if no, Extract and verify user from Authorization header (Bearer <JWT>).     Returns {"
@@ -1825,24 +1797,24 @@ Cohesion: 0.67
 Nodes (3): is_super_admin(), bool, Check if user has super_admin flag.
 
 ## Knowledge Gaps
-- **1925 isolated node(s):** `Response Style (apply to every reply)`, `What This Project Is`, `Active Brands`, `The 18 Agents (Locked Roster)`, `Non-Negotiable Ground Rules` (+1920 more)
+- **2001 isolated node(s):** `int`, `$schema`, `builder`, `startCommand`, `healthcheckPath` (+1996 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **67 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **64 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `CEOBrain` connect `Community 64` to `Community 66`, `Community 68`, `Community 100`, `Community 38`, `Community 71`, `Community 9`, `Community 11`, `Community 12`, `Community 46`, `Community 207`, `Community 208`, `Community 21`, `Community 22`, `Community 26`, `Community 93`?**
-  _High betweenness centrality (0.097) - this node is a cross-community bridge._
-- **Why does `cn()` connect `Community 0` to `Community 263`, `Community 8`, `Community 266`, `Community 138`, `Community 140`, `Community 281`, `Community 28`, `Community 30`, `Community 34`, `Community 36`, `Community 39`, `Community 47`, `Community 48`, `Community 56`, `Community 184`, `Community 61`, `Community 74`, `Community 75`, `Community 77`, `Community 214`, `Community 92`, `Community 229`, `Community 230`, `Community 231`, `Community 237`, `Community 117`, `Community 246`, `Community 248`?**
+- **Why does `CEOBrain` connect `Community 64` to `Community 66`, `Community 68`, `Community 100`, `Community 38`, `Community 71`, `Community 9`, `Community 11`, `Community 12`, `Community 46`, `Community 207`, `Community 21`, `Community 22`, `Community 26`, `Community 93`?**
+  _High betweenness centrality (0.102) - this node is a cross-community bridge._
+- **Why does `cn()` connect `Community 0` to `Community 34`, `Community 36`, `Community 39`, `Community 8`, `Community 138`, `Community 75`, `Community 77`, `Community 47`, `Community 48`, `Community 56`, `Community 92`, `Community 30`?**
   _High betweenness centrality (0.084) - this node is a cross-community bridge._
 - **Why does `push_to_notion()` connect `Community 46` to `Community 33`, `Community 2`, `Community 10`?**
-  _High betweenness centrality (0.079) - this node is a cross-community bridge._
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `str` (e.g. with `BaseAgent` and `base_agent.py`) actually correct?**
   _`str` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Response Style (apply to every reply)`, `What This Project Is`, `Active Brands` to the rest of the system?**
-  _2321 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `int`, `Phase 1 — Role model, Brain guardrails, cost governance, per-brand agent config.`, `Map (super-admin flag, per-brand membership role) → grid role.     Deny-by-defau` to the rest of the system?**
+  _2397 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.04151404151404151 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.02176669484361792 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06210526315789474 - nodes in this community are weakly interconnected._
