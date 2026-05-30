@@ -9,7 +9,8 @@ import {
   Building2,
   TrendingUp,
   Cpu,
-  MessageSquare,
+  LayoutDashboard,
+  Compass,
   Eye,
   ArrowLeftRight,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const clientNavItems = [
-  { path: "/", icon: MessageSquare, label: "The Brain" },
+  { path: "/", icon: LayoutDashboard, label: "Cockpit" },
   { path: "/review", icon: CheckSquare, label: "Review" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
@@ -87,11 +88,15 @@ export function LeftRail() {
                 )}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-muted-foreground">
-              <ChevronDown className="mr-2 h-3 w-3 rotate-[-90deg]" />
-              New brand
-            </DropdownMenuItem>
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-muted-foreground" onClick={() => navigate("/onboarding")}>
+                  <ChevronDown className="mr-2 h-3 w-3 rotate-[-90deg]" />
+                  New brand
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -109,6 +114,30 @@ export function LeftRail() {
 
         {/* Navigation */}
         <div className="flex flex-1 flex-col items-center gap-1">
+          {/* All Brands control tower — owner only, above the per-brand cockpit */}
+          {isSuperAdmin && viewMode === "client" && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to="/brands"
+                    className={({ isActive }) =>
+                      cn(
+                        "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+                        isActive
+                          ? "bg-primary/20 text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                      )
+                    }
+                  >
+                    <Compass className="h-5 w-5" />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right">All Brands</TooltipContent>
+              </Tooltip>
+              <div className="my-1 w-6 border-t border-border" />
+            </>
+          )}
           {navItems.map((item) => (
             <Tooltip key={item.path}>
               <TooltipTrigger asChild>

@@ -4795,6 +4795,20 @@ def get_digest():
     contra_counts = contra.get("counts") or {"CRITICAL": 0, "WARNING": 0, "INFO": 0}
     contra_findings = (contra.get("findings") or [])[:5]
 
+    # Trend Sentinel verdict (PIVOT / TRACK / STAY) — real decision only, never fabricated.
+    decision = _load("pivot_decision.json") or {}
+    verdict = decision.get("overall_decision")
+    if verdict not in ("PIVOT", "TRACK", "STAY"):
+        verdict = None
+    verdict_reason = ""
+    if verdict:
+        per_signal = decision.get("per_signal") or []
+        verdict_reason = (decision.get("reason")
+                          or (decision.get("loop_header") or {}).get("winner")
+                          or (per_signal[0].get("reason") if per_signal and isinstance(per_signal[0], dict) else "")
+                          or "")
+    verdict_at = decision.get("decided_at") or decision.get("run_at") or ""
+
     # Last pipeline / update timestamps.
     session = _load("session_state.json") or {}
     last_run = (session.get("last_pipeline_run")
@@ -4804,6 +4818,9 @@ def get_digest():
 
     return jsonify({"success": True, "data": {
         "brand_slug": brand_slug,
+        "verdict": verdict,
+        "verdict_reason": verdict_reason,
+        "verdict_at": verdict_at,
         "sentinel": {"signals": signals[:10], "tracked_count": len(signals)},
         "trends": trends,
         "contradictions": {"counts": contra_counts, "findings": contra_findings,

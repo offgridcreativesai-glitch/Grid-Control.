@@ -268,3 +268,80 @@ export function useConnections() {
     staleTime: 60_000,
   })
 }
+
+// ── Daily Intelligence Digest (cockpit hero) ──────────────────────────────────
+
+export interface DigestTrend {
+  title: string
+  relevance?: number | null
+  classification?: string
+}
+
+export interface DigestData {
+  brand_slug: string
+  verdict: "PIVOT" | "TRACK" | "STAY" | null
+  verdict_reason: string
+  verdict_at: string
+  sentinel: { signals: { label: string; day_count: number; reason: string }[]; tracked_count: number }
+  trends: DigestTrend[]
+  contradictions: {
+    counts: Record<string, number>
+    findings: any[]
+    blocking: boolean
+  }
+  last_pipeline_run: string
+  has_data: boolean
+}
+
+export function useDigest() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["digest", activeBrand.slug],
+    queryFn: () =>
+      getJson<{ success: boolean; data: DigestData }>(
+        `/api/digest?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 30_000,
+  })
+}
+
+// ── Operator mode (super-admin only — unlocks Brain edit/run, never relaxes approvals) ──
+
+export function useOperatorMode(enabled = true) {
+  return useQuery({
+    queryKey: ["operator-mode"],
+    queryFn: () => getJson<{ success: boolean; data: { on: boolean } }>("/api/operator-mode"),
+    // 403 for non-operators is expected — don't spam retries. Gate with `enabled`
+    // (pass isSuperAdmin) so non-operators never fire the request at all.
+    enabled,
+    retry: false,
+    staleTime: 60_000,
+  })
+}
+
+export function useSetOperatorMode() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (on: boolean) =>
+      postJson<{ success: boolean; data: { on: boolean } }>("/api/operator-mode", { on }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["operator-mode"] }),
+  })
+}
+
+// ── Run the daily pipeline (Trend Researcher → Sentinel → Data Analyst) ──────────
+
+export function useRunDailyPipeline() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: () =>
+      postJson<{ success: boolean; pipeline_run_id?: string }>("/api/pipeline/daily-run", {
+        brand_slug: activeBrand.slug,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["agents", "status"] })
+      qc.invalidateQueries({ queryKey: ["digest"] })
+    },
+  })
+}

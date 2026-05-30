@@ -3,7 +3,9 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { ClientDashboardPage } from "@/pages/ClientDashboardPage"
+import { BrandCockpitPage } from "@/pages/BrandCockpitPage"
+import { AllBrandsPage } from "@/pages/AllBrandsPage"
+import { ClientPortalPage } from "@/pages/ClientPortalPage"
 import { ReviewPage } from "@/pages/ReviewPage"
 import { CalendarPage } from "@/pages/CalendarPage"
 import { InsightsPage } from "@/pages/InsightsPage"
@@ -107,21 +109,26 @@ function AdminGuard({ children }: { children: ReactNode }) {
 
 function OnboardingGuard({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const { data } = useBrands()
-  const { setBrands, setActiveBrand, brands } = useBrandStore()
+  const { data, isLoading } = useBrands()
+  const { setBrands, setActiveBrand } = useBrandStore()
   const { isSuperAdmin } = useAuthStore()
 
   useEffect(() => {
     if (data?.brands && data.brands.length > 0) {
       const mapped = data.brands.map((b) => ({ slug: b.slug, name: b.name, handle: b.handle }))
       setBrands(mapped)
-      if (!brands.find((b) => b.slug === mapped[0].slug)) {
+      // Set active brand only if none is currently selected
+      const current = useBrandStore.getState().activeBrand
+      if (!current || !mapped.find((b) => b.slug === current.slug)) {
         setActiveBrand(mapped[0])
       }
     }
-  }, [data, setBrands, setActiveBrand, brands])
+  }, [data, setBrands, setActiveBrand])
 
   if (isSuperAdmin) return <>{children}</>
+
+  // Don't redirect while still loading brands from API
+  if (isLoading) return null
 
   const hasBrands = (data?.brands?.length ?? 0) > 0
   if (!hasBrands && location.pathname !== "/onboarding") {
@@ -141,12 +148,17 @@ export default function App() {
             <OnboardingGuard>
             <DashboardLayout>
               <Routes>
-                {/* Client routes — accessible to all */}
-                <Route path="/" element={<ClientDashboardPage />} />
+                {/* Brand cockpit — the operator's home for a single brand */}
+                <Route path="/" element={<BrandCockpitPage />} />
                 <Route path="/review" element={<ReviewPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
+                {/* Restricted managed-client portal */}
+                <Route path="/portal" element={<ClientPortalPage />} />
+
+                {/* Owner control tower — super admin only */}
+                <Route path="/brands" element={<AdminGuard><AllBrandsPage /></AdminGuard>} />
 
                 {/* Admin routes — super admin only */}
                 <Route path="/admin" element={<AdminGuard><AdminOverviewPage /></AdminGuard>} />
