@@ -262,6 +262,43 @@ def sse_events():
     )
 
 
+# ── Audit logging middleware ──────────────────────────────────────────────────
+_AUDIT_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+_AUDIT_SKIP_PREFIXES = ("/api/events", "/api/health")
+
+
+def _audit_async(slug, action, actor, payload):
+    """Resolve brand + write audit row off the request thread (best-effort)."""
+    def _w():
+        try:
+            brand_id = None
+            if slug:
+                b = _db.get_brand(slug)
+                brand_id = b.get("id") if b else None
+            _db.log_audit(brand_id, action, actor, payload)
+        except Exception:
+            pass
+    threading.Thread(target=_w, daemon=True).start()
+
+
+@app.after_request
+def _audit_request(response):
+    try:
+        path = request.path or ""
+        if (request.method in _AUDIT_METHODS and _DB_AVAILABLE
+                and not path.startswith(_AUDIT_SKIP_PREFIXES)):
+            user = getattr(request, "user", None) or {}
+            actor = user.get("email") or user.get("id") or "secret"
+            slug = request.args.get("brand_slug")
+            if not slug and request.is_json:
+                slug = (request.get_json(silent=True) or {}).get("brand_slug")
+            _audit_async(slug, f"{request.method} {path}", actor,
+                         {"status": response.status_code})
+    except Exception:
+        pass
+    return response
+
+
 # ── API Key Startup Verification ───────────────────────────────────────────────
 _ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "").strip()
 _ELEVENLABS_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
@@ -1069,8 +1106,8 @@ def get_agents_status():
     return jsonify({"success": True, "data": result})
 
 
-@require_auth
 @app.route("/api/agents/list", methods=["GET"])
+@require_auth
 def get_agents_list():
     return jsonify({"success": True, "data": AGENTS_ENRICHED})
 
@@ -1174,8 +1211,8 @@ def run_agent():
     }})
 
 
-@require_auth
 @app.route("/api/agents/run/status", methods=["GET"])
+@require_auth
 def agent_run_status():
     """
     SSE endpoint. Polls Supabase agent_run row every 2s.
@@ -1595,8 +1632,8 @@ Extract this exact schema:
     return jsonify({"success": True, "data": profile})
 
 
-@require_auth
 @app.route("/api/voice/profile", methods=["GET"])
+@require_auth
 def voice_get_profile():
     """Return voice_profile.json for a brand, or {exists: false} if not created yet."""
     brand_slug = request.args.get("brand_slug", "").strip()
@@ -1692,8 +1729,8 @@ def performance_log_post():
     })
 
 
-@require_auth
 @app.route("/api/performance/history", methods=["GET"])
+@require_auth
 def performance_history():
     """Return current performance_history.json or empty skeleton if not yet computed."""
     brand_slug = request.args.get("brand_slug", "").strip()
@@ -1719,8 +1756,8 @@ def performance_history():
 
 # ── BRAND FILE READER (used by InsightsSpace provenance audit) ───────────────
 
-@require_auth
 @app.route("/api/brand/file", methods=["GET"])
+@require_auth
 def brand_file():
     """
     Read a single JSON file from a brand's directory (whitelisted set only).
@@ -1756,8 +1793,8 @@ def brand_file():
 
 # ── BUILD D — CROSS-AGENT CONTRADICTION DETECTOR ─────────────────────────────
 
-@require_auth
 @app.route("/api/contradictions/check", methods=["POST", "GET"])
+@require_auth
 def contradictions_check():
     """
     Run the cross-agent contradiction detector on a brand's current outputs.
@@ -1798,8 +1835,8 @@ def contradictions_check():
         return jsonify({"success": False, "error": f"Detector failed: {e}"}), 500
 
 
-@require_auth
 @app.route("/api/contradictions/latest", methods=["GET"])
+@require_auth
 def contradictions_latest():
     """Return the most recent contradictions.json report for a brand (or empty if never run)."""
     brand_slug = request.args.get("brand_slug", "").strip()
@@ -1822,8 +1859,8 @@ def contradictions_latest():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@require_auth
 @app.route("/api/performance/inbox", methods=["GET"])
+@require_auth
 def performance_inbox():
     """Return current performance_inbox.json (queued, not-yet-ingested entries)."""
     brand_slug = request.args.get("brand_slug", "").strip()
@@ -1891,8 +1928,8 @@ def _save_conversation(brand_slug: str, agent_slug: str, history: list) -> None:
         print(f"[dashboard_api] conversation json-save failed: {e}")
 
 
-@require_auth
 @app.route("/api/agents/conversation", methods=["GET"])
+@require_auth
 def get_conversation():
     """Return persisted conversation history for a brand+agent pair."""
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -2323,8 +2360,8 @@ def agent_group_chat():
     return jsonify({"success": True, "data": {"responses": responses}})
 
 
-@require_auth
 @app.route("/api/agents/request-changes", methods=["POST"])
+@require_auth
 def agent_request_changes():
     """Save feedback for an agent, reset its status to idle so it can be re-run."""
     body = request.get_json() or {}
@@ -2378,8 +2415,8 @@ def agent_request_changes():
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
-@require_auth
 @app.route("/api/agents/train", methods=["POST"])
+@require_auth
 def agent_train():
     body = request.get_json() or {}
     agent_name  = body.get("agentName", "unknown").strip()
@@ -2408,8 +2445,8 @@ def agent_train():
 
 # ── Cost Tracking ─────────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/brands/<brand_slug>/costs", methods=["GET"])
+@require_auth
 def brand_costs(brand_slug: str):
     """
     Return monthly cost breakdown for a brand.
@@ -2431,8 +2468,8 @@ def brand_costs(brand_slug: str):
     return jsonify({"success": True, "data": data})
 
 
-@require_auth
 @app.route("/api/brands/<brand_slug>/costs/record", methods=["POST"])
+@require_auth
 def record_agent_cost(brand_slug: str):
     """
     Called by agent scripts at end of each run to record token counts.
@@ -2460,8 +2497,8 @@ def record_agent_cost(brand_slug: str):
 
 # ── n8n Webhook Receiver ───────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/webhooks/n8n", methods=["POST"])
+@require_auth
 def n8n_webhook():
     """
     n8n → GRID CONTROL trigger endpoint.
@@ -2551,8 +2588,8 @@ def n8n_webhook():
 
 # ── Brand Memory API ──────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/brands/<brand_slug>/memory/db", methods=["GET"])
+@require_auth
 def get_brand_memory_db(brand_slug: str):
     """Return all stored memory entries from Supabase for a brand (all agents or filtered by agent_slug)."""
     if not _DB_AVAILABLE:
@@ -2573,18 +2610,35 @@ def get_brand_memory_db(brand_slug: str):
 
 # ── Brands ────────────────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/brands", methods=["GET"])
+@require_auth
+@require_auth
 def get_brands():
-    # DB-WIRED Step 5 — try Supabase first, fall back to filesystem
+    """Return brands the current user has access to.
+    Super admins see all brands. Regular users see only their brand_members brands."""
+    user = getattr(request, "user", None)
+    is_super = _DB_AVAILABLE and user and _db.is_super_admin(user["id"])
+
     if _DB_AVAILABLE:
         try:
-            res = _db._client.table("brands").select("slug, name").order("created_at").execute()
+            if is_super:
+                # Super admin sees everything
+                res = _db._client.table("brands").select("slug, name").order("created_at").execute()
+            else:
+                # Regular user: only brands they're a member of
+                user_id = user["id"] if user else None
+                if not user_id:
+                    return jsonify({"brands": []})
+                mem = _db._client.table("brand_members").select("brand_id").eq("user_id", user_id).execute()
+                brand_ids = [m["brand_id"] for m in (mem.data or [])]
+                if not brand_ids:
+                    return jsonify({"brands": []})
+                res = _db._client.table("brands").select("slug, name").in_("id", brand_ids).order("created_at").execute()
             if res.data:
-                return jsonify({"success": True, "data": res.data})
+                return jsonify({"brands": res.data})
         except Exception as e:
             print(f"[dashboard_api] Supabase brands list failed: {e}")
-    return jsonify({"success": True, "data": list_brands()})
+    return jsonify({"brands": list_brands()})
 
 
 @app.route("/api/brands/create", methods=["POST"])
@@ -2948,8 +3002,8 @@ def _extract_output_meta(agent_slug: str, data: dict) -> dict:
     return out
 
 
-@require_auth
 @app.route("/api/outputs/pending", methods=["GET"])
+@require_auth
 def get_pending_outputs():
     from utils.output_formatter import format_for_notion
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3128,8 +3182,8 @@ def _parse_agent_output_file(filepath: Path) -> dict | None:
         return None
 
 
-@require_auth
 @app.route("/api/agents/output/history", methods=["GET"])
+@require_auth
 def get_agent_output_history():
     """Return version history for an agent's outputs. Phase 1 Step 3."""
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3146,8 +3200,8 @@ def get_agent_output_history():
     return jsonify({"success": True, "data": []})
 
 
-@require_auth
 @app.route("/api/agents/output", methods=["GET"])
+@require_auth
 def get_agent_output():
     # DB-WIRED Step 5 + Phase 1 Step 3
     from utils.output_formatter import format_for_notion, format_scripts, format_calendar, format_strategy
@@ -3274,8 +3328,8 @@ def get_agent_output():
     })
 
 
-@require_auth
 @app.route("/api/published", methods=["GET"])
+@require_auth
 def get_published():
     """Approved + scheduled + published posts across all platforms.
 
@@ -3364,8 +3418,8 @@ def get_published():
     return jsonify({"success": True, "data": items})
 
 
-@require_auth
 @app.route("/api/outputs/all", methods=["GET"])
+@require_auth
 def get_all_outputs():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
     brand_dir = get_brand_dir(brand_slug)
@@ -3576,9 +3630,23 @@ def _resolve_output_file(filepath_param: str) -> Path | None:
     """
     import urllib.parse
     decoded = urllib.parse.unquote(filepath_param)
+    # SECURITY: confine to output/visual directories ONLY. A bare startswith(BASE_DIR)
+    # check is insufficient — .env, .git, and source files live under BASE_DIR too and
+    # were downloadable via path params. Build the allowed-roots whitelist explicitly.
+    allowed_roots = [(BASE_DIR / "outputs").resolve()]
+    if BRANDS_DIR.exists():
+        for _bdir in BRANDS_DIR.iterdir():
+            if _bdir.is_dir():
+                allowed_roots.append((_bdir / "outputs").resolve())
+                allowed_roots.append((_bdir / "visuals").resolve())
+    # Reject dotfiles / secrets outright regardless of location
+    if Path(decoded).name.lower().startswith(".env") or ".git" in Path(decoded).parts:
+        return None
     # Try as relative to BASE_DIR first (filepath may already include brands/...)
     candidate = (BASE_DIR / decoded).resolve()
-    if str(candidate).startswith(str(BASE_DIR.resolve())) and candidate.exists():
+    if candidate.is_file() and any(
+        str(candidate).startswith(str(root)) for root in allowed_roots
+    ):
         return candidate
     # Try just the filename across all brand output folders
     fname = Path(decoded).name
@@ -3612,8 +3680,8 @@ _MIME_MAP: dict[str, str] = {
 }
 
 
-@require_auth
 @app.route("/api/outputs/download/<path:filepath>", methods=["GET"])
+@require_auth
 def download_file(filepath):
     """Force-download any output file."""
     fpath = _resolve_output_file(filepath)
@@ -3624,8 +3692,8 @@ def download_file(filepath):
                      download_name=fpath.name)
 
 
-@require_auth
 @app.route("/api/outputs/media/<path:filepath>", methods=["GET"])
+@require_auth
 def serve_media(filepath):
     """Serve an output file inline (for browser preview — images, video, audio)."""
     fpath = _resolve_output_file(filepath)
@@ -3637,8 +3705,8 @@ def serve_media(filepath):
 
 # ── Brand profile / dashboard ─────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/brand/profile", methods=["GET"])
+@require_auth
 def get_brand_profile():
     # DB-WIRED Step 5
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
@@ -3656,8 +3724,8 @@ def get_brand_profile():
     return jsonify({"success": True, "data": data})
 
 
-@require_auth
 @app.route("/api/brand/profile", methods=["POST"])
+@require_auth
 def save_brand_profile():
     # DB-WIRED Step 5
     body = request.get_json()
@@ -3673,8 +3741,8 @@ def save_brand_profile():
     return jsonify({"success": True, "data": {"message": "Brand profile saved."}})
 
 
-@require_auth
 @app.route("/api/brand/dashboard", methods=["GET"])
+@require_auth
 def get_brand_dashboard():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
     brand_dir = get_brand_dir(brand_slug)
@@ -3689,8 +3757,8 @@ def get_brand_dashboard():
 
 # ── Brand Summary ─────────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/brand/summary", methods=["GET"])
+@require_auth
 def get_brand_summary():
     """
     Returns a flat summary card for the Brand Dashboard screen:
@@ -3795,8 +3863,8 @@ def get_brand_summary():
 
 # ── Dashboard Output Bundle ───────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/dashboard-output", methods=["GET"])
+@require_auth
 def get_dashboard_output():
     from utils.output_formatter import format_scripts, format_calendar, format_strategy
 
@@ -3827,8 +3895,8 @@ def get_dashboard_output():
 
 # ── Agent Log ─────────────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/ceo/next-agent", methods=["GET"])
+@require_auth
 def ceo_next_agent():
     """
     Return CEO Brain's recommended next agent and reason.
@@ -3896,8 +3964,8 @@ def ceo_next_agent():
     }})
 
 
-@require_auth
 @app.route("/api/agents/log", methods=["GET"])
+@require_auth
 def get_agent_log():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
     brand_dir = get_brand_dir(brand_slug)
@@ -3914,8 +3982,8 @@ def get_agent_log():
 
 # ── Notion Approval Cards ─────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/notion/cards", methods=["GET"])
+@require_auth
 def get_notion_cards():
     brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
     brand_dir = get_brand_dir(brand_slug)
@@ -3928,8 +3996,8 @@ def get_notion_cards():
     return jsonify({"success": True, "data": cards})
 
 
-@require_auth
 @app.route("/api/notion/approve", methods=["POST"])
+@require_auth
 def approve_notion_card():
     body = request.get_json() or {}
     page_id = body.get("page_id", "")
@@ -3948,8 +4016,8 @@ def approve_notion_card():
     return jsonify({"success": True, "data": {"message": "Approved in Notion"}})
 
 
-@require_auth
 @app.route("/api/notion/reject", methods=["POST"])
+@require_auth
 def reject_notion_card():
     body = request.get_json() or {}
     page_id = body.get("page_id", "")
@@ -3968,8 +4036,8 @@ def reject_notion_card():
     return jsonify({"success": True, "data": {"message": "Rejected in Notion"}})
 
 
-@require_auth
 @app.route("/api/notion/sync", methods=["GET"])
+@require_auth
 def sync_notion_approvals():
     """
     Phase 3 Step 2 — Check Notion for approved pages, sync status back to Supabase.
@@ -4027,6 +4095,9 @@ def sync_notion_approvals():
 
 
 # ── The Brain (Claude chat embedded in GRID CONTROL) ─────────────────────────
+
+# In-memory rate limiting for client Brain chat (resets on server restart)
+_brain_rate_counts: dict = {}
 
 # Tool definitions for Claude — read tools auto-execute, write tools require approval.
 BRAIN_TOOLS_DEF = [
@@ -4123,6 +4194,7 @@ def _brain_execute_read_tool(name: str, args: dict) -> dict:
 @require_auth
 @rate_limit(max_requests=5, window_seconds=60)
 @app.route("/api/brain/execute", methods=["POST"])
+@require_auth
 def brain_execute_proposal():
     """
     Execute a proposed action AFTER user approval in the UI.
@@ -4264,6 +4336,7 @@ def _build_brain_brand_summary(brand_slug: str) -> str:
 @require_auth
 @rate_limit(max_requests=10, window_seconds=60)
 @app.route("/api/brain/chat", methods=["POST"])
+@require_auth
 def brain_chat():
     """
     Embedded Claude chat for The Brain right-rail panel.
@@ -4271,10 +4344,8 @@ def brain_chat():
     Body: { messages: [{role: 'user'|'assistant', content: str}], brand_slug: str }
     Returns: { response: str }
 
-    Read-only context-aware assistant. Has knowledge of brand profile, voice
-    profile, recent agent outputs, calendar. Does NOT have write tool access
-    in v1 — that would bypass the approval pipeline. To make changes, the
-    user runs an agent from the Agents page.
+    Admin: full tools (read_file, propose_edit, propose_bash).
+    Client: brand-only Q&A — no tools, no coding, no off-topic.
     """
     body = request.get_json(silent=True) or {}
     messages = body.get("messages") or []
@@ -4287,29 +4358,67 @@ def brain_chat():
     if not api_key:
         return jsonify({"success": False, "error": "ANTHROPIC_API_KEY not set"}), 400
 
+    # ── Role detection ────────────────────────────────────────────────────────
+    user = getattr(request, "user", None)
+    is_admin = _DB_AVAILABLE and user and _db.is_super_admin(user["id"])
+
+    # ── Rate limiting for clients (30 messages/hour per brand) ────────────────
+    if not is_admin and brand_slug:
+        cache_key = f"brain_rate:{brand_slug}:{user['id'] if user else 'anon'}"
+        count = _brain_rate_counts.get(cache_key, {"count": 0, "reset": time.time() + 3600})
+        if time.time() > count["reset"]:
+            count = {"count": 0, "reset": time.time() + 3600}
+        count["count"] += 1
+        _brain_rate_counts[cache_key] = count
+        if count["count"] > 30:
+            return jsonify({
+                "success": False,
+                "error": "Message limit reached (30/hour). Try again later."
+            }), 429
+
     # Token optimization: load a SLIM brand summary instead of dumping full JSONs.
     # Brain can `read_file` to get full detail when actually needed.
-    use_opus = bool(body.get("use_opus", False))
+    use_opus = bool(body.get("use_opus", False)) and is_admin  # clients never get Opus
     agent_scope = (body.get("agent_scope") or "").strip() or None
     context_block = _build_brain_brand_summary(brand_slug)
     agent_block = _build_brain_agent_summary(brand_slug, agent_scope) if agent_scope else ""
 
-    # Static system instructions — eligible for prompt caching (5-min TTL).
-    system_static = (
-        "You are The Brain — embedded Claude inside GRID CONTROL, a marketing OS.\n"
-        f"Project root: {BASE_DIR}\n\n"
-        "TOOLS:\n"
-        "• read_file(path), list_dir(path) — auto-execute.\n"
-        "• propose_edit(path, old_string, new_string, rationale) — gated, user approves.\n"
-        "• propose_bash(command, rationale) — gated, user approves.\n\n"
-        "RULES:\n"
-        "1. Terse. Founder-grade. No fluff.\n"
-        "2. read_file/list_dir freely — they're free.\n"
-        "3. Any file change or shell command = propose_*. User approves in UI.\n"
-        "4. propose_edit old_string must be unique in the file (executor refuses ambiguous).\n"
-        "5. All paths relative to project root.\n"
-        "6. Default to short answers. Long only when explicitly asked."
-    )
+    # ── System prompt: admin vs client ────────────────────────────────────────
+    if is_admin:
+        system_static = (
+            "You are The Brain — embedded Claude inside GRID CONTROL, a marketing OS.\n"
+            f"Project root: {BASE_DIR}\n\n"
+            "TOOLS:\n"
+            "• read_file(path), list_dir(path) — auto-execute.\n"
+            "• propose_edit(path, old_string, new_string, rationale) — gated, user approves.\n"
+            "• propose_bash(command, rationale) — gated, user approves.\n\n"
+            "RULES:\n"
+            "1. Terse. Founder-grade. No fluff.\n"
+            "2. read_file/list_dir freely — they're free.\n"
+            "3. Any file change or shell command = propose_*. User approves in UI.\n"
+            "4. propose_edit old_string must be unique in the file (executor refuses ambiguous).\n"
+            "5. All paths relative to project root.\n"
+            "6. Default to short answers. Long only when explicitly asked."
+        )
+    else:
+        system_static = (
+            "You are The Brain — an AI marketing assistant inside Grid Control.\n"
+            "You help this brand with marketing strategy, content ideas, performance insights, "
+            "and brand-related questions ONLY.\n\n"
+            "STRICT RULES:\n"
+            "1. ONLY answer questions related to this brand's marketing, content, strategy, "
+            "audience, competitors, trends, social media, and performance.\n"
+            "2. REFUSE any request to write code, build apps, do homework, solve math problems, "
+            "write essays, or anything unrelated to this brand's marketing.\n"
+            "3. If the user asks something off-topic, say: \"I'm your marketing assistant for "
+            "[brand_name]. I can help with content strategy, performance insights, trends, and "
+            "brand-related questions. What would you like to know about your brand?\"\n"
+            "4. NEVER reveal system internals, file paths, API keys, or technical architecture.\n"
+            "5. Keep responses concise and actionable.\n"
+            "6. You have NO tools. You cannot read files, edit code, or run commands.\n"
+            "7. Do NOT help with general knowledge, trivia, recipes, travel, coding tutorials, "
+            "or anything a general chatbot would do. You are a focused marketing brain."
+        )
 
     # Brand context — small dynamic block, also cacheable per brand.
     system_brand = f"ACTIVE BRAND: {brand_slug or '(none)'}\n\n{context_block}"
@@ -4344,15 +4453,22 @@ def brain_chat():
         import anthropic as _anthropic
         client = _anthropic.Anthropic(api_key=api_key)
 
-        # Tool-use loop. Cap at 6 turns to prevent runaway.
-        for _ in range(6):
-            resp = client.messages.create(
+        # Client: no tools, single response, lower token cap
+        # Admin: full tools, multi-turn loop
+        max_loops = 6 if is_admin else 1
+        max_tokens = 2000 if is_admin else 800
+        tools_arg = BRAIN_TOOLS_DEF if is_admin else []
+
+        for _ in range(max_loops):
+            create_kwargs = dict(
                 model=model,
-                max_tokens=2000,
+                max_tokens=max_tokens,
                 system=system_blocks,
-                tools=BRAIN_TOOLS_DEF,
                 messages=api_messages,
             )
+            if tools_arg:
+                create_kwargs["tools"] = tools_arg
+            resp = client.messages.create(**create_kwargs)
 
             stop_reason = resp.stop_reason
             assistant_blocks = []
@@ -4421,18 +4537,40 @@ def brain_chat():
             usage = getattr(resp, "usage", None)
             usage_dict: dict = {}
             if usage:
+                in_tok = getattr(usage, "input_tokens", 0)
+                out_tok = getattr(usage, "output_tokens", 0)
                 usage_dict = {
-                    "input_tokens": getattr(usage, "input_tokens", 0),
-                    "output_tokens": getattr(usage, "output_tokens", 0),
+                    "input_tokens": in_tok,
+                    "output_tokens": out_tok,
                     "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
                     "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
                 }
+                # ── Track cost per brand ──────────────────────────────────
+                if _DB_AVAILABLE and brand_slug:
+                    try:
+                        # Sonnet: $3/M in, $15/M out. Opus: $15/M in, $75/M out.
+                        if "opus" in model:
+                            cost = (in_tok * 15 + out_tok * 75) / 1_000_000
+                        else:
+                            cost = (in_tok * 3 + out_tok * 15) / 1_000_000
+                        _db._client.table("brain_usage").insert({
+                            "brand_slug": brand_slug,
+                            "user_id": user["id"] if user else None,
+                            "model": model,
+                            "input_tokens": in_tok,
+                            "output_tokens": out_tok,
+                            "cost_usd": round(cost, 6),
+                            "is_admin": is_admin,
+                        }).execute()
+                    except Exception as e:
+                        print(f"[brain] cost tracking failed: {e}")
+
             return jsonify({
                 "success": True,
                 "response": text,
-                "proposals": proposals,
+                "proposals": proposals if is_admin else [],  # clients don't see proposals
                 "model": model,
-                "usage": usage_dict,
+                "usage": usage_dict if is_admin else {},  # clients don't see token counts
             })
 
         # Loop cap hit
@@ -4452,8 +4590,8 @@ def health():
     return jsonify({"success": True, "data": {"status": "GRID CONTROL API running", "port": 5001}})
 
 
-@require_auth
 @app.route("/api/config/keys", methods=["GET"])
+@require_auth
 def get_key_status():
     """Returns which API keys are configured (never exposes the keys themselves)."""
     return jsonify({"success": True, "data": {
@@ -4470,8 +4608,8 @@ def get_key_status():
     }})
 
 
-@require_auth
 @app.route("/api/connections/check", methods=["GET"])
+@require_auth
 def check_connections():
     """
     Phase 4 Step 1 — Live connection validator. Each check has a 5s timeout.
@@ -4698,8 +4836,8 @@ def save_connection_token():
 
 # ── Team Standup ──────────────────────────────────────────────────────────────
 
-@require_auth
 @app.route("/api/standup", methods=["POST"])
+@require_auth
 def team_standup():
     """Generate a brief team standup summary from session state + recent agent activity."""
     import anthropic as _anthropic
@@ -4906,8 +5044,8 @@ def billing_plans():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/billing/subscription", methods=["GET"])
+@require_auth
 def billing_get_subscription():
     """Get the active subscription for a brand."""
     brand_id = _resolve_brand_id(request.args.get("brand_slug") or request.args.get("brand_id", ""))
@@ -4924,6 +5062,7 @@ def billing_get_subscription():
 @require_auth
 @rate_limit(max_requests=3, window_seconds=60)
 @app.route("/api/billing/subscribe", methods=["POST"])
+@require_auth
 def billing_subscribe():
     """Create a Razorpay subscription for a brand."""
     if not _razorpay_ok:
@@ -4989,8 +5128,8 @@ def billing_subscribe():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/billing/verify", methods=["POST"])
+@require_auth
 def billing_verify():
     """Verify subscription payment after Razorpay checkout."""
     if not _razorpay_ok:
@@ -5035,8 +5174,8 @@ def billing_verify():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/billing/cancel", methods=["POST"])
+@require_auth
 def billing_cancel():
     """Cancel a subscription (at end of billing cycle)."""
     if not _razorpay_ok:
@@ -5063,8 +5202,8 @@ def billing_cancel():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/billing/usage", methods=["GET"])
+@require_auth
 def billing_usage():
     """Get usage stats for a brand (current month)."""
     brand_id = _resolve_brand_id(request.args.get("brand_slug") or request.args.get("brand_id", ""))
@@ -5102,8 +5241,8 @@ def billing_usage():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/billing/payments", methods=["GET"])
+@require_auth
 def billing_payments():
     """Get payment history for a brand."""
     brand_id = _resolve_brand_id(request.args.get("brand_slug") or request.args.get("brand_id", ""))
@@ -5193,8 +5332,8 @@ def billing_webhook():
 # REVISION LOOP — Client feedback → agent re-run with constraint
 # ============================================================
 
-@require_auth
 @app.route("/api/outputs/revise", methods=["POST"])
+@require_auth
 def output_revise():
     """Request a revision on a rejected/approved output.
     Body: { brand_slug, output_id, feedback, agent_slug }
@@ -5243,8 +5382,8 @@ def output_revise():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/outputs/revisions", methods=["GET"])
+@require_auth
 def output_revisions():
     """Get revision history for a brand."""
     brand_slug = request.args.get("brand_slug", "")
@@ -5263,8 +5402,8 @@ def output_revisions():
 # TEAM ROLES — Admin / Editor / Viewer per brand
 # ============================================================
 
-@require_auth
 @app.route("/api/team/members", methods=["GET"])
+@require_auth
 def team_members():
     """List team members for a brand."""
     brand_slug = request.args.get("brand_slug", "")
@@ -5282,6 +5421,7 @@ def team_members():
 @require_auth
 @rate_limit(max_requests=10, window_seconds=60)
 @app.route("/api/team/invite", methods=["POST"])
+@require_auth
 def team_invite():
     """Invite a user to a brand team.
     Body: { brand_slug, email, role }  role = admin | editor | viewer
@@ -5327,8 +5467,8 @@ def team_invite():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/team/update-role", methods=["POST"])
+@require_auth
 def team_update_role():
     """Update a team member's role.
     Body: { brand_slug, user_id, role }
@@ -5354,8 +5494,8 @@ def team_update_role():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/team/remove", methods=["POST"])
+@require_auth
 def team_remove():
     """Remove a team member from a brand.
     Body: { brand_slug, user_id }
@@ -5382,8 +5522,8 @@ def team_remove():
 # EMAIL NOTIFICATIONS — Approval alerts
 # ============================================================
 
-@require_auth
 @app.route("/api/notifications/pending-summary", methods=["GET"])
+@require_auth
 def notifications_pending_summary():
     """Get count of pending approvals per brand for email digest."""
     brand_slug = request.args.get("brand_slug", "")
@@ -5408,8 +5548,8 @@ def notifications_pending_summary():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/notifications/send-digest", methods=["POST"])
+@require_auth
 def notifications_send_digest():
     """Send an email digest of pending approvals.
     Body: { brand_slug, recipient_email }
@@ -5468,8 +5608,8 @@ Review them now: {dashboard_url}
 # CONTINUOUS LEARNING — Auto-capture agent patterns per brand
 # ============================================================
 
-@require_auth
 @app.route("/api/learning/capture", methods=["POST"])
+@require_auth
 def learning_capture():
     """Capture a learning/pattern from an agent run.
     Body: { brand_slug, agent_slug, learning_type, content, source_run_id }
@@ -5515,8 +5655,8 @@ def learning_capture():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/learning/list", methods=["GET"])
+@require_auth
 def learning_list():
     """List captured learnings for a brand, optionally filtered by agent."""
     brand_slug = request.args.get("brand_slug", "")
@@ -5537,8 +5677,8 @@ def learning_list():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
 @app.route("/api/learning/stats", methods=["GET"])
+@require_auth
 def learning_stats():
     """Get learning stats for a brand — 'your agents learned X things this month'."""
     brand_slug = request.args.get("brand_slug", "")
