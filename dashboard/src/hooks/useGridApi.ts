@@ -329,6 +329,67 @@ export function useSetOperatorMode() {
   })
 }
 
+// ── Instagram publishing (the "agents post it" step) ────────────────────────────
+
+export interface PublishResult {
+  mode: "published" | "prepared"
+  media_id?: string
+  permalink?: string
+  post_id?: string
+  reason?: string
+  slide_urls?: string[]
+  caption?: string
+  note?: string
+}
+
+export function usePublishCheck() {
+  return useQuery({
+    queryKey: ["publish-check"],
+    queryFn: () =>
+      getJson<{ success: boolean; data: { live: boolean; username?: string; account_type?: string; reason?: string } }>(
+        "/api/publish/check",
+      ).then((r) => r.data),
+    staleTime: 60_000,
+    retry: false,
+  })
+}
+
+export function usePublishInstagram() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (filename: string) =>
+      postJson<{ success: boolean; data?: PublishResult; error?: string }>("/api/publish/instagram", {
+        brand_slug: activeBrand.slug,
+        filename,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["published"] })
+    },
+  })
+}
+
+// ── Generate a carousel (synchronous ~30-60s → lands in pending_approval) ────────
+
+export function useGenerateCarousel() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (opts: { topic?: string; post_id?: string; slides?: number; platform?: string }) =>
+      postJson<{ success: boolean; data?: any; error?: string }>("/api/carousel/generate", {
+        brand_slug: activeBrand.slug,
+        topic: opts.topic,
+        post_id: opts.post_id,
+        slides: opts.slides ?? 7,
+        platform: opts.platform ?? "instagram",
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["outputs", "pending"] })
+      qc.invalidateQueries({ queryKey: ["agents", "status"] })
+    },
+  })
+}
+
 // ── Run the daily pipeline (Trend Researcher → Sentinel → Data Analyst) ──────────
 
 export function useRunDailyPipeline() {

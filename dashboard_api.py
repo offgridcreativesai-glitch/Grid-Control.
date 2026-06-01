@@ -1173,6 +1173,14 @@ def run_agent():
     body = request.get_json() or {}
     agent_name = body.get("agentName", "").strip()
     brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    # Accept agent_slug too — the cockpit UI and Brain send kebab slugs
+    # (e.g. "script-writer"), not the human name. Resolve slug → name.
+    if not agent_name:
+        slug_in = (body.get("agent_slug") or "").strip().lower()
+        if slug_in:
+            agent_name = next(
+                (n for n in AGENT_SCRIPTS if _agent_name_to_slug(n) == slug_in), ""
+            )
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
 
@@ -1479,6 +1487,121 @@ def _daily_scheduler_loop() -> None:
 if os.getenv("ENABLE_DAILY_SCHEDULER", "").strip() in ("1", "true", "True"):
     threading.Thread(target=_daily_scheduler_loop, daemon=True).start()
     print("[GRID CONTROL] ✅ Daily pipeline scheduler enabled")
+
+
+# ── Instagram publishing (the "agents post it" step) ──────────────────────────
+
+def _read_output_json(path: Path) -> dict:
+    """Read a brand output file, stripping the LOOP HEADER prefix (split on first
+    '\\n---\\n') before parsing. Never returns raw JSON to the client — callers map it."""
+    raw = path.read_text()
+    body = raw.split("\n---\n", 1)[1] if "\n---\n" in raw else raw
+    return json.loads(body)
+
+
+def _find_carousel_output(brand_dir: Path, filename: str) -> Path | None:
+    """Locate an approved (preferred) or still-pending carousel output by filename."""
+    candidates = [
+        brand_dir / "outputs" / "approved" / filename,
+        brand_dir / "outputs" / "pending_approval" / "carousel-designer" / filename,
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
+
+@app.route("/api/publish/check", methods=["GET"])
+@require_auth
+def publish_check():
+    """Read-only IG token liveness probe — drives auto-publish vs prepare-only."""
+    from publishing.instagram_publisher import token_status
+    token = os.getenv("META_GRAPH_API_TOKEN", "").strip()
+    return jsonify({"success": True, "data": token_status(token)})
+
+
+@app.route("/api/publish/instagram", methods=["POST"])
+@require_auth
+@require_brand_access
+def publish_instagram():
+    """
+    Publish an approved carousel to Instagram. Always hosts the slides publicly first
+    (Instagram fetches images from a URL). If the IG token is live → publishes for real and
+    returns the permalink. If the token is absent/blocked → returns a 'prepared' package
+    (public slide URLs + caption) so the human can post it manually; flips to auto when the
+    token works. Real data only — no fabricated post IDs.
+    """
+    from publishing.instagram_publisher import (
+        upload_slides_to_storage, publish_carousel, token_status,
+    )
+    body = request.get_json(silent=True) or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    filename = (body.get("filename") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    if not filename or "/" in filename or ".." in filename:
+        return jsonify({"success": False, "error": "Valid carousel filename required"}), 400
+
+    brand_dir = BRANDS_DIR / brand_slug
+    src = _find_carousel_output(brand_dir, filename)
+    if not src:
+        return jsonify({"success": False, "error": f"Carousel '{filename}' not found in approved or pending"}), 404
+
+    try:
+        data = _read_output_json(src)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Could not parse carousel output: {e}"}), 500
+
+    slide_paths = data.get("slide_image_paths") or []
+    caption = data.get("post_caption") or data.get("caption") or ""
+    post_id = data.get("post_id") or src.stem
+    if not slide_paths:
+        return jsonify({"success": False, "error": "Carousel has no slide_image_paths to publish"}), 400
+
+    # 1. Host slides publicly (required for IG fetch — and for the manual fallback).
+    try:
+        slide_urls = upload_slides_to_storage(brand_slug, slide_paths, post_id)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Slide hosting failed: {e}"}), 502
+
+    # 2. Decide: auto-publish vs prepare-only based on real token liveness.
+    token = os.getenv("META_GRAPH_API_TOKEN", "").strip()
+    status = token_status(token)
+    if not status.get("live"):
+        return jsonify({"success": True, "data": {
+            "mode": "prepared",
+            "reason": status.get("reason", "token not live"),
+            "slide_urls": slide_urls,
+            "caption": caption,
+            "post_id": post_id,
+            "note": "IG token isn't live yet — slides hosted + caption ready. Post manually, or this auto-publishes once the token works.",
+        }})
+
+    # 3. Publish for real.
+    result = publish_carousel(slide_urls, caption, token)
+    if not result.get("published"):
+        return jsonify({"success": False, "error": "Publish failed", "data": result}), 502
+
+    # 4. Record the published post (best-effort, never blocks the response).
+    try:
+        published_log = brand_dir / "published_posts.json"
+        log = json.loads(published_log.read_text()) if published_log.exists() else []
+        log.append({
+            "post_id": post_id, "platform": "instagram",
+            "media_id": result.get("media_id"), "permalink": result.get("permalink"),
+            "caption": caption, "slide_urls": slide_urls,
+            "published_at": datetime.now().isoformat(),
+        })
+        published_log.write_text(json.dumps(log, indent=2))
+    except Exception:
+        pass
+
+    return jsonify({"success": True, "data": {
+        "mode": "published",
+        "media_id": result.get("media_id"),
+        "permalink": result.get("permalink"),
+        "post_id": post_id,
+    }})
 
 
 @rate_limit(max_requests=2, window_seconds=60)
