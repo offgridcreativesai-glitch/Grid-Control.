@@ -8,10 +8,11 @@ export interface Brand {
   primary?: boolean
 }
 
-// Default brands seed (used until backend response loads)
-const defaultBrands: Brand[] = [
-  { slug: "askgauravai", name: "AskGauravAI", handle: "@askgauravai", primary: true },
-]
+// No hardcoded brand seed — the real brand list comes from /api/brands.
+// activeBrand starts as an empty sentinel (slug "") so brand-scoped queries stay
+// disabled (they guard on activeBrand.slug) until a real brand is onboarded/selected.
+const NO_BRAND: Brand = { slug: "", name: "No brand", handle: "" }
+const defaultBrands: Brand[] = []
 
 interface Message {
   role: "user" | "agent"
@@ -47,7 +48,7 @@ interface BrandStore {
 export const useBrandStore = create<BrandStore>()(
   persist(
     (set) => ({
-      activeBrand: defaultBrands[0],
+      activeBrand: NO_BRAND,
       brands: defaultBrands,
       activeScreen: 1,
       individualHistories: {},

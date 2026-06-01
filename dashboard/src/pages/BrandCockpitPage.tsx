@@ -7,12 +7,10 @@ import { useEffect } from "react"
 import { useBrandStore } from "@/store/brandStore"
 import { useAppStore } from "@/store/appStore"
 import { CockpitRoot } from "@/components/cockpit/primitives"
-import { CarouselComposer } from "@/components/cockpit/CarouselComposer"
 import { DigestModule } from "@/components/cockpit/DigestModule"
 import { BrainPanel } from "@/components/cockpit/BrainPanel"
 import { AgentsModule } from "@/components/cockpit/AgentsModule"
 import { PerformanceModule } from "@/components/cockpit/PerformanceModule"
-import { ReadyToPublish } from "@/components/cockpit/ReadyToPublish"
 import { OperatorToggle } from "@/components/cockpit/OperatorToggle"
 import { brandMark } from "@/lib/cockpitFormat"
 
@@ -50,9 +48,6 @@ export function BrandCockpitPage() {
           <OperatorToggle />
         </div>
 
-        {/* Create bar — generate your first carousel */}
-        <CarouselComposer />
-
         {/* Top zone: Digest | Brain */}
         <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <DigestModule />
@@ -64,9 +59,6 @@ export function BrandCockpitPage() {
           <AgentsModule />
           <PerformanceModule />
         </section>
-
-        {/* Approved carousels → publish to Instagram */}
-        <ReadyToPublish />
       </div>
     </CockpitRoot>
   )
