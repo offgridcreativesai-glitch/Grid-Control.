@@ -370,6 +370,47 @@ BASE_DIR = Path(__file__).parent
 BRANDS_DIR = BASE_DIR / "brands"
 AGENTS_DIR = BASE_DIR / ".claude" / "agents"
 
+
+# ── Per-brand secrets (brands/<slug>/.env) ─────────────────────────────────────
+# Each brand's social/platform tokens live in its own .env, isolated from the
+# global Grid Control .env (infra keys). Brand value wins; global is the fallback.
+from dotenv import dotenv_values as _dotenv_values  # noqa: E402
+
+
+def _brand_env_path(slug: str) -> Path:
+    return BRANDS_DIR / slug / ".env"
+
+
+def brand_env(slug: str) -> dict:
+    """Load a brand's private .env as a dict ({} if none/unreadable)."""
+    p = _brand_env_path(slug)
+    if not slug or not p.exists():
+        return {}
+    try:
+        return {k: (v or "") for k, v in _dotenv_values(p).items()}
+    except Exception:
+        return {}
+
+
+def brand_token(slug: str, env_key: str) -> str:
+    """Resolve a token for a brand: brand .env first, then global env fallback."""
+    val = (brand_env(slug).get(env_key) or "").strip()
+    return val if val else os.getenv(env_key, "").strip()
+
+
+def _write_brand_env_token(slug: str, env_key: str, value: str) -> None:
+    """Upsert key=value into brands/<slug>/.env (creates file/dir if needed)."""
+    p = _brand_env_path(slug)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    content = p.read_text(encoding="utf-8") if p.exists() else ""
+    pattern = re.compile(rf"^{re.escape(env_key)}\s*=.*$", re.MULTILINE)
+    new_line = f"{env_key}={value}"
+    if pattern.search(content):
+        new_content = pattern.sub(new_line, content)
+    else:
+        new_content = content.rstrip("\n") + ("\n" if content else "") + new_line + "\n"
+    p.write_text(new_content, encoding="utf-8")
+
 # Locked roster — exactly 9 agents in pipeline order
 AGENTS = [
     {"id": 0, "name": "Trend Researcher",  "role": "Weekly trends",    "model": "claude-sonnet-4-6", "agentFile": "trend-researcher.md"},
@@ -956,6 +997,8 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
         agent_env["GRID_BRAND_SLUG"] = brand_slug
         # ACTIVE_BRAND is the env var all agent scripts read — must match GRID_BRAND_SLUG
         agent_env["ACTIVE_BRAND"]    = brand_slug
+        # Overlay this brand's private secrets (platform tokens) on top of global env
+        agent_env.update({k: v for k, v in brand_env(brand_slug).items() if v})
         # Ensure local supabase/db.py wins over the installed pip 'supabase' package
         existing_pypath = agent_env.get("PYTHONPATH", "")
         agent_env["PYTHONPATH"] = str(BASE_DIR) + (":" + existing_pypath if existing_pypath else "")
@@ -1373,6 +1416,8 @@ def carousel_generate():
     env = os.environ.copy()
     env["ACTIVE_BRAND"] = brand_slug
     env["GRID_BRAND_SLUG"] = brand_slug
+    # Overlay this brand's private secrets (platform tokens) on top of global env
+    env.update({k: v for k, v in brand_env(brand_slug).items() if v})
 
     try:
         result = subprocess.run(
@@ -5175,8 +5220,211 @@ _PLATFORM_ENV_MAP: dict[str, str] = {
     "youtube":   "YOUTUBE_API_KEY",
     "twitter":   "TWITTER_BEARER_TOKEN",
     "x":         "TWITTER_BEARER_TOKEN",
+    "tiktok":    "TIKTOK_ACCESS_TOKEN",
     "whatsapp":  "WHATSAPP_ACCESS_TOKEN",
 }
+
+# Social platforms surfaced on the per-brand Connections page (in display order).
+_SOCIAL_PLATFORMS = ["instagram", "linkedin", "youtube", "twitter", "tiktok"]
+
+
+def _verify_social(platform: str, token: str) -> dict:
+    """Live-verify one social platform token. Returns {connected, account}.
+    Never raises; never returns the token."""
+    import requests as _req
+    if not token:
+        return {"connected": False, "account": "Not connected"}
+    try:
+        if platform in ("instagram", "meta"):
+            # Instagram Login (IGAA…) tokens validate on graph.instagram.com; classic
+            # Graph tokens on graph.facebook.com. Try both.
+            r = _req.get(f"https://graph.instagram.com/me?fields=username&access_token={token}", timeout=5)
+            if r.status_code == 200:
+                return {"connected": True, "account": "@" + (r.json().get("username") or "")}
+            r = _req.get(f"https://graph.facebook.com/me?fields=name&access_token={token}", timeout=5)
+            if r.status_code == 200:
+                return {"connected": True, "account": r.json().get("name") or "Connected"}
+            return {"connected": False, "account": f"Token invalid ({r.status_code})"}
+        if platform == "linkedin":
+            # OpenID Connect token (openid/profile scopes) → /v2/userinfo
+            r = _req.get("https://api.linkedin.com/v2/userinfo",
+                         headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            if r.status_code == 200:
+                d = r.json()
+                return {"connected": True, "account": d.get("name") or d.get("email") or "Connected"}
+            # Fallback for older r_liteprofile tokens
+            r2 = _req.get("https://api.linkedin.com/v2/me",
+                          headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            if r2.status_code == 200:
+                d = r2.json()
+                name = f"{d.get('localizedFirstName','')} {d.get('localizedLastName','')}".strip()
+                return {"connected": True, "account": name or "Connected"}
+            return {"connected": False, "account": f"Token invalid ({r.status_code})"}
+        if platform == "youtube":
+            r = _req.get(f"https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&access_token={token}", timeout=5)
+            if r.status_code == 200:
+                items = r.json().get("items", [])
+                title = items[0]["snippet"]["title"] if items else "Key valid"
+                return {"connected": True, "account": title}
+            # Fall back to API-key validity probe
+            r2 = _req.get(f"https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=AskGauravAI&key={token}", timeout=5)
+            if r2.status_code == 200:
+                return {"connected": True, "account": "API key valid"}
+            return {"connected": False, "account": f"Invalid ({r.status_code})"}
+        if platform in ("twitter", "x"):
+            r = _req.get("https://api.twitter.com/2/users/me",
+                         headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            if r.status_code == 200:
+                d = r.json().get("data", {})
+                return {"connected": True, "account": "@" + (d.get("username") or d.get("name") or "")}
+            if r.status_code in (403, 429):
+                return {"connected": True, "account": "Token set (Free tier)"}
+            return {"connected": False, "account": f"Token invalid ({r.status_code})"}
+        if platform == "tiktok":
+            r = _req.get("https://open.tiktokapis.com/v2/user/info/?fields=display_name",
+                         headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            if r.status_code == 200:
+                d = r.json().get("data", {}).get("user", {})
+                return {"connected": True, "account": d.get("display_name") or "Connected"}
+            return {"connected": False, "account": f"Token invalid ({r.status_code})"}
+    except Exception as e:
+        return {"connected": False, "account": f"Error: {type(e).__name__}"}
+    return {"connected": bool(token), "account": "Token set"}
+
+
+def _verify_twitter_oauth(benv: dict) -> dict:
+    """Verify X OAuth 1.0a user credentials (post-capable). Returns {connected,
+    account} with a write/read-only note from the x-access-level header."""
+    keys = ["TWITTER_API_KEY", "TWITTER_API_SECRET", "TWITTER_ACCESS_TOKEN", "TWITTER_ACCESS_SECRET"]
+    vals = [(benv.get(k) or "").strip() for k in keys]
+    if not all(vals):
+        return {"connected": False, "account": "OAuth keys incomplete"}
+    try:
+        from requests_oauthlib import OAuth1Session
+        auth = OAuth1Session(*vals)
+        r = auth.get("https://api.twitter.com/1.1/account/verify_credentials.json", timeout=6)
+        if r.status_code == 200:
+            handle = r.json().get("screen_name", "")
+            level = r.headers.get("x-access-level", "")
+            tag = " · write" if "write" in level else " · read-only"
+            return {"connected": True, "account": f"@{handle}{tag}"}
+        return {"connected": False, "account": f"Invalid ({r.status_code})"}
+    except Exception as e:
+        return {"connected": False, "account": f"Error: {type(e).__name__}"}
+
+
+def _verify_youtube_oauth(benv: dict) -> dict:
+    """Verify a YouTube OAuth connection: mint an access token from the refresh
+    token and fetch the channel title. Returns {connected, account}."""
+    import requests as _req
+    refresh = (benv.get("YOUTUBE_REFRESH_TOKEN") or "").strip()
+    cid     = (benv.get("YOUTUBE_CLIENT_ID") or "").strip()
+    secret  = (benv.get("YOUTUBE_CLIENT_SECRET") or "").strip()
+    if not (refresh and cid and secret):
+        return {"connected": False, "account": "OAuth incomplete"}
+    try:
+        tok = _req.post("https://oauth2.googleapis.com/token", data={
+            "client_id": cid, "client_secret": secret,
+            "refresh_token": refresh, "grant_type": "refresh_token",
+        }, timeout=6)
+        if tok.status_code != 200:
+            return {"connected": False, "account": f"Refresh failed ({tok.status_code})"}
+        access = tok.json().get("access_token", "")
+        ch = _req.get(
+            "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
+            headers={"Authorization": f"Bearer {access}"}, timeout=6)
+        if ch.status_code == 200:
+            items = ch.json().get("items", [])
+            title = items[0]["snippet"]["title"] if items else "Connected (no channel)"
+            return {"connected": True, "account": title}
+        return {"connected": False, "account": f"Channel lookup failed ({ch.status_code})"}
+    except Exception as e:
+        return {"connected": False, "account": f"Error: {type(e).__name__}"}
+
+
+@app.route("/api/brands/<slug>/connections", methods=["GET"])
+@require_auth
+def brand_connections(slug: str):
+    """Per-brand social connection status. Reads brand .env tokens and live-verifies
+    each. Never returns raw tokens."""
+    profile = {}
+    pf = BRANDS_DIR / slug / "brand_profile.json"
+    if pf.exists():
+        try:
+            profile = json.loads(pf.read_text())
+        except Exception:
+            profile = {}
+    socials = profile.get("social_handles", {}) or {}
+
+    benv = brand_env(slug)
+    out = []
+    for platform in _SOCIAL_PLATFORMS:
+        env_key = _PLATFORM_ENV_MAP[platform]
+        # Brand-authoritative: only this brand's own .env counts here (no global
+        # fallback) so the page reflects what THIS brand has actually connected.
+        token = (benv.get(env_key) or "").strip()
+
+        # YouTube: OAuth (refresh token) supersedes the read-only API key.
+        if platform == "youtube":
+            yt_refresh = (benv.get("YOUTUBE_REFRESH_TOKEN") or "").strip()
+            if yt_refresh:
+                token = yt_refresh  # marks has_token true
+                status = _verify_youtube_oauth(benv)
+            elif token:
+                status = _verify_social("youtube", token)
+            else:
+                status = {"connected": False, "account": "Not connected"}
+            out.append({
+                "platform": platform, "handle": socials.get("youtube", "") or "",
+                "env_key": env_key, "has_token": bool(token),
+                "connected": status["connected"], "account": status["account"],
+            })
+            continue
+
+        # X/Twitter: OAuth 1.0a (post-capable) supersedes the read-only Bearer.
+        if platform == "twitter":
+            oauth_keys = all((benv.get(k) or "").strip() for k in
+                             ("TWITTER_API_KEY", "TWITTER_API_SECRET",
+                              "TWITTER_ACCESS_TOKEN", "TWITTER_ACCESS_SECRET"))
+            if oauth_keys:
+                token = "oauth1"  # marks has_token true
+                status = _verify_twitter_oauth(benv)
+            elif token:
+                status = _verify_social("twitter", token)
+            else:
+                status = {"connected": False, "account": "Not connected"}
+            out.append({
+                "platform": platform, "handle": socials.get("x", "") or socials.get("twitter", "") or "",
+                "env_key": env_key, "has_token": bool(token),
+                "connected": status["connected"], "account": status["account"],
+            })
+            continue
+
+        status = _verify_social(platform, token) if token else {"connected": False, "account": "Not connected"}
+
+        # LinkedIn: once connected, capture the member URN from the token (server-side
+        # only, never exposed) so member posting works later without manual lookup.
+        if platform == "linkedin" and status.get("connected") and not (benv.get("LINKEDIN_URN") or "").strip():
+            try:
+                import requests as _rq
+                ui = _rq.get("https://api.linkedin.com/v2/userinfo",
+                             headers={"Authorization": f"Bearer {token}"}, timeout=5)
+                sub = ui.json().get("sub", "") if ui.status_code == 200 else ""
+                if sub:
+                    urn = sub if sub.startswith("urn:li:") else f"urn:li:person:{sub}"
+                    _write_brand_env_token(slug, "LINKEDIN_URN", urn)
+            except Exception:
+                pass
+        handle = socials.get("instagram" if platform == "instagram" else platform, "") or ""
+        out.append({
+            "platform":  platform,
+            "handle":    handle,
+            "env_key":   env_key,
+            "has_token": bool(token),
+            "connected": status["connected"],
+            "account":   status["account"],
+        })
+    return jsonify({"success": True, "data": out})
 
 _ENV_FILE = BASE_DIR / ".env"
 
@@ -5201,13 +5449,19 @@ def _write_env_token(env_key: str, value: str) -> None:
 @require_auth
 def save_connection_token():
     """
-    Persist a platform API token to .env and reload it immediately.
-    Body: { "platform": "instagram"|"linkedin"|"youtube"|"twitter"|"whatsapp",
-            "token": "<token value>" }
+    Persist a platform API token to a brand's private .env (brands/<slug>/.env).
+    Body: { "brand_slug": "<slug>",
+            "platform": "instagram"|"linkedin"|"youtube"|"twitter"|"tiktok"|"whatsapp",
+            "token": "<token value>",
+            "extra": { "IG_USER_ID": "...", "LINKEDIN_URN": "..." }  # optional secondary keys
+    }
+    Falls back to global .env when no brand_slug is given (back-compat).
     """
-    body     = request.get_json() or {}
-    platform = (body.get("platform") or "").strip().lower()
-    token    = (body.get("token")    or "").strip()
+    body       = request.get_json() or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    platform   = (body.get("platform") or "").strip().lower()
+    token      = (body.get("token")    or "").strip()
+    extra      = body.get("extra") or {}
 
     if not platform:
         return jsonify({"success": False, "error": "platform is required"}), 400
@@ -5218,16 +5472,29 @@ def save_connection_token():
 
     env_key = _PLATFORM_ENV_MAP[platform]
     try:
-        _write_env_token(env_key, token)
+        if brand_slug:
+            _write_brand_env_token(brand_slug, env_key, token)
+            for k, v in extra.items():
+                if isinstance(v, str) and v.strip():
+                    _write_brand_env_token(brand_slug, str(k).strip(), v.strip())
+            target = f"brands/{brand_slug}/.env"
+        else:
+            _write_env_token(env_key, token)
+            target = ".env"
     except Exception as exc:
-        return jsonify({"success": False, "error": f"Failed to write .env: {exc}"}), 500
+        return jsonify({"success": False, "error": f"Failed to write {env_key}: {exc}"}), 500
 
+    # Live-verify what we just stored (never echo the token back)
+    status = _verify_social(platform, token)
     return jsonify({
         "success": True,
         "data": {
-            "platform": platform,
-            "env_key":  env_key,
-            "message":  f"{env_key} saved and live-reloaded",
+            "platform":  platform,
+            "env_key":   env_key,
+            "target":    target,
+            "connected": status["connected"],
+            "account":   status["account"],
+            "message":   f"{env_key} saved to {target}",
         },
     })
 

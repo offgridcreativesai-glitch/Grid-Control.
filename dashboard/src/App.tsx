@@ -9,6 +9,7 @@ import { ClientPortalPage } from "@/pages/ClientPortalPage"
 import { ReviewPage } from "@/pages/ReviewPage"
 import { CalendarPage } from "@/pages/CalendarPage"
 import { InsightsPage } from "@/pages/InsightsPage"
+import { ConnectionsPage } from "@/pages/ConnectionsPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
@@ -153,6 +154,7 @@ export default function App() {
                 <Route path="/review" element={<ReviewPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/connections" element={<ConnectionsPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 {/* Restricted managed-client portal */}
                 <Route path="/portal" element={<ClientPortalPage />} />

@@ -13,6 +13,7 @@ import {
   Compass,
   Eye,
   ArrowLeftRight,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -31,6 +32,7 @@ const clientNavItems = [
   { path: "/review", icon: CheckSquare, label: "Review" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
+  { path: "/connections", icon: Plug, label: "Connections" },
 ];
 
 const adminNavItems = [
