@@ -940,9 +940,9 @@
     "semantic_hash": "82efb97a359f5c7290bf2513d14686be"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/.claude/CLAUDE.md": {
-    "mtime": 1779955145.0788476,
-    "ast_hash": "c4a3ed19eb34f8021ae46667da74c531",
-    "semantic_hash": "c4a3ed19eb34f8021ae46667da74c531"
+    "mtime": 1780407856.581835,
+    "ast_hash": "65df9e2fe38a45b8a4eb2ea3ea84d26f",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/.claude/agents/data-analyst.md": {
     "mtime": 1774877300.3419464,
@@ -2745,13 +2745,13 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/contradictions.json": {
-    "mtime": 1780407111.6047013,
-    "ast_hash": "6cd5ef43420a873764c9f7717f36caa7",
+    "mtime": 1780408006.6003892,
+    "ast_hash": "26f600e15289fda06142cfcf0c052aa3",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/session_state.json": {
-    "mtime": 1780407114.3743427,
-    "ast_hash": "6220a72fb376bc6c44079f3d85931a4b",
+    "mtime": 1780408008.7994816,
+    "ast_hash": "39958128c9b6141605583ede6e16a2e1",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/youtube_oauth.py": {
@@ -2760,8 +2760,8 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/trends_live.json": {
-    "mtime": 1780407111.5796175,
-    "ast_hash": "96f97c6cefca189b09c054d3537fc2d6",
+    "mtime": 1780408006.5856721,
+    "ast_hash": "b73c980e95fce0a4acc6e82d567b4c1d",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/brand_memory/content_calendar.json": {
