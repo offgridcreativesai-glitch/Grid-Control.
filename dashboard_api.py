@@ -1565,25 +1565,19 @@ def publish_check():
     return jsonify({"success": True, "data": token_status(token)})
 
 
-@app.route("/api/publish/instagram", methods=["POST"])
-@require_auth
-@require_brand_access
-def publish_instagram():
+def _publish_instagram_impl(brand_slug: str, filename: str):
     """
-    Publish an approved carousel to Instagram. Always hosts the slides publicly first
-    (Instagram fetches images from a URL). If the IG token is live → publishes for real and
-    returns the permalink. If the token is absent/blocked → returns a 'prepared' package
-    (public slide URLs + caption) so the human can post it manually; flips to auto when the
-    token works. Real data only — no fabricated post IDs.
+    Core Instagram carousel publish, shared by /api/publish/instagram and the generic
+    /api/publish router. Hosts slides publicly first (IG fetches images from a URL).
+    Token is read from the brand's private .env (brand_token), not global env. If the
+    token is live → publishes for real + returns the permalink; if absent/blocked →
+    returns a 'prepared' package for manual posting. Real data only — no fake post IDs.
+
+    Returns a (json_response, status_code) tuple.
     """
     from publishing.instagram_publisher import (
         upload_slides_to_storage, publish_carousel, token_status,
     )
-    body = request.get_json(silent=True) or {}
-    brand_slug = (body.get("brand_slug") or "").strip()
-    filename = (body.get("filename") or "").strip()
-    if not brand_slug or not _validate_brand_slug(brand_slug):
-        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
     if not filename or "/" in filename or ".." in filename:
         return jsonify({"success": False, "error": "Valid carousel filename required"}), 400
 
@@ -1610,17 +1604,18 @@ def publish_instagram():
         return jsonify({"success": False, "error": f"Slide hosting failed: {e}"}), 502
 
     # 2. Decide: auto-publish vs prepare-only based on real token liveness.
-    token = os.getenv("META_GRAPH_API_TOKEN", "").strip()
+    token = brand_token(brand_slug, "META_GRAPH_API_TOKEN")
     status = token_status(token)
     if not status.get("live"):
         return jsonify({"success": True, "data": {
+            "platform": "instagram",
             "mode": "prepared",
             "reason": status.get("reason", "token not live"),
             "slide_urls": slide_urls,
             "caption": caption,
             "post_id": post_id,
             "note": "IG token isn't live yet — slides hosted + caption ready. Post manually, or this auto-publishes once the token works.",
-        }})
+        }}), 200
 
     # 3. Publish for real.
     result = publish_carousel(slide_urls, caption, token)
@@ -1642,11 +1637,56 @@ def publish_instagram():
         pass
 
     return jsonify({"success": True, "data": {
+        "platform": "instagram",
         "mode": "published",
         "media_id": result.get("media_id"),
         "permalink": result.get("permalink"),
         "post_id": post_id,
-    }})
+    }}), 200
+
+
+@app.route("/api/publish/instagram", methods=["POST"])
+@require_auth
+@require_brand_access
+def publish_instagram():
+    """Publish an approved carousel to Instagram (thin wrapper over the shared impl)."""
+    body = request.get_json(silent=True) or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    filename = (body.get("filename") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    return _publish_instagram_impl(brand_slug, filename)
+
+
+@app.route("/api/publish", methods=["POST"])
+@require_auth
+@require_brand_access
+def publish_generic():
+    """
+    Platform-agnostic publish router — the spine of the create → approve → publish pipeline.
+    Routes by `platform` through the publisher registry (publishing/base.py):
+      - instagram  → real carousel publish.
+      - linkedin / youtube / twitter → honest "publisher not built yet" (nothing sent).
+    Never fabricates a success for an unbuilt platform.
+    """
+    from publishing.base import is_built, unbuilt_result
+    body = request.get_json(silent=True) or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    platform = (body.get("platform") or "").strip().lower()
+    filename = (body.get("filename") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    if not platform:
+        return jsonify({"success": False, "error": "platform required"}), 400
+
+    if platform == "instagram":
+        return _publish_instagram_impl(brand_slug, filename)
+
+    if not is_built(platform):
+        return jsonify({"success": True, "data": unbuilt_result(platform)}), 200
+
+    # A platform marked built but with no route here is a wiring bug, not a runtime path.
+    return jsonify({"success": False, "error": f"No publish route wired for '{platform}'"}), 501
 
 
 @rate_limit(max_requests=2, window_seconds=60)

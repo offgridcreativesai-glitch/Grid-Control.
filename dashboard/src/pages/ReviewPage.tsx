@@ -1,89 +1,156 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X, Send, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { Check, X, Send, ChevronDown, ChevronUp, MessageSquare, ExternalLink, Loader2 } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
-import { type PendingApproval } from "@/data/mock";
 import { type Platform } from "@/store/appStore";
 import { StatusDot } from "@/components/ui/status-dot";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { Button } from "@/components/ui/button";
-import { usePendingOutputs, useApproveOutput, useRejectOutput, type PendingOutput } from "@/hooks/useGridApi";
+import {
+  usePendingOutputs, useApproveOutput, useRejectOutput, type PendingOutput,
+  usePublishedPosts, usePublish, type PublishedPost, type PublishResult,
+} from "@/hooks/useGridApi";
 import { useBrainStore } from "@/store/brainStore";
 import { useBrandStore } from "@/store/brandStore";
 
-function inferPlatform(po: PendingOutput): Platform {
-  const hay = `${po.platform ?? ""} ${po.filename} ${po.agent_slug}`.toLowerCase();
-  if (hay.includes("instagram") || hay.includes("ig")) return "instagram";
-  if (hay.includes("linkedin") || hay.includes("li")) return "linkedin";
-  if (hay.includes("tiktok") || hay.includes("tt")) return "tiktok";
-  if (hay.includes("youtube") || hay.includes("yt")) return "youtube";
+// One unit flowing through the pipeline, normalized across the three stages.
+type PipelineItem = {
+  id: string;            // filename — the publish key
+  platform: Platform;
+  draftedBy: string;
+  time: Date;
+  title?: string;
+  caption: string;
+  hashtags: string[];
+  script?: string;
+  slideImages: string[];
+  permalink?: string;
+};
+
+type Stage = "pending" | "approved" | "published";
+
+function inferPlatform(hay: string): Platform {
+  const h = hay.toLowerCase();
+  if (h.includes("instagram") || h.includes("ig")) return "instagram";
+  if (h.includes("linkedin") || h.includes("li")) return "linkedin";
+  if (h.includes("tiktok") || h.includes("tt")) return "tiktok";
+  if (h.includes("youtube") || h.includes("yt")) return "youtube";
   return "x";
 }
 
-function adaptOutput(po: PendingOutput): PendingApproval {
-  // Caption — prefer the structured caption; fall back to body_text or preview.
-  const caption = po.caption || po.body_text || po.preview || "(no caption)";
+function adaptPending(po: PendingOutput): PipelineItem {
   return {
     id: po.filename,
-    platform: inferPlatform(po),
+    platform: inferPlatform(`${po.platform ?? ""} ${po.filename} ${po.agent_slug}`),
     draftedBy: po.agent_name || po.agent_slug,
-    scheduledTime: po.scheduled_for ? new Date(po.scheduled_for) : new Date(po.created_at),
+    time: po.scheduled_for ? new Date(po.scheduled_for) : new Date(po.created_at),
     title: po.title || undefined,
-    caption,
+    caption: po.caption || po.body_text || po.preview || "(no caption)",
     hashtags: po.hashtags || [],
     script: po.body_text || undefined,
     slideImages: po.slide_images || [],
-    status: "pending",
   };
 }
 
+function adaptPublished(p: PublishedPost): PipelineItem {
+  return {
+    id: p.id,
+    platform: inferPlatform(`${p.platform ?? ""} ${p.id} ${p.agent_slug}`),
+    draftedBy: p.agent_slug,
+    time: p.posted_at ? new Date(p.posted_at) : p.scheduled_for ? new Date(p.scheduled_for) : new Date(p.approved_at),
+    title: p.title || undefined,
+    caption: p.caption || p.body_text || "(no caption)",
+    hashtags: p.hashtags || [],
+    script: p.body_text || undefined,
+    slideImages: p.slide_images || [],
+    permalink: (p as PublishedPost & { permalink?: string }).permalink,
+  };
+}
+
+const STAGES: { key: Stage; label: string }[] = [
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "published", label: "Published" },
+];
+
 export function ReviewPage() {
-  const { data } = usePendingOutputs();
+  const { data: pendingData } = usePendingOutputs();
+  const { data: publishedData } = usePublishedPosts();
   const approveMut = useApproveOutput();
   const rejectMut = useRejectOutput();
+  const publishMut = usePublish();
   const navigate = useNavigate();
   const { activeBrand } = useBrandStore();
   const { appendMessage } = useBrainStore();
 
-  const approvals: PendingApproval[] = useMemo(
-    () => (data?.outputs ?? []).map(adaptOutput),
-    [data],
+  const [stage, setStage] = useState<Stage>("pending");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showScript, setShowScript] = useState(false);
+  const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
+
+  const pending = useMemo(() => (pendingData?.outputs ?? []).map(adaptPending), [pendingData]);
+  const approved = useMemo(
+    () => (publishedData?.data ?? []).filter((p) => p.status === "scheduled").map(adaptPublished),
+    [publishedData],
+  );
+  const published = useMemo(
+    () => (publishedData?.data ?? []).filter((p) => p.status === "published").map(adaptPublished),
+    [publishedData],
   );
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const counts: Record<Stage, number> = {
+    pending: pending.length,
+    approved: approved.length,
+    published: published.length,
+  };
+  const items = stage === "pending" ? pending : stage === "approved" ? approved : published;
+
+  // Reset selection + transient result whenever the stage changes.
   useEffect(() => {
-    if (!selectedId && approvals.length > 0) setSelectedId(approvals[0].id);
-  }, [approvals, selectedId]);
-  const [showScript, setShowScript] = useState(false);
+    setSelectedId(items[0]?.id ?? null);
+    setPublishResult(null);
+    setShowScript(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
 
-  const selected = approvals.find((a) => a.id === selectedId);
-  const pendingApprovals = approvals.filter((a) => a.status === "pending");
-
-  const navigateToNext = useCallback(() => {
-    const currentIndex = pendingApprovals.findIndex((a) => a.id === selectedId);
-    if (currentIndex < pendingApprovals.length - 1) {
-      setSelectedId(pendingApprovals[currentIndex + 1].id);
+  // Keep a valid selection as lists refresh.
+  useEffect(() => {
+    if ((!selectedId || !items.some((i) => i.id === selectedId)) && items.length > 0) {
+      setSelectedId(items[0].id);
     }
-  }, [pendingApprovals, selectedId]);
+  }, [items, selectedId]);
 
-  const navigateToPrev = useCallback(() => {
-    const currentIndex = pendingApprovals.findIndex((a) => a.id === selectedId);
-    if (currentIndex > 0) {
-      setSelectedId(pendingApprovals[currentIndex - 1].id);
-    }
-  }, [pendingApprovals, selectedId]);
+  const selected = items.find((i) => i.id === selectedId) ?? null;
+
+  const navigateBy = useCallback(
+    (dir: 1 | -1) => {
+      const idx = items.findIndex((i) => i.id === selectedId);
+      const next = idx + dir;
+      if (next >= 0 && next < items.length) setSelectedId(items[next].id);
+    },
+    [items, selectedId],
+  );
 
   const handleApprove = useCallback(() => {
-    if (!selectedId) return;
+    if (!selectedId || stage !== "pending") return;
     approveMut.mutate(selectedId);
-    navigateToNext();
-  }, [selectedId, navigateToNext, approveMut]);
+    navigateBy(1);
+  }, [selectedId, stage, navigateBy, approveMut]);
 
   const handleReject = useCallback(() => {
-    if (!selectedId) return;
+    if (!selectedId || stage !== "pending") return;
     rejectMut.mutate(selectedId);
-    navigateToNext();
-  }, [selectedId, navigateToNext, rejectMut]);
+    navigateBy(1);
+  }, [selectedId, stage, navigateBy, rejectMut]);
+
+  const handlePublish = useCallback(() => {
+    if (!selected || stage !== "approved") return;
+    setPublishResult(null);
+    publishMut.mutate(
+      { platform: selected.platform === "x" ? "twitter" : selected.platform, filename: selected.id },
+      { onSuccess: (r) => setPublishResult(r.data ?? null) },
+    );
+  }, [selected, stage, publishMut]);
 
   const handleRequestChanges = useCallback(() => {
     if (!selected) return;
@@ -96,255 +163,276 @@ export function ReviewPage() {
     ]
       .filter(Boolean)
       .join("\n");
-
     appendMessage(activeBrand.slug, "global", {
       id: Date.now().toString(),
       role: "user",
       content: context,
       createdAt: Date.now(),
     });
-
     navigate("/");
   }, [selected, activeBrand.slug, appendMessage, navigate]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — only in the Pending stage (approve/reject/edit + navigate).
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
       switch (e.key.toLowerCase()) {
-        case "a":
-          handleApprove();
-          break;
-        case "r":
-          handleReject();
-          break;
-        case "e":
-          handleRequestChanges();
-          break;
-        case "j":
-          if (!e.metaKey && !e.ctrlKey) navigateToNext();
-          break;
-        case "k":
-          navigateToPrev();
-          break;
+        case "a": if (stage === "pending") handleApprove(); break;
+        case "r": if (stage === "pending") handleReject(); break;
+        case "e": if (stage === "pending") handleRequestChanges(); break;
+        case "j": if (!e.metaKey && !e.ctrlKey) navigateBy(1); break;
+        case "k": navigateBy(-1); break;
       }
     };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, handleRequestChanges, navigateToNext, navigateToPrev]);
-
-  if (pendingApprovals.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-medium">No drafts waiting.</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            The agents are quiet. Enjoy it.
-          </p>
-        </div>
-      </div>
-    );
-  }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stage, handleApprove, handleReject, handleRequestChanges, navigateBy]);
 
   return (
-    <div className="flex h-full">
-      {/* Left: Approval List */}
-      <div className="w-80 border-r border-border overflow-auto">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-sm font-medium">
-            Pending approvals{" "}
-            <span className="text-muted-foreground">({pendingApprovals.length})</span>
-          </h2>
-        </div>
-        <div className="divide-y divide-border">
-          {approvals.map((approval) => (
+    <div className="flex h-full flex-col">
+      {/* Pipeline toggle */}
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+        <div className="inline-flex rounded-lg border border-border bg-secondary/40 p-0.5">
+          {STAGES.map((s) => (
             <button
-              key={approval.id}
-              onClick={() => setSelectedId(approval.id)}
+              key={s.key}
+              onClick={() => setStage(s.key)}
               className={cn(
-                "w-full px-4 py-3 text-left hover:bg-secondary/50 transition-colors",
-                selectedId === approval.id && "bg-secondary",
-                approval.status !== "pending" && "opacity-50"
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                stage === s.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <PlatformIcon platform={approval.platform} className="h-3.5 w-3.5" />
-                <span className="text-xs text-muted-foreground">
-                  {approval.draftedBy}
-                </span>
-                <StatusDot
-                  status={
-                    approval.status === "approved"
-                      ? "success"
-                      : approval.status === "rejected"
-                      ? "error"
-                      : "queued"
-                  }
-                  className="ml-auto"
-                />
-              </div>
-              {approval.title && (
-                <p className="text-sm font-medium line-clamp-1 mb-0.5">{approval.title}</p>
-              )}
-              <p className="text-xs text-muted-foreground line-clamp-2">{approval.caption}</p>
+              {s.label}
+              <span className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-mono",
+                stage === s.key ? "bg-secondary text-foreground" : "bg-transparent text-muted-foreground",
+              )}>
+                {counts[s.key]}
+              </span>
             </button>
           ))}
         </div>
+        <span className="ml-auto text-[11px] font-mono text-muted-foreground">
+          create → approve → publish
+        </span>
       </div>
 
-      {/* Right: Draft Preview */}
-      {selected && (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-4 border-b border-border px-6 py-4">
-            <div className="flex items-center gap-2">
-              <PlatformIcon platform={selected.platform} className="h-5 w-5" />
-              <span className="text-sm font-medium capitalize">
-                {selected.platform}
-              </span>
+      {items.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-medium">
+              {stage === "pending" ? "No drafts waiting." : stage === "approved" ? "Nothing approved yet." : "Nothing published yet."}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {stage === "pending" ? "The agents are quiet. Enjoy it."
+                : stage === "approved" ? "Approve a draft and it lands here, ready to publish."
+                : "Published posts will show here with their live links."}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left: list */}
+          <div className="w-80 overflow-auto border-r border-border">
+            <div className="divide-y divide-border">
+              {items.map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() => { setSelectedId(it.id); setPublishResult(null); }}
+                  className={cn(
+                    "w-full px-4 py-3 text-left transition-colors hover:bg-secondary/50",
+                    selectedId === it.id && "bg-secondary",
+                  )}
+                >
+                  <div className="mb-1 flex items-center gap-2">
+                    <PlatformIcon platform={it.platform} className="h-3.5 w-3.5" />
+                    <span className="text-xs text-muted-foreground">{it.draftedBy}</span>
+                    <StatusDot
+                      status={stage === "published" ? "success" : stage === "approved" ? "queued" : "queued"}
+                      className="ml-auto"
+                    />
+                  </div>
+                  {it.title && <p className="mb-0.5 line-clamp-1 text-sm font-medium">{it.title}</p>}
+                  <p className="line-clamp-2 text-xs text-muted-foreground">{it.caption}</p>
+                </button>
+              ))}
             </div>
-            <span className="text-xs text-muted-foreground">
-              Drafted by {selected.draftedBy}
-            </span>
-            <span className="text-xs font-mono text-muted-foreground ml-auto">
-              Scheduled: {formatTime(selected.scheduledTime)}
-            </span>
           </div>
 
-          {/* Preview */}
-          <div className="flex-1 overflow-auto p-6">
-            <div className="max-w-lg mx-auto">
-              {/* Platform-specific preview card */}
-              <PostPreview approval={selected} />
-
-              {/* Caption */}
-              <div className="mt-6 space-y-4">
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                    Caption
-                  </h3>
-                  <p className="text-sm whitespace-pre-wrap">{selected.caption}</p>
+          {/* Right: preview + stage actions */}
+          {selected && (
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <div className="flex items-center gap-4 border-b border-border px-6 py-4">
+                <div className="flex items-center gap-2">
+                  <PlatformIcon platform={selected.platform} className="h-5 w-5" />
+                  <span className="text-sm font-medium capitalize">{selected.platform}</span>
                 </div>
+                <span className="text-xs text-muted-foreground">Drafted by {selected.draftedBy}</span>
+                <span className="ml-auto font-mono text-xs text-muted-foreground">
+                  {stage === "published" ? "Posted" : "Scheduled"}: {formatTime(selected.time)}
+                </span>
+              </div>
 
-                {selected.hashtags.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                      Hashtags
-                    </h3>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.hashtags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs text-primary"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+              <div className="flex-1 overflow-auto p-6">
+                <div className="mx-auto max-w-lg">
+                  <PostPreview item={selected} />
+
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <h3 className="mb-2 text-xs font-medium text-muted-foreground">Caption</h3>
+                      <p className="whitespace-pre-wrap text-sm">{selected.caption}</p>
                     </div>
-                  </div>
-                )}
 
-                {selected.script && (
-                  <div>
-                    <button
-                      onClick={() => setShowScript(!showScript)}
-                      className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showScript ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )}
-                      Script
-                    </button>
-                    {showScript && (
-                      <pre className="mt-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap bg-secondary/50 rounded p-3">
-                        {selected.script}
-                      </pre>
+                    {selected.hashtags.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 text-xs font-medium text-muted-foreground">Hashtags</h3>
+                        <div className="flex flex-wrap gap-1">
+                          {selected.hashtags.map((tag) => (
+                            <span key={tag} className="text-xs text-primary">{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selected.script && (
+                      <div>
+                        <button
+                          onClick={() => setShowScript(!showScript)}
+                          className="flex items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {showScript ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                          Script
+                        </button>
+                        {showScript && (
+                          <pre className="mt-2 whitespace-pre-wrap rounded bg-secondary/50 p-3 font-mono text-xs text-muted-foreground">
+                            {selected.script}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+
+                    {selected.permalink && (
+                      <a
+                        href={selected.permalink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" /> View live post
+                      </a>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Stage-specific action bar */}
+              <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                {stage === "pending" && (
+                  <>
+                    <div className="space-x-4 font-mono text-xs text-muted-foreground">
+                      <span><kbd className="rounded bg-secondary px-1.5 py-0.5">A</kbd> approve</span>
+                      <span><kbd className="rounded bg-secondary px-1.5 py-0.5">R</kbd> reject</span>
+                      <span><kbd className="rounded bg-secondary px-1.5 py-0.5">E</kbd> edit</span>
+                      <span><kbd className="rounded bg-secondary px-1.5 py-0.5">J</kbd>/<kbd className="rounded bg-secondary px-1.5 py-0.5">K</kbd> navigate</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handleReject}>
+                        <X className="mr-1 h-4 w-4" /> Reject
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleRequestChanges}>
+                        <MessageSquare className="mr-1 h-4 w-4" /> Request Changes
+                      </Button>
+                      <Button size="sm" onClick={handleApprove}>
+                        <Check className="mr-1 h-4 w-4" /> Approve
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {stage === "approved" && (
+                  <>
+                    <PublishOutcome result={publishResult} pending={publishMut.isPending} />
+                    <Button size="sm" onClick={handlePublish} disabled={publishMut.isPending}>
+                      {publishMut.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}
+                      {publishMut.isPending ? "Publishing…" : "Publish"}
+                    </Button>
+                  </>
+                )}
+
+                {stage === "published" && (
+                  <span className="text-xs text-muted-foreground">
+                    Live. Engagement is tracked by the Data Analyst.
+                  </span>
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Action Bar */}
-          <div className="flex items-center justify-between border-t border-border px-6 py-4">
-            <div className="text-xs text-muted-foreground font-mono space-x-4">
-              <span><kbd className="px-1.5 py-0.5 rounded bg-secondary">A</kbd> approve</span>
-              <span><kbd className="px-1.5 py-0.5 rounded bg-secondary">R</kbd> reject</span>
-              <span><kbd className="px-1.5 py-0.5 rounded bg-secondary">E</kbd> edit</span>
-              <span><kbd className="px-1.5 py-0.5 rounded bg-secondary">J</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-secondary">K</kbd> navigate</span>
-              <span><kbd className="px-1.5 py-0.5 rounded bg-secondary">⌘↵</kbd> approve & schedule</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleReject}>
-                <X className="h-4 w-4 mr-1" />
-                Reject
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleRequestChanges}>
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Request Changes
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleApprove}>
-                <Check className="h-4 w-4 mr-1" />
-                Approve
-              </Button>
-              <Button size="sm" onClick={handleApprove}>
-                <Send className="h-4 w-4 mr-1" />
-                Approve & Schedule
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function PostPreview({ approval }: { approval: PendingApproval }) {
+function PublishOutcome({ result, pending }: { result: PublishResult | null; pending: boolean }) {
+  if (pending) return <span className="text-xs text-muted-foreground">Sending to platform…</span>;
+  if (!result) return <span className="text-xs text-muted-foreground">Review, then publish to the live account.</span>;
+  if (result.mode === "published")
+    return (
+      <span className="flex items-center gap-2 text-xs text-emerald-500">
+        <Check className="h-3.5 w-3.5" /> Published.
+        {result.permalink && (
+          <a href={result.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">
+            <ExternalLink className="h-3 w-3" /> View
+          </a>
+        )}
+      </span>
+    );
+  if (result.mode === "prepared")
+    return <span className="text-xs text-amber-500">{result.note || "Prepared — token not live. Post manually for now."}</span>;
+  if (result.mode === "unbuilt")
+    return <span className="text-xs text-amber-500">{result.note || `${result.platform} publisher not built yet — nothing sent.`}</span>;
+  return <span className="text-xs text-red-500">{result.error || "Publish failed."}</span>;
+}
+
+function PostPreview({ item }: { item: PipelineItem }) {
   const baseClasses = "rounded-lg border border-border bg-card overflow-hidden";
-  const slides = approval.slideImages ?? [];
+  const slides = item.slideImages ?? [];
   const mediaUrl = (path: string) => `/api/outputs/media/${path}`;
 
-  switch (approval.platform) {
+  switch (item.platform) {
     case "instagram":
       return (
         <div className={baseClasses}>
           {slides.length > 0 ? (
-            <div className="aspect-square bg-secondary overflow-hidden relative">
+            <div className="relative aspect-square overflow-hidden bg-secondary">
               <div className="flex h-full snap-x snap-mandatory overflow-x-auto">
                 {slides.map((path, i) => (
                   <img
                     key={path}
                     src={mediaUrl(path)}
                     alt={`Slide ${i + 1}`}
-                    className="h-full w-full flex-shrink-0 object-contain snap-center"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
+                    className="h-full w-full flex-shrink-0 snap-center object-contain"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                   />
                 ))}
               </div>
               {slides.length > 1 && (
-                <div className="absolute top-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white">
+                <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 font-mono text-[10px] text-white">
                   1 / {slides.length}
                 </div>
               )}
             </div>
           ) : (
-            <div className="aspect-square bg-secondary flex items-center justify-center">
-              <span className="text-muted-foreground text-sm">No image yet</span>
+            <div className="flex aspect-square items-center justify-center bg-secondary">
+              <span className="text-sm text-muted-foreground">No image yet</span>
             </div>
           )}
           <div className="p-3">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-secondary" />
               <span className="text-sm font-medium">askgauravai</span>
             </div>
-            <p className="text-sm line-clamp-3 whitespace-pre-wrap">{approval.caption}</p>
+            <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.caption}</p>
           </div>
         </div>
       );
@@ -353,13 +441,13 @@ function PostPreview({ approval }: { approval: PendingApproval }) {
       return (
         <div className={cn(baseClasses, "p-4")}>
           <div className="flex gap-3">
-            <div className="h-10 w-10 rounded-full bg-secondary flex-shrink-0" />
+            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-secondary" />
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-sm">Gaurav</span>
-                <span className="text-muted-foreground text-sm">@askgauravai</span>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-sm font-medium">Gaurav</span>
+                <span className="text-sm text-muted-foreground">@AskGauravAI</span>
               </div>
-              <p className="text-sm whitespace-pre-wrap">{approval.caption}</p>
+              <p className="whitespace-pre-wrap text-sm">{item.caption}</p>
             </div>
           </div>
         </div>
@@ -368,32 +456,25 @@ function PostPreview({ approval }: { approval: PendingApproval }) {
     case "linkedin":
       return (
         <div className={baseClasses}>
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="border-b border-border p-4">
+            <div className="mb-3 flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-secondary" />
               <div>
-                <p className="font-medium text-sm">Gaurav</p>
-                <p className="text-xs text-muted-foreground">
-                  Founder at AskGauravAI · 1st
-                </p>
+                <p className="text-sm font-medium">Gaurav Khanna</p>
+                <p className="text-xs text-muted-foreground">Founder at AskGauravAI · 1st</p>
               </div>
             </div>
-            <p className="text-sm whitespace-pre-wrap line-clamp-6">
-              {approval.caption}
-            </p>
-          </div>
-          <div className="h-48 bg-secondary flex items-center justify-center">
-            <span className="text-muted-foreground text-sm">Image preview</span>
+            <p className="line-clamp-6 whitespace-pre-wrap text-sm">{item.caption}</p>
           </div>
         </div>
       );
 
     case "tiktok":
       return (
-        <div className={cn(baseClasses, "aspect-[9/16] max-h-96 bg-secondary flex items-center justify-center relative")}>
-          <span className="text-muted-foreground text-sm">Video preview</span>
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-            <p className="text-sm text-white line-clamp-2">{approval.caption}</p>
+        <div className={cn(baseClasses, "relative flex aspect-[9/16] max-h-96 items-center justify-center bg-secondary")}>
+          <span className="text-sm text-muted-foreground">Video preview</span>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+            <p className="line-clamp-2 text-sm text-white">{item.caption}</p>
           </div>
         </div>
       );
@@ -401,14 +482,12 @@ function PostPreview({ approval }: { approval: PendingApproval }) {
     case "youtube":
       return (
         <div className={baseClasses}>
-          <div className="aspect-video bg-secondary flex items-center justify-center">
-            <span className="text-muted-foreground text-sm">Thumbnail preview</span>
+          <div className="flex aspect-video items-center justify-center bg-secondary">
+            <span className="text-sm text-muted-foreground">Thumbnail / video</span>
           </div>
           <div className="p-3">
-            <p className="font-medium text-sm line-clamp-2">{approval.caption}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              AskGauravAI · Scheduled
-            </p>
+            <p className="line-clamp-2 text-sm font-medium">{item.caption}</p>
+            <p className="mt-1 text-xs text-muted-foreground">AskGauravAI</p>
           </div>
         </div>
       );

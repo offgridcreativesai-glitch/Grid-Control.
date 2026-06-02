@@ -332,7 +332,8 @@ export function useSetOperatorMode() {
 // ── Instagram publishing (the "agents post it" step) ────────────────────────────
 
 export interface PublishResult {
-  mode: "published" | "prepared"
+  mode: "published" | "prepared" | "unbuilt"
+  platform?: string
   media_id?: string
   permalink?: string
   post_id?: string
@@ -340,6 +341,7 @@ export interface PublishResult {
   slide_urls?: string[]
   caption?: string
   note?: string
+  error?: string
 }
 
 export function usePublishCheck() {
@@ -361,6 +363,27 @@ export function usePublishInstagram() {
     mutationFn: (filename: string) =>
       postJson<{ success: boolean; data?: PublishResult; error?: string }>("/api/publish/instagram", {
         brand_slug: activeBrand.slug,
+        filename,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["published"] })
+    },
+  })
+}
+
+/**
+ * Generic publish — routes through the platform registry on the backend.
+ * instagram publishes for real; linkedin/youtube/twitter return mode "unbuilt"
+ * (honest "publisher not built yet" — nothing is sent).
+ */
+export function usePublish() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: ({ platform, filename }: { platform: string; filename: string }) =>
+      postJson<{ success: boolean; data?: PublishResult; error?: string }>("/api/publish", {
+        brand_slug: activeBrand.slug,
+        platform,
         filename,
       }),
     onSuccess: () => {
