@@ -1645,6 +1645,193 @@ def _publish_instagram_impl(brand_slug: str, filename: str):
     }}), 200
 
 
+# ── Generic (non-carousel) output loading + per-platform publish impls ─────────
+
+def _find_output(brand_dir: Path, filename: str) -> Path | None:
+    """Locate an approved (preferred) or still-pending output by filename, across any
+    agent subfolder."""
+    for base in (brand_dir / "outputs" / "approved", brand_dir / "outputs" / "pending_approval"):
+        if not base.exists():
+            continue
+        direct = base / filename
+        if direct.exists():
+            return direct
+        for hit in base.rglob(filename):
+            if hit.is_file():
+                return hit
+    return None
+
+
+def _load_post_fields(src: Path) -> dict:
+    """Parse an output file into the fields a publisher needs. Strips the LOOP HEADER."""
+    data = _read_output_json(src)
+    if not isinstance(data, dict):
+        data = {}
+    caption = data.get("post_caption") or data.get("caption") or ""
+    body = data.get("body_text") or data.get("post_body") or data.get("script") or ""
+    hashtags = data.get("hashtags") or []
+    return {
+        "caption": caption,
+        "body": body,
+        "title": data.get("title") or data.get("video_title") or "",
+        "description": data.get("description") or data.get("video_description") or body or caption,
+        "hashtags": hashtags,
+        "video_path": data.get("video_path") or data.get("video_file") or "",
+        "post_id": data.get("post_id") or src.stem,
+    }
+
+
+def _compose_social_text(fields: dict, prefer: str = "body") -> str:
+    """Build the post text: prefer body_text (long form) or caption, then append hashtags."""
+    primary = (fields.get(prefer) or fields.get("caption") or fields.get("body") or "").strip()
+    tags = fields.get("hashtags") or []
+    if tags:
+        tag_line = " ".join(t if t.startswith("#") else f"#{t}" for t in tags)
+        primary = f"{primary}\n\n{tag_line}".strip()
+    return primary
+
+
+def _record_published(brand_dir: Path, entry: dict) -> None:
+    """Append to brands/<slug>/published_posts.json. Best-effort, never raises."""
+    try:
+        log_path = brand_dir / "published_posts.json"
+        log = json.loads(log_path.read_text()) if log_path.exists() else []
+        entry.setdefault("published_at", datetime.now().isoformat())
+        log.append(entry)
+        log_path.write_text(json.dumps(log, indent=2))
+    except Exception:
+        pass
+
+
+def _publish_linkedin_impl(brand_slug: str, filename: str):
+    """Publish an approved text post to LinkedIn as the member (w_member_social)."""
+    from publishing.linkedin_publisher import token_status, publish_text
+    brand_dir = BRANDS_DIR / brand_slug
+    src = _find_output(brand_dir, filename)
+    if not src:
+        return jsonify({"success": False, "error": f"Output '{filename}' not found"}), 404
+    fields = _load_post_fields(src)
+    text = _compose_social_text(fields, prefer="body")
+    if not text:
+        return jsonify({"success": False, "error": "No text to post (empty body and caption)"}), 400
+
+    token = brand_token(brand_slug, "LINKEDIN_ACCESS_TOKEN")
+    urn = brand_token(brand_slug, "LINKEDIN_URN")
+    status = token_status(token, urn)
+    if not status.get("live"):
+        return jsonify({"success": True, "data": {
+            "platform": "linkedin", "mode": "prepared", "reason": status.get("reason", "token not live"),
+            "text": text, "post_id": fields["post_id"],
+            "note": "LinkedIn token isn't live — text ready. Post manually, or this auto-publishes once the token works.",
+        }}), 200
+
+    result = publish_text(token, urn, text)
+    if not result.get("published"):
+        return jsonify({"success": False, "error": "Publish failed", "data": result}), 502
+    _record_published(brand_dir, {
+        "post_id": fields["post_id"], "platform": "linkedin",
+        "post_urn": result.get("post_urn"), "permalink": result.get("permalink"), "text": text,
+    })
+    return jsonify({"success": True, "data": {
+        "platform": "linkedin", "mode": "published",
+        "permalink": result.get("permalink"), "post_id": fields["post_id"],
+    }}), 200
+
+
+def _publish_twitter_impl(brand_slug: str, filename: str):
+    """Publish an approved text post to X via OAuth 1.0a (4 keys from brand .env)."""
+    from publishing.twitter_publisher import token_status, publish_text
+    brand_dir = BRANDS_DIR / brand_slug
+    src = _find_output(brand_dir, filename)
+    if not src:
+        return jsonify({"success": False, "error": f"Output '{filename}' not found"}), 404
+    fields = _load_post_fields(src)
+    text = _compose_social_text(fields, prefer="caption")
+    if not text:
+        return jsonify({"success": False, "error": "No text to post (empty caption and body)"}), 400
+
+    keys = (
+        brand_token(brand_slug, "TWITTER_API_KEY"),
+        brand_token(brand_slug, "TWITTER_API_SECRET"),
+        brand_token(brand_slug, "TWITTER_ACCESS_TOKEN"),
+        brand_token(brand_slug, "TWITTER_ACCESS_SECRET"),
+    )
+    status = token_status(*keys)
+    if not status.get("live"):
+        return jsonify({"success": True, "data": {
+            "platform": "twitter", "mode": "prepared", "reason": status.get("reason", "keys not live"),
+            "text": text, "post_id": fields["post_id"],
+            "note": "X keys aren't live — text ready. Post manually, or this auto-publishes once the keys work.",
+        }}), 200
+    if not status.get("write", True):
+        return jsonify({"success": True, "data": {
+            "platform": "twitter", "mode": "prepared", "reason": "read_only_app",
+            "text": text, "post_id": fields["post_id"],
+            "note": "X app is read-only — enable Read+Write and regenerate the access token to post.",
+        }}), 200
+
+    result = publish_text(*keys, text)
+    if not result.get("published"):
+        return jsonify({"success": False, "error": "Publish failed", "data": result}), 502
+    _record_published(brand_dir, {
+        "post_id": fields["post_id"], "platform": "twitter",
+        "tweet_id": result.get("tweet_id"), "permalink": result.get("permalink"), "text": text,
+    })
+    return jsonify({"success": True, "data": {
+        "platform": "twitter", "mode": "published",
+        "permalink": result.get("permalink"), "post_id": fields["post_id"],
+    }}), 200
+
+
+def _publish_youtube_impl(brand_slug: str, filename: str):
+    """Upload an approved video to YouTube via OAuth refresh token. Requires a REAL
+    video file — returns 'needs_video' if none, never fabricates an upload."""
+    from publishing.youtube_publisher import token_status, upload_video
+    brand_dir = BRANDS_DIR / brand_slug
+    src = _find_output(brand_dir, filename)
+    if not src:
+        return jsonify({"success": False, "error": f"Output '{filename}' not found"}), 404
+    fields = _load_post_fields(src)
+
+    client_id = brand_token(brand_slug, "YOUTUBE_CLIENT_ID")
+    client_secret = brand_token(brand_slug, "YOUTUBE_CLIENT_SECRET")
+    refresh_token = brand_token(brand_slug, "YOUTUBE_REFRESH_TOKEN")
+    status = token_status(client_id, client_secret, refresh_token)
+
+    # Resolve video path (relative to project root if not absolute).
+    video_path = fields["video_path"]
+    if video_path and not os.path.isabs(video_path):
+        video_path = str((BASE_DIR / video_path).resolve())
+
+    if not status.get("live"):
+        return jsonify({"success": True, "data": {
+            "platform": "youtube", "mode": "prepared", "reason": status.get("reason", "oauth not live"),
+            "title": fields["title"], "post_id": fields["post_id"],
+            "note": "YouTube OAuth isn't live — re-run publishing/youtube_oauth.py. Nothing uploaded.",
+        }}), 200
+
+    result = upload_video(
+        client_id, client_secret, refresh_token,
+        video_path, fields["title"], fields["description"], fields["hashtags"],
+    )
+    if result.get("mode") == "needs_video":
+        return jsonify({"success": True, "data": {
+            "platform": "youtube", "mode": "needs_video",
+            "title": fields["title"], "post_id": fields["post_id"],
+            "note": result.get("note"), "error": result.get("error"),
+        }}), 200
+    if not result.get("published"):
+        return jsonify({"success": False, "error": "Upload failed", "data": result}), 502
+    _record_published(brand_dir, {
+        "post_id": fields["post_id"], "platform": "youtube",
+        "video_id": result.get("video_id"), "permalink": result.get("permalink"), "title": fields["title"],
+    })
+    return jsonify({"success": True, "data": {
+        "platform": "youtube", "mode": "published",
+        "permalink": result.get("permalink"), "post_id": fields["post_id"],
+    }}), 200
+
+
 @app.route("/api/publish/instagram", methods=["POST"])
 @require_auth
 @require_brand_access
@@ -1679,8 +1866,14 @@ def publish_generic():
     if not platform:
         return jsonify({"success": False, "error": "platform required"}), 400
 
-    if platform == "instagram":
-        return _publish_instagram_impl(brand_slug, filename)
+    routes = {
+        "instagram": _publish_instagram_impl,
+        "linkedin": _publish_linkedin_impl,
+        "twitter": _publish_twitter_impl,
+        "youtube": _publish_youtube_impl,
+    }
+    if platform in routes:
+        return routes[platform](brand_slug, filename)
 
     if not is_built(platform):
         return jsonify({"success": True, "data": unbuilt_result(platform)}), 200

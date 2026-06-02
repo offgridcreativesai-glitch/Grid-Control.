@@ -389,6 +389,8 @@ function PublishOutcome({ result, pending }: { result: PublishResult | null; pen
     );
   if (result.mode === "prepared")
     return <span className="text-xs text-amber-500">{result.note || "Prepared — token not live. Post manually for now."}</span>;
+  if (result.mode === "needs_video")
+    return <span className="text-xs text-amber-500">{result.note || "YouTube needs a real founder-recorded video. Nothing uploaded."}</span>;
   if (result.mode === "unbuilt")
     return <span className="text-xs text-amber-500">{result.note || `${result.platform} publisher not built yet — nothing sent.`}</span>;
   return <span className="text-xs text-red-500">{result.error || "Publish failed."}</span>;

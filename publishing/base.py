@@ -15,9 +15,10 @@ from __future__ import annotations
 # Every platform AskGauravAI posts to. Order = display order in the pipeline.
 ALL_PLATFORMS = ["instagram", "linkedin", "youtube", "twitter"]
 
-# Platforms with a real, tested publisher wired into the publish endpoint.
-# Add to this set as each publisher lands (linkedin/youtube/twitter are next).
-BUILT_PUBLISHERS = {"instagram"}
+# Platforms with a real publisher wired into the publish endpoint.
+# instagram = carousel · linkedin/twitter = text · youtube = real video upload
+# (youtube routes, but returns 'needs_video' until a real founder video is provided).
+BUILT_PUBLISHERS = {"instagram", "linkedin", "twitter", "youtube"}
 
 
 def is_built(platform: str) -> bool:

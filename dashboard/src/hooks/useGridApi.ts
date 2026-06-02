@@ -332,7 +332,7 @@ export function useSetOperatorMode() {
 // ── Instagram publishing (the "agents post it" step) ────────────────────────────
 
 export interface PublishResult {
-  mode: "published" | "prepared" | "unbuilt"
+  mode: "published" | "prepared" | "unbuilt" | "needs_video"
   platform?: string
   media_id?: string
   permalink?: string
