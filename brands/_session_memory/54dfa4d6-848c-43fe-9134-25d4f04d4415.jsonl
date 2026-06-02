@@ -1,0 +1,193 @@
+{"ts": "2026-05-27T18:03:49+00:00", "tool": "Bash", "summary": "List hooks", "exit_code": null}
+{"ts": "2026-05-27T18:03:49+00:00", "tool": "Bash", "summary": "List stores", "exit_code": null}
+{"ts": "2026-05-27T18:04:02+00:00", "tool": "Edit", "file": "dashboard/src/store/authStore.ts"}
+{"ts": "2026-05-27T18:04:06+00:00", "tool": "Edit", "file": "dashboard/src/store/authStore.ts"}
+{"ts": "2026-05-27T18:04:12+00:00", "tool": "Edit", "file": "dashboard/src/store/authStore.ts"}
+{"ts": "2026-05-27T18:04:19+00:00", "tool": "Edit", "file": "dashboard/src/store/authStore.ts"}
+{"ts": "2026-05-27T18:04:46+00:00", "tool": "Write", "file": "dashboard/src/components/layout/LeftRail.tsx"}
+{"ts": "2026-05-27T18:05:22+00:00", "tool": "Write", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:06:28+00:00", "tool": "Write", "file": "dashboard/src/pages/ClientDashboardPage.tsx"}
+{"ts": "2026-05-27T18:06:32+00:00", "tool": "Bash", "summary": "Type check the dashboard", "exit_code": null}
+{"ts": "2026-05-27T18:06:54+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T18:06:59+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T18:07:06+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T18:07:13+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T18:07:19+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T18:07:24+00:00", "tool": "Bash", "summary": "Type check after Phase 3 changes", "exit_code": null}
+{"ts": "2026-05-27T18:07:44+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:07:49+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:07:57+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:08:01+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:08:04+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-05-27T18:08:08+00:00", "tool": "Bash", "summary": "Type check after Phase 4", "exit_code": null}
+{"ts": "2026-05-27T18:08:20+00:00", "tool": "Bash", "summary": "List agent files", "exit_code": null}
+{"ts": "2026-05-27T18:08:41+00:00", "tool": "Edit", "file": "agents/base_agent.py"}
+{"ts": "2026-05-27T18:09:13+00:00", "tool": "Write", "file": "agents/council.py"}
+{"ts": "2026-05-27T18:09:20+00:00", "tool": "Bash", "summary": "Create programs directory", "exit_code": null}
+{"ts": "2026-05-27T18:09:31+00:00", "tool": "Write", "file": "agents/programs/script-writer.md"}
+{"ts": "2026-05-27T18:09:41+00:00", "tool": "Write", "file": "agents/programs/strategy-agent.md"}
+{"ts": "2026-05-27T18:09:51+00:00", "tool": "Write", "file": "agents/programs/content-planner.md"}
+{"ts": "2026-05-27T18:10:00+00:00", "tool": "Write", "file": "agents/programs/brand-guardian.md"}
+{"ts": "2026-05-27T18:10:09+00:00", "tool": "Write", "file": "agents/programs/trend-researcher.md"}
+{"ts": "2026-05-27T18:10:17+00:00", "tool": "Write", "file": "agents/programs/creative-director.md"}
+{"ts": "2026-05-27T18:10:28+00:00", "tool": "Bash", "summary": "List existing memory files", "exit_code": null}
+{"ts": "2026-05-27T18:10:32+00:00", "tool": "Bash", "summary": "Create context packages directory", "exit_code": null}
+{"ts": "2026-05-27T18:11:06+00:00", "tool": "Write", "file": "offgrid-offgrid-marketing-os/memory/context_packages/GRIDLOCK-CLIENT-UX-27MAY.md"}
+{"ts": "2026-05-27T18:11:18+00:00", "tool": "Edit", "file": "grid/.claude/projects/-Users-gauravoffgrid-offgrid-marketing-os/memory/MEMORY.md"}
+{"ts": "2026-05-27T18:11:27+00:00", "tool": "Bash", "summary": "Final type check", "exit_code": null}
+{"ts": "2026-05-27T18:11:28+00:00", "tool": "Bash", "summary": "Verify Python imports", "exit_code": null}
+{"ts": "2026-05-27T18:24:46+00:00", "tool": "Bash", "summary": "Start Flask API on port 5001", "exit_code": null}
+{"ts": "2026-05-27T18:24:49+00:00", "tool": "Bash", "summary": "Start Vite dev server on port 5173", "exit_code": null}
+{"ts": "2026-05-27T18:24:56+00:00", "tool": "Bash", "summary": "Check both servers are up", "exit_code": null}
+{"ts": "2026-05-27T18:25:17+00:00", "tool": "Bash", "summary": "Check dashboard env files", "exit_code": null}
+{"ts": "2026-05-27T18:25:22+00:00", "tool": "Bash", "summary": "Kill both servers", "exit_code": null}
+{"ts": "2026-05-27T18:25:26+00:00", "tool": "Bash", "summary": "Restart Flask API", "exit_code": null}
+{"ts": "2026-05-27T18:25:30+00:00", "tool": "Bash", "summary": "Restart Vite from dashboard dir", "exit_code": null}
+{"ts": "2026-05-27T18:25:37+00:00", "tool": "Bash", "summary": "Verify Vite is serving", "exit_code": null}
+{"ts": "2026-05-27T18:25:59+00:00", "tool": "Bash", "summary": "Clear Vite cache and restart", "exit_code": null}
+{"ts": "2026-05-27T18:26:06+00:00", "tool": "Bash", "summary": "Check Vite is ready", "exit_code": null}
+{"ts": "2026-05-27T18:26:21+00:00", "tool": "Bash", "summary": "Verify env var loading", "exit_code": null}
+{"ts": "2026-05-27T18:26:33+00:00", "tool": "Bash", "summary": "Clear Vite cache from correct dir and restart", "exit_code": null}
+{"ts": "2026-05-27T18:26:41+00:00", "tool": "Bash", "summary": "Check Vite ready", "exit_code": null}
+{"ts": "2026-05-27T18:27:09+00:00", "tool": "Edit", "file": "dashboard/src/lib/supabase.ts"}
+{"ts": "2026-05-27T18:27:14+00:00", "tool": "Bash", "summary": "Restart Vite from dashboard directory", "exit_code": null}
+{"ts": "2026-05-27T18:27:21+00:00", "tool": "Bash", "summary": "Check Vite ready", "exit_code": null}
+{"ts": "2026-05-27T18:31:20+00:00", "tool": "Bash", "summary": "Kill current Vite", "exit_code": null}
+{"ts": "2026-05-27T18:31:26+00:00", "tool": "Bash", "summary": "Start Vite explicitly from dashboard dir", "exit_code": null}
+{"ts": "2026-05-27T18:31:33+00:00", "tool": "Bash", "summary": "Confirm Vite ready", "exit_code": null}
+{"ts": "2026-05-27T18:31:38+00:00", "tool": "Bash", "summary": "Check all env files", "exit_code": null}
+{"ts": "2026-05-27T18:31:42+00:00", "tool": "Bash", "summary": "Check Vite config", "exit_code": null}
+{"ts": "2026-05-27T18:31:48+00:00", "tool": "Bash", "summary": "Check project root .env for VITE vars", "exit_code": null}
+{"ts": "2026-05-27T18:31:57+00:00", "tool": "Bash", "summary": "Add Supabase vars to project root .env", "exit_code": null}
+{"ts": "2026-05-27T18:32:02+00:00", "tool": "Bash", "summary": "Restart Vite with correct env", "exit_code": null}
+{"ts": "2026-05-27T18:32:10+00:00", "tool": "Bash", "summary": "Confirm Vite ready without env warning", "exit_code": null}
+{"ts": "2026-05-27T18:32:36+00:00", "tool": "Bash", "summary": "Kill all Vite processes", "exit_code": null}
+{"ts": "2026-05-27T18:32:41+00:00", "tool": "Bash", "summary": "Verify Supabase vars in root .env", "exit_code": null}
+{"ts": "2026-05-27T18:32:46+00:00", "tool": "Bash", "summary": "Verify Vite loads env from configured envDir", "exit_code": null}
+{"ts": "2026-05-27T18:32:56+00:00", "tool": "Bash", "summary": "Start Vite fresh and check for warnings", "exit_code": null}
+{"ts": "2026-05-27T18:34:41+00:00", "tool": "Bash", "summary": "Check if Flask API is running on port 5001", "exit_code": null}
+{"ts": "2026-05-27T18:34:42+00:00", "tool": "Bash", "summary": "Check if Vite dev server is running on port 5173", "exit_code": null}
+{"ts": "2026-05-27T18:36:35+00:00", "tool": "Bash", "summary": "Test the admin check endpoint", "exit_code": null}
+{"ts": "2026-05-27T18:36:41+00:00", "tool": "Bash", "summary": "Find admin check endpoint in Flask API", "exit_code": null}
+{"ts": "2026-05-27T18:36:46+00:00", "tool": "Bash", "summary": "Find super admin check logic", "exit_code": null}
+{"ts": "2026-05-27T18:36:49+00:00", "tool": "Bash", "summary": "Find is_super_admin in db module", "exit_code": null}
+{"ts": "2026-05-27T18:36:52+00:00", "tool": "Bash", "summary": "Find is_super_admin definition", "exit_code": null}
+{"ts": "2026-05-27T18:37:37+00:00", "tool": "Edit", "file": "dashboard/src/store/authStore.ts"}
+{"ts": "2026-05-27T18:49:33+00:00", "tool": "Bash", "summary": "Find Apify usage in trend researcher", "exit_code": null}
+{"ts": "2026-05-27T18:49:42+00:00", "tool": "Edit", "file": "agents/trend_researcher.py"}
+{"ts": "2026-05-27T18:49:52+00:00", "tool": "Edit", "file": "agents/trend_researcher.py"}
+{"ts": "2026-05-27T18:49:56+00:00", "tool": "Bash", "summary": "Check if APIFY_DISABLED already in .env", "exit_code": null}
+{"ts": "2026-05-27T18:50:00+00:00", "tool": "Bash", "summary": "Add APIFY_DISABLED=true to .env", "exit_code": null}
+{"ts": "2026-05-27T18:53:04+00:00", "tool": "Edit", "file": "agents/trend_researcher.py"}
+{"ts": "2026-05-27T18:53:09+00:00", "tool": "Edit", "file": "agents/trend_researcher.py"}
+{"ts": "2026-05-27T18:53:16+00:00", "tool": "Bash", "summary": "Remove APIFY_DISABLED from .env", "exit_code": null}
+{"ts": "2026-05-27T18:53:25+00:00", "tool": "Bash", "summary": "Find approval/rejection API endpoints", "exit_code": null}
+{"ts": "2026-05-27T18:53:41+00:00", "tool": "Bash", "summary": "Find skill methods in base_agent", "exit_code": null}
+{"ts": "2026-05-27T18:53:57+00:00", "tool": "Bash", "summary": "Find _agent_slug method", "exit_code": null}
+{"ts": "2026-05-27T18:54:11+00:00", "tool": "Bash", "summary": "Find _FOLDER_TO_SLUG definition", "exit_code": null}
+{"ts": "2026-05-27T18:54:24+00:00", "tool": "Bash", "summary": "Check pending approval output structure", "exit_code": null}
+{"ts": "2026-05-27T18:54:31+00:00", "tool": "Bash", "summary": "Check script-writer pending outputs", "exit_code": null}
+{"ts": "2026-05-27T18:54:53+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-05-27T18:55:10+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-05-27T18:55:31+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-05-27T18:55:35+00:00", "tool": "Bash", "summary": "Find Script Writer structure", "exit_code": null}
+{"ts": "2026-05-27T18:56:09+00:00", "tool": "Edit", "file": "agents/council.py"}
+{"ts": "2026-05-27T18:56:35+00:00", "tool": "Edit", "file": "agents/script_writer.py"}
+{"ts": "2026-05-27T19:05:10+00:00", "tool": "Bash", "summary": "Show working tree status", "exit_code": null}
+{"ts": "2026-05-27T19:05:11+00:00", "tool": "Bash", "summary": "Show staged and unstaged changes", "exit_code": null}
+{"ts": "2026-05-27T19:05:11+00:00", "tool": "Bash", "summary": "Show recent commits", "exit_code": null}
+{"ts": "2026-05-27T19:05:19+00:00", "tool": "Bash", "summary": "Stage all relevant changed files", "exit_code": null}
+{"ts": "2026-05-27T19:05:27+00:00", "tool": "Bash", "summary": "Commit all changes", "exit_code": null}
+{"ts": "2026-05-27T19:05:33+00:00", "tool": "Bash", "summary": "Push to remote", "exit_code": null}
+{"ts": "2026-05-27T19:10:43+00:00", "tool": "Edit", "file": "dashboard/src/components/layout/LeftRail.tsx"}
+{"ts": "2026-05-27T19:10:45+00:00", "tool": "Edit", "file": "dashboard/src/pages/ClientDashboardPage.tsx"}
+{"ts": "2026-05-27T19:10:46+00:00", "tool": "Edit", "file": "dashboard/src/pages/ClientDashboardPage.tsx"}
+{"ts": "2026-05-27T19:10:47+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-05-27T19:10:54+00:00", "tool": "Bash", "summary": "Run TypeScript build check", "exit_code": null}
+{"ts": "2026-05-27T19:11:02+00:00", "tool": "Bash", "summary": "Check working directory and status", "exit_code": null}
+{"ts": "2026-05-27T21:18:18+00:00", "tool": "Bash", "summary": "Commit and push unused import fixes from project root", "exit_code": null}
+{"ts": "2026-05-28T07:57:23+00:00", "tool": "Bash", "summary": "Clone the graphify repo for study", "exit_code": null}
+{"ts": "2026-05-28T07:57:30+00:00", "tool": "Bash", "summary": "List graphify package structure", "exit_code": null}
+{"ts": "2026-05-28T07:57:31+00:00", "tool": "Bash", "summary": "Line counts of graphify modules", "exit_code": null}
+{"ts": "2026-05-28T07:58:48+00:00", "tool": "Bash", "summary": "Check if graphify is already installed", "exit_code": null}
+{"ts": "2026-05-28T07:58:48+00:00", "tool": "Bash", "summary": "Check available package managers", "exit_code": null}
+{"ts": "2026-05-28T07:58:57+00:00", "tool": "Bash", "summary": "Install graphify via uv", "exit_code": null}
+{"ts": "2026-05-28T07:59:00+00:00", "tool": "Bash", "summary": "Verify graphify installation", "exit_code": null}
+{"ts": "2026-05-28T07:59:04+00:00", "tool": "Bash", "summary": "Install graphify skill for Claude Code (user-level)", "exit_code": null}
+{"ts": "2026-05-28T07:59:05+00:00", "tool": "Bash", "summary": "Install graphify skill into the project", "exit_code": null}
+{"ts": "2026-05-28T07:59:10+00:00", "tool": "Bash", "summary": "Check project skill files", "exit_code": null}
+{"ts": "2026-05-28T07:59:11+00:00", "tool": "Bash", "summary": "Check hooks added to settings", "exit_code": null}
+{"ts": "2026-05-28T08:01:32+00:00", "tool": "Bash", "summary": "Debug Python interpreter resolution", "exit_code": null}
+{"ts": "2026-05-28T08:01:36+00:00", "tool": "Bash", "summary": "Save Python interpreter path", "exit_code": null}
+{"ts": "2026-05-28T08:01:43+00:00", "tool": "Bash", "summary": "Detect files in codebase", "exit_code": null}
+{"ts": "2026-05-28T08:01:49+00:00", "tool": "Bash", "summary": "Summarize detected files", "exit_code": null}
+{"ts": "2026-05-28T08:01:58+00:00", "tool": "Bash", "summary": "Check if video transcription is available", "exit_code": null}
+{"ts": "2026-05-28T08:02:05+00:00", "tool": "Bash", "summary": "Transcribe video files with Whisper", "exit_code": null}
+{"ts": "2026-05-28T08:02:09+00:00", "tool": "Bash", "summary": "Install video transcription dependencies", "exit_code": null}
+{"ts": "2026-05-28T08:02:18+00:00", "tool": "Bash", "summary": "Install graphify with video extra via uv", "exit_code": null}
+{"ts": "2026-05-28T08:02:38+00:00", "tool": "Bash", "summary": "Verify faster-whisper installed", "exit_code": null}
+{"ts": "2026-05-28T08:04:03+00:00", "tool": "Bash", "summary": "Transcribe video files with Whisper (retry)", "exit_code": null}
+{"ts": "2026-05-28T08:04:08+00:00", "tool": "Bash", "summary": "Check for Gemini API key", "exit_code": null}
+{"ts": "2026-05-28T08:04:22+00:00", "tool": "Bash", "summary": "Check semantic extraction cache", "exit_code": null}
+{"ts": "2026-05-28T08:04:38+00:00", "tool": "Bash", "summary": "Check transcripts file content", "exit_code": null}
+{"ts": "2026-05-28T08:04:42+00:00", "tool": "Bash", "summary": "Extract JSON line from transcripts file", "exit_code": null}
+{"ts": "2026-05-28T08:04:46+00:00", "tool": "Bash", "summary": "Fix transcripts JSON file", "exit_code": null}
+{"ts": "2026-05-28T08:04:53+00:00", "tool": "Bash", "summary": "Split files into chunks for subagents", "exit_code": null}
+{"ts": "2026-05-28T08:05:04+00:00", "tool": "Bash", "summary": "AST extraction for all code files", "exit_code": null}
+{"ts": "2026-05-28T08:05:11+00:00", "tool": "Bash", "summary": "Get doc chunk file lists for subagent dispatch", "exit_code": null}
+{"ts": "2026-05-28T08:05:20+00:00", "tool": "Bash", "summary": "Regroup image chunks for fewer subagents", "exit_code": null}
+{"ts": "2026-05-28T08:05:27+00:00", "tool": "Bash", "summary": "Print all chunk file lists for subagent prompts", "exit_code": null}
+{"ts": "2026-05-28T08:09:56+00:00", "tool": "Agent", "summary": "Graphify chunk 1 extraction"}
+{"ts": "2026-05-28T08:10:10+00:00", "tool": "Agent", "summary": "Graphify chunk 2 extraction"}
+{"ts": "2026-05-28T08:10:17+00:00", "tool": "Agent", "summary": "Graphify chunk 3 extraction"}
+{"ts": "2026-05-28T08:10:19+00:00", "tool": "Bash", "summary": "Create graphify output directory", "exit_code": null}
+{"ts": "2026-05-28T08:10:30+00:00", "tool": "Agent", "summary": "Graphify chunk 4 extraction"}
+{"ts": "2026-05-28T08:10:33+00:00", "tool": "Bash", "summary": "Create graphify output directory", "exit_code": null}
+{"ts": "2026-05-28T08:10:38+00:00", "tool": "Agent", "summary": "Graphify chunk 5 extraction"}
+{"ts": "2026-05-28T08:10:43+00:00", "tool": "Bash", "summary": "Create output directory", "exit_code": null}
+{"ts": "2026-05-28T08:10:46+00:00", "tool": "Agent", "summary": "Graphify chunk 6 extraction"}
+{"ts": "2026-05-28T08:10:53+00:00", "tool": "Agent", "summary": "Graphify chunk 7 extraction"}
+{"ts": "2026-05-28T08:10:58+00:00", "tool": "Bash", "summary": "ls /Users/gauravoffgrid/offgrid-marketing-os/graphify-out/ 2>/dev/null || echo \"dir not found\"", "exit_code": null}
+{"ts": "2026-05-28T08:11:13+00:00", "tool": "Bash", "summary": "ls /Users/gauravoffgrid/offgrid-marketing-os/graphify-out/ 2>/dev/null || echo \"dir not found\"", "exit_code": null}
+{"ts": "2026-05-28T08:11:13+00:00", "tool": "Bash", "summary": "Ensure graphify-out directory exists", "exit_code": null}
+{"ts": "2026-05-28T08:11:39+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_01.json"}
+{"ts": "2026-05-28T08:12:01+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_02.json"}
+{"ts": "2026-05-28T08:12:36+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_07.json"}
+{"ts": "2026-05-28T08:12:39+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_03.json"}
+{"ts": "2026-05-28T08:13:09+00:00", "tool": "Write", "file": ".graphifyignore"}
+{"ts": "2026-05-28T08:13:17+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_05.json"}
+{"ts": "2026-05-28T08:13:25+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_04.json"}
+{"ts": "2026-05-28T08:13:31+00:00", "tool": "Write", "file": "graphify-out/.graphify_chunk_06.json"}
+{"ts": "2026-05-28T08:13:36+00:00", "tool": "Bash", "summary": "Check which chunk files exist", "exit_code": null}
+{"ts": "2026-05-28T13:06:40+00:00", "tool": "Bash", "summary": "Check all chunk files for validity and size", "exit_code": null}
+{"ts": "2026-05-28T13:06:59+00:00", "tool": "Bash", "summary": "Merge all chunks + AST, filter stale paths", "exit_code": null}
+{"ts": "2026-05-28T13:07:09+00:00", "tool": "Bash", "summary": "Check available functions in build module", "exit_code": null}
+{"ts": "2026-05-28T13:07:19+00:00", "tool": "Bash", "summary": "Check build() signature", "exit_code": null}
+{"ts": "2026-05-28T13:07:36+00:00", "tool": "Bash", "summary": "Build graph with correct API", "exit_code": null}
+{"ts": "2026-05-28T13:07:44+00:00", "tool": "Bash", "summary": "Run Leiden community detection", "exit_code": null}
+{"ts": "2026-05-28T13:07:50+00:00", "tool": "Bash", "summary": "Summarize community detection results", "exit_code": null}
+{"ts": "2026-05-28T13:08:03+00:00", "tool": "Bash", "summary": "Run analyze to find god nodes and label communities", "exit_code": null}
+{"ts": "2026-05-28T13:08:08+00:00", "tool": "Bash", "summary": "Check analyze module exports", "exit_code": null}
+{"ts": "2026-05-28T13:08:12+00:00", "tool": "Bash", "summary": "Check analyze function signatures", "exit_code": null}
+{"ts": "2026-05-28T13:08:20+00:00", "tool": "Bash", "summary": "Run god_nodes and surprising_connections analysis", "exit_code": null}
+{"ts": "2026-05-28T13:08:33+00:00", "tool": "Bash", "summary": "Generate community labels from node attributes", "exit_code": null}
+{"ts": "2026-05-28T13:08:57+00:00", "tool": "Bash", "summary": "Generate GRAPH_REPORT.md", "exit_code": null}
+{"ts": "2026-05-28T13:09:02+00:00", "tool": "Bash", "summary": "Check available export/viz functions", "exit_code": null}
+{"ts": "2026-05-28T13:09:07+00:00", "tool": "Bash", "summary": "Check to_html and to_json signatures", "exit_code": null}
+{"ts": "2026-05-28T13:09:13+00:00", "tool": "Bash", "summary": "Generate HTML visualization and update graph.json", "exit_code": null}
+{"ts": "2026-05-28T13:09:18+00:00", "tool": "Bash", "summary": "Check output file sizes", "exit_code": null}
+{"ts": "2026-05-28T13:10:20+00:00", "tool": "Bash", "summary": "Open graph HTML in default browser", "exit_code": null}
+{"ts": "2026-05-28T13:10:35+00:00", "tool": "Bash", "summary": "Demo graphify query command", "exit_code": null}
+{"ts": "2026-05-28T13:10:39+00:00", "tool": "Bash", "summary": "Demo graphify path command", "exit_code": null}
+{"ts": "2026-05-28T13:10:43+00:00", "tool": "Bash", "summary": "Demo graphify explain command", "exit_code": null}
+{"ts": "2026-05-28T13:10:49+00:00", "tool": "Bash", "summary": "Demo real architecture question", "exit_code": null}
+{"ts": "2026-05-28T13:18:21+00:00", "tool": "Bash", "summary": "Get video duration and size", "exit_code": null}
+{"ts": "2026-05-28T13:18:38+00:00", "tool": "Bash", "summary": "Transcribe video with timestamps", "exit_code": null}
+{"ts": "2026-05-28T13:20:30+00:00", "tool": "Bash", "summary": "Create output directory for cuts", "exit_code": null}
+{"ts": "2026-05-28T13:25:46+00:00", "tool": "Bash", "summary": "Cut 6 segments from raw video", "exit_code": null}
+{"ts": "2026-05-28T13:25:50+00:00", "tool": "Bash", "summary": "Check ffmpeg progress", "exit_code": null}
+{"ts": "2026-05-28T13:25:53+00:00", "tool": "Bash", "summary": "Check if segments are being written", "exit_code": null}
+{"ts": "2026-05-28T13:27:06+00:00", "tool": "Bash", "summary": "Wait for final segment then list all", "exit_code": null}
+{"ts": "2026-05-28T13:27:14+00:00", "tool": "Bash", "summary": "Concatenate 6 segments into final 60s cut", "exit_code": null}
+{"ts": "2026-05-28T13:32:35+00:00", "tool": "Bash", "summary": "Check latest deliverables", "exit_code": null}
+{"ts": "2026-05-28T13:32:45+00:00", "tool": "Bash", "summary": "Extract text from AskGauravAI pillar script HTML", "exit_code": null}

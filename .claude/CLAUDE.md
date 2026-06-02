@@ -28,7 +28,7 @@ A 18-agent autonomous AI marketing system on the Claude Agent SDK. CEO Brain orc
 
 | Slug | Status |
 |------|--------|
-| `askgauravai` | Primary. Phase 1 — Awareness + Proof. |
+| `askgauravai` | Primary. Phase 1 — Awareness + Proof. **IG/LinkedIn/YouTube/X connected + post-capable** (see Connections). |
 | `offgrid-creatives-ai` | Original. Active. |
 | `dropvolt` | Test brand — graphic tees, Gen Z. |
 
@@ -71,7 +71,7 @@ A 18-agent autonomous AI marketing system on the Claude Agent SDK. CEO Brain orc
 ## GRID CONTROL Dashboard (Live)
 
 - React 19 + Vite + Tailwind v4 + shadcn (oklch tokens) + TanStack Query v5 + Zustand + react-router-dom v7.
-- Pages: `/`, `/review`, `/agents`, `/agents/:id`, `/calendar`, `/insights`, `/system` (in `dashboard/src/pages/`).
+- Pages: `/`, `/review`, `/agents`, `/agents/:id`, `/calendar`, `/insights`, `/connections`, `/system` (in `dashboard/src/pages/`).
 - Layout in `dashboard/src/components/layout/` (DashboardLayout, LeftRail, TopBar, TheBrain, CommandPalette).
 - Brand switcher in left rail. ⌘K command palette. ⌘J The Brain.
 - Flask `/api/*` on port 5001 with `/api` proxy on Vite 5173.
@@ -80,6 +80,7 @@ A 18-agent autonomous AI marketing system on the Claude Agent SDK. CEO Brain orc
 ## Multi-Brand & File Layout (per-brand)
 
 `brands/{slug}/` is fully isolated. Key files:
+- `.env` — **brand-private platform tokens** (IG/LinkedIn/YouTube/X). Gitignored. Source of truth for that brand's social connections; loaded via `brand_env()` and overlaid onto agent subprocesses. Prefer the Connections page Connect buttons over hand-editing (manual saves have clobbered values). Global `/.env` = Grid Control infra only.
 - `brand_profile.json` — read by all, never modified by agents
 - `voice_profile.json` — read by Script Writer + Carousel Designer
 - `content_calendar.json` — written by Content Planner; read by Script Writer + Carousel Designer
@@ -92,17 +93,24 @@ A 18-agent autonomous AI marketing system on the Claude Agent SDK. CEO Brain orc
 - `outputs/approved/`, `outputs/blocked/{agent-slug}/`
 - `visuals/carousels/{date}_{post_id}/`
 
-All API endpoints take `?brand_slug=`. All TanStack queries keyed by `activeBrand.slug`. Subprocesses get `ACTIVE_BRAND` env.
+All API endpoints take `?brand_slug=`. All TanStack queries keyed by `activeBrand.slug`. Subprocesses get `ACTIVE_BRAND` env + the brand's `.env` overlay.
 
 ## Pending in Priority Order
 
 1. **Custom domain** — point a domain at Vercel (dashboard) and Railway (API).
-2. **Browser publishing** — Chrome automation for posting approved content (needs Gaurav hands-on).
+2. **Publishers + publish pipeline** — Instagram publisher exists; build LinkedIn/YouTube/X publishers (each reads `brands/<slug>/.env`) + create→approval→publish flow. First post target: agents create, Gaurav approves, then post to IG/LinkedIn/YouTube/X. YouTube needs a real founder-on-camera video (no fabrication).
 4. Apply Rule 10 fully to Trend Researcher AutoResearch (partial today).
-5. **META_GRAPH_API_TOKEN** — unblocks live Data Analyst metrics + Performance Tracker.
+5. **META_GRAPH_API_TOKEN** — set per-brand for askgauravai (`brands/askgauravai/.env`); still unblocks live Data Analyst metrics + Performance Tracker for other brands.
 6. Subagent orchestration upgrade in CEOBrain.
 7. Parallelization (Trend Researcher + Data Analyst are independent).
 8. AgentShield security scan before first client.
+
+### Recently Completed (June 2, 2026) — Per-brand social connections
+- ✅ **Per-brand secrets model** — `brands/<slug>/.env` (gitignored) holds that brand's platform tokens, isolated from Grid Control infra (global `/.env`). `brand_env()`/`brand_token()` loaders in `dashboard_api.py`; overlaid onto every agent subprocess env.
+- ✅ **Connections page** (`dashboard/src/pages/ConnectionsPage.tsx`, route `/connections`, client-nav) — cockpit visual language, live status per platform, never displays raw tokens.
+- ✅ **API**: `GET /api/brands/<slug>/connections` (brand-authoritative live verify, no global fallback) + brand-aware `POST /api/connections/save-token`. Verifiers: `_verify_social`, `_verify_youtube_oauth`, `_verify_twitter_oauth`.
+- ✅ **AskGauravAI — all 4 platforms LIVE + post-capable**: Instagram @askgauravai (Graph token + IG_USER_ID) · LinkedIn "Gaurav Khanna" (w_member_social + URN, posts as personal /in/ profile) · YouTube "Gaurav - AI strategiste" (OAuth `youtube.upload` via `publishing/youtube_oauth.py`) · X @AskGauravAI write (OAuth 1.0a, 4 keys). **TikTok dropped** (banned in India).
+- ⚠️ YouTube app is External+Testing → refresh token expires ~7 days; "Publish app" on Google Audience page to make permanent. X's 4 OAuth1 fields are hand-edited (only bearer is in the Connect UI).
 
 ### Recently Completed (May 27, 2026)
 - ✅ **Deploy LIVE** — Vercel (dashboard) + Railway (Flask API) + API proxy working
@@ -152,3 +160,6 @@ Production build: `cd dashboard && npm run build`.
 ## Working Rule
 
 Claude Code writes every line of code. Gaurav and Claude plan only.
+# graphify
+- **graphify** (`.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

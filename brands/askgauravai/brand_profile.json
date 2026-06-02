@@ -1,162 +1,45 @@
 {
-  "brand_name": "ASKGauravAI",
-  "founder_identity": "Non-coder who built Grid Control (18-agent marketing OS) using Claude. Has never written a line of code. Bridges AI gaps for businesses without making them learn to code.",
-  "product": "Two products sold through ASKGauravAI: (1) Reporting Project — pre-advertising intelligence reports (₹2.5-7k), (2) Grid Control services — content system setup, monthly retainers, strategy sessions (₹15-50k+).",
-  "phase": "Phase 1 — Awareness + Proof",
-  "industry": "AI Strategy / Operations",
-  "business_type": "Personal Brand → Intelligence Reports + Done-for-you Content Systems + Monthly Retainers",
-
-  "brand_brief": "Gaurav is a non-coder who built an 18-agent marketing OS using Claude — proving you don't need to write code to build serious AI systems. ASKGauravAI is the public-facing brand that reveals the back-end of AI work that other creators hide: the real hours, the real costs, the assumptions baked into 'magic' prompts, and the places AI broke and a human had to fix it. Content is forward-only — documents what's being built right now. Two products: intelligence reports (Reporting Project) and execution services (Grid Control). Sold through ASKGauravAI content, no separate social profiles for products.",
-
-  "unique_tension": "AI creators show the magic. Gaurav shows the back-end they hide.",
-
-  "back_end_weapons": [
-    "Time truth — '5-minute build' actually = 40 hours of prompt iteration",
-    "Cost truth — real API spend, tool stack costs, error-rerun bills",
-    "Failure truth — where AI broke and a human fixed it manually",
-    "Assumption truth — why a viral prompt only works in its specific context"
-  ],
-
-  "audience": [
-    "D2C founders who spend on agencies but get Canva calendars back",
-    "Small brand owners running their own marketing with no data",
-    "Agency owners who want to scale without hiring 10 more people",
-    "Solopreneurs who want a marketing system, not another tool",
-    "Founders who know AI matters but feel overwhelmed by jargon"
-  ],
-  "not_for_audience": [
-    "Job-seekers wanting to learn AI to get hired",
-    "Aspiring AI students / course-buyers",
-    "Coders looking for tutorials",
-    "People looking for free AI tool lists"
-  ],
-  "target_audience": "Non-technical founders, agency owners, and solopreneurs who know AI matters but are stuck between 'I know I should use AI' and 'AI is actually running my marketing.' They want intelligence and execution, not more tools to figure out themselves.",
-
-  "market": "Global. No geographic limitations. Pricing in both INR and USD.",
-  "language": "English ONLY. No Hinglish. No Hindi words. All content — video, audio, text, captions, carousels — in plain conversational English. Locked May 25 2026.",
-
-  "platforms": ["Instagram", "YouTube", "LinkedIn", "Twitter/X", "TikTok", "Google/SEO"],
-  "primary_platforms": "YouTube (pillar long-form) + Instagram (derivatives + carousels)",
-  "secondary_platforms": "LinkedIn, Twitter/X, TikTok (derivatives from pillar)",
-  "platform_handles": [
-    { "platform": "Instagram", "handle": "AskGauravAI" },
-    { "platform": "LinkedIn", "handle": "AskGauravAI" },
-    { "platform": "Twitter/X", "handle": "AskGauravAI" },
-    { "platform": "YouTube", "handle": "AskGauravAI" },
-    { "platform": "TikTok", "handle": "AskGauravAI" }
-  ],
-
-  "content_model": {
-    "method": "GaryVee Pillar Model",
-    "pillar": "1 YouTube long-form (12-15 min) per week",
-    "derivatives": "4-6 Shorts/Reels, 2-3 carousels, 3-4 LinkedIn posts, 2-3 X threads, TikTok reposts",
-    "recording_time": "~1 hour per week produces 20+ pieces",
-    "principle": "Document don't create. Give give give, then ask. Platform-native derivatives, not cross-posts.",
-    "on_camera": "Gaurav's face on camera. No AI clone for Month 1.",
-    "ads": "Zero paid Month 1. Organic only."
-  },
-
-  "competitor_handles": ["manthanjethwani", "aiwithanushka", "shivam.ai.data"],
-  "reference_handles": ["garyvee", "thevibefounder", "vaibhavsisinty"],
-  "competitor_research_targets": ["Liam Ottley (AI automation agency)", "Nate Herk (AI YouTuber)", "Alex Hormozi (business scaling + AI)"],
-
-  "tone_of_voice": "Plain conversational English. Founder-to-founder. Uses real numbers, never vague claims. Reveals what the audience didn't know they didn't know. Never lectures — diagnoses.",
-
-  "visual_aesthetic": "Clean white/cream backgrounds, Notion/Linear-startup feel. NOT dark mode. NOT tech-bro aesthetic. NOT generic-AI dreamy renders.",
-  "brand_palette": {
-    "primary_bg": "#FFFFFF",
-    "secondary_bg": "#FAFAFA",
-    "accent": "#0F4C5C",
-    "text_primary": "#1A1A1A",
-    "highlight_sparing": "#E07A5F"
-  },
-
-  "production_gear": {
-    "audio": "Protronics DASH 7 wireless mic",
-    "video_primary": "iPhone 13 Pro Max (4K HDR talking-head)",
-    "video_broll": "GoPro Hero 7 Black (behind-the-scenes, wide shots, hands/screen)",
-    "voice_synthesis_disabled": "ElevenLabs cancelled. All voice = Gaurav's actual recorded voice."
-  },
-
-  "products": {
-    "reporting_project": {
-      "name": "TBD — needs naming",
-      "type": "Pre-advertising intelligence reports",
-      "price_india": "₹2,500 (early access) — ₹6,999 (standard) — ₹24,000 (agency 3-pack)",
-      "delivery": "Automated: form → Razorpay payment → Apify scraping → Claude analysis → ReportLab PDF → email",
-      "website": "From Day 1. Purchase flow on website.",
-      "social_profile": "NONE. Promoted through ASKGauravAI only."
-    },
-    "grid_control_services": {
-      "content_system_setup": { "price": "$199-349 / ₹15-25k", "type": "one-time" },
-      "monthly_content_retainer": { "price": "$199-449/mo / ₹15-35k/mo", "type": "recurring" },
-      "strategy_session_90min": { "price": "$99-149 / ₹5-10k", "type": "one-time" },
-      "brand_voice_dna": { "price": "$49-79 / ₹3-5k", "type": "one-time" },
-      "carousel_pack": { "price": "$99-199/mo / ₹8-15k/mo", "type": "recurring" },
-      "script_pack": { "price": "$129-249/mo / ₹10-20k/mo", "type": "recurring" },
-      "trend_intelligence_brief": { "price": "$69-99/mo / ₹5-8k/mo", "type": "recurring" },
-      "full_agency_replacement": { "price": "$349-649/mo / ₹25-50k/mo", "type": "recurring" }
-    },
-    "grid_control_future": {
-      "saas": "After 2 months of testing on 4 brands. Client dashboard login.",
-      "white_label": "For agencies. Multi-brand.",
-      "cohort": "4-week live. Teach Grid Control.",
-      "lifetime_deal": "AppSumo-style one-time payment."
-    }
-  },
-
-  "revenue_funnel": {
-    "entry": "Reporting Project report (₹2.5-7k) — lowest friction, automated",
-    "mid": "Grid Control services (₹15-50k) — content system setup, strategy sessions",
-    "high": "Monthly retainer / agency replacement (₹25-50k/mo)",
-    "future": "Grid Control SaaS / white-label / cohort"
-  },
-
-  "brands_grid_control_runs_on": [
-    "ASKGauravAI (personal brand)",
-    "Reporting Project (intelligence product)",
-    "OffGrid Creatives AI (Grid Control product page)",
-    "Third Gen Tribe (fashion brand — on hold until Month 2)"
-  ],
-
-  "social_identity_structure": {
-    "askgauravai": "Growth engine. Gaurav's face. Sells everything. Trust layer.",
-    "offgrid_creatives_ai": "Grid Control product page. Demos, results, case studies. Checkout destination.",
-    "third_gen_tribe": "Fashion brand. Independent. Becomes a live case study for ASKGauravAI.",
-    "reporting_project": "Landing page for payments only. NO social profile. Promoted via ASKGauravAI."
-  },
-
-  "grid_control_naming_rule": {
-    "askgauravai": "SILENT Week 1-2. Reference as 'a system I built' / 'my AI system'. Nameable from Week 3+.",
-    "offgrid_creatives_ai": "Named freely. This IS the Grid Control brand page."
-  },
-
-  "content_rules": {
-    "forward_only": true,
-    "zero_assumptions": "Every data point traces to a real scrape, API call, or user input. If unavailable → STOP, ask. Never fabricate.",
-    "real_data_mandate": "All scripts, hooks, and topics must be backed by real scraped trend data, competitor data, or engagement metrics. No generic content.",
-    "approval_gate": "Every output → pending_approval/. Approved manually → approved/.",
-    "week_1_cta": "Pure value. Zero sales. No CTAs to buy anything. Jab jab jab."
-  },
-
-  "what_to_never_say": [
-    "AI buzzwords ('synergize', 'leverage', 'next-gen', 'cutting-edge', 'game-changer')",
-    "Generic AI guru language ('master AI in 7 days')",
-    "Direct competitor name-calling",
-    "Direct hire-me / sales pitches in public posts",
-    "Past client portfolio reveals — content is forward-only",
-    "Technical implementation details that exclude non-coders",
-    "Any Hindi or Hinglish words",
-    "Promising deliverables that don't exist yet"
-  ],
-
-  "north_star_metric": "qualified_founder_dms_per_week",
-  "north_star_metric_definition": "Inbound DMs from founders/agency owners describing a specific AI bottleneck or asking about reports/services. Quality over follower count.",
-
-  "use_elevenlabs": false,
-  "brand_face": "Gaurav on camera. Real voice. No AI clone Month 1.",
-
+  "brand_type": "existing",
+  "name": "AskGauravAI",
+  "product_description": "I help D2C founders, brand owners and agencies grow with AI. Two products: an AI marketing-intelligence report, and Grid Control, done-for-you AI content execution. I also educate on AI in marketing as a creator.",
+  "hero_products": "Reporting Project (AI marketing intelligence): Rs 2.5k-7k. Grid Control (done-for-you AI execution): Rs 30k-50K",
+  "industry": "AI marketing, Digital/Social media marketing automated with AI",
+  "phase": "Growing",
   "website_url": "",
-  "has_existing_pipeline": true,
-  "existing_pipeline": "Grid Control 18-agent system"
+  "target_audience": "D2C founders, e-commerce brand owners, agency owners and solopreneurs running Meta ads \u2014 globally, English-speaking. People who need marketing intelligence + execution but don't have a big in-house team.",
+  "brand_brief": "I pair real, data-backed marketing intelligence (from actual competitor and market scraping \u2014 zero guesswork) with done-for-you AI execution. Founder-to-founder, no agency fluff, every output traceable to real data.",
+  "content_goal_90d": "Leads",
+  "primary_bottleneck": "No consistent system \u2014 brands get run ad-hoc and lose context. Need steady on-brand output and to convert audience into clients for both products.",
+  "market": "English / Global",
+  "tone_of_voice": "Direct, founder-to-founder, no fluff. Practical and confident \u2014 show the work and the data, not hype. Teach by doing, slightly contrarian.",
+  "tone_specifics": "build, real data not vibes, no fluff, founder-to-founder, show the receipts, execution, intelligence, zero-assumption",
+  "what_to_never_say": "No fake or unverifiable claims \u2014 everything traces to real data. No hype/guru tone, no get-rich-quick, no fear-mongering. No dunking on named people, no politics or religion, no fabricated testimonials or stats.",
+  "brand_face": "Founder on camera",
+  "reference_accounts": "",
+  "follower_range": "<1k",
+  "past_content_worked": "Account is set up (2 followers) but 0 posts live yet \u2014 starting from zero on content.",
+  "instagram_handle": "askgauravai",
+  "platform_handles": {
+    "linkedin": "",
+    "youtube": "",
+    "tiktok": "",
+    "x": ""
+  },
+  "competitor_handles": [
+    "manthanjethwani",
+    "seanpurvis.ai",
+    "gobi_automates"
+  ],
+  "brand_colors": [],
+  "social_handles": {
+    "instagram": "@askgauravai",
+    "linkedin": "",
+    "youtube": "",
+    "tiktok": "",
+    "x": ""
+  },
+  "platforms": [
+    "Instagram"
+  ],
+  "slug": "askgauravai"
 }

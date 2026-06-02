@@ -47,3 +47,10 @@ dashboard/.env.local
 # Managed agents registry (contains agent IDs — sensitive)
 managed_agents/registry.json
 brands/*/visuals/cuts/*.mp4
+.design_handoff/
+
+# Claude Code temp worktrees
+.claude/worktrees/
+
+# Local dated brand backups (large, not for git)
+brands/_BACKUP_brands_*/

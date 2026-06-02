@@ -1,0 +1,17 @@
+---
+source_file: "dashboard/src/hooks/useBilling.ts"
+type: "code"
+community: "Dashboard — Billing, Hook"
+location: "L49"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/Dashboard__Billing_Hook
+---
+
+# Payment
+
+## Connections
+- [[useBilling.ts]] - `contains` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/Dashboard__Billing_Hook

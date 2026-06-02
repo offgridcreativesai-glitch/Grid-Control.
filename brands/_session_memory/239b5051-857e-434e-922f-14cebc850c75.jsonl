@@ -1,0 +1,53 @@
+{"ts": "2026-05-28T13:37:02+00:00", "tool": "Write", "file": "-Users-gauravoffgrid-offgrid-marketing-os/memory/feedback_video_editing_style.md"}
+{"ts": "2026-05-28T13:37:12+00:00", "tool": "Edit", "file": "grid/.claude/projects/-Users-gauravoffgrid-offgrid-marketing-os/memory/MEMORY.md"}
+{"ts": "2026-05-28T17:27:16+00:00", "tool": "Bash", "summary": "Check graphify CLI capabilities", "exit_code": null}
+{"ts": "2026-05-28T17:27:20+00:00", "tool": "Bash", "summary": "Check remaining CLI options", "exit_code": null}
+{"ts": "2026-05-28T17:27:24+00:00", "tool": "Bash", "summary": "Check extract and cluster-only options", "exit_code": null}
+{"ts": "2026-05-28T17:27:29+00:00", "tool": "Bash", "summary": "Check extract function signature", "exit_code": null}
+{"ts": "2026-05-28T17:27:34+00:00", "tool": "Bash", "summary": "Check all export function signatures", "exit_code": null}
+{"ts": "2026-05-28T17:27:40+00:00", "tool": "Bash", "summary": "Check wiki, report, and analysis capabilities", "exit_code": null}
+{"ts": "2026-05-28T17:27:45+00:00", "tool": "Bash", "summary": "Check wiki and report function signatures", "exit_code": null}
+{"ts": "2026-05-28T17:28:20+00:00", "tool": "Bash", "summary": "Check graph.json structure", "exit_code": null}
+{"ts": "2026-05-28T17:28:43+00:00", "tool": "Bash", "summary": "Generate meaningful community labels with proper graph loading", "exit_code": null}
+{"ts": "2026-05-28T17:29:00+00:00", "tool": "Bash", "summary": "Install matplotlib for SVG export", "exit_code": null}
+{"ts": "2026-05-28T17:29:06+00:00", "tool": "Bash", "summary": "Install graphify with viz extras", "exit_code": null}
+{"ts": "2026-05-28T17:29:17+00:00", "tool": "Bash", "summary": "Fix python path after uv tool upgrade", "exit_code": null}
+{"ts": "2026-05-28T17:29:24+00:00", "tool": "Bash", "summary": "Force reinstall graphify with viz extras", "exit_code": null}
+{"ts": "2026-05-28T17:29:29+00:00", "tool": "Bash", "summary": "Check viz extras installation output", "exit_code": null}
+{"ts": "2026-05-28T17:29:35+00:00", "tool": "Bash", "summary": "Install matplotlib directly into graphify's venv", "exit_code": null}
+{"ts": "2026-05-28T17:29:43+00:00", "tool": "Bash", "summary": "Verify matplotlib installed", "exit_code": null}
+{"ts": "2026-05-28T17:30:35+00:00", "tool": "Bash", "summary": "Generate suggested questions and official report", "exit_code": null}
+{"ts": "2026-05-28T17:30:41+00:00", "tool": "Bash", "summary": "Generate tree view and callflow HTML", "exit_code": null}
+{"ts": "2026-05-28T17:30:46+00:00", "tool": "Bash", "summary": "Install git hooks and run token benchmark", "exit_code": null}
+{"ts": "2026-05-28T17:30:53+00:00", "tool": "Bash", "summary": "Show final graphify-out structure", "exit_code": null}
+{"ts": "2026-05-28T17:33:08+00:00", "tool": "Bash", "summary": "Top-level directory sizes", "exit_code": null}
+{"ts": "2026-05-28T17:33:12+00:00", "tool": "Bash", "summary": "Brand directory sizes", "exit_code": null}
+{"ts": "2026-05-28T17:33:16+00:00", "tool": "Bash", "summary": "AskGauravAI subdirectory sizes", "exit_code": null}
+{"ts": "2026-05-28T17:33:21+00:00", "tool": "Bash", "summary": "Breakdown of raw_recordings and visuals", "exit_code": null}
+{"ts": "2026-05-28T17:33:24+00:00", "tool": "Bash", "summary": "Check cuts and carousel versions", "exit_code": null}
+{"ts": "2026-05-28T17:33:28+00:00", "tool": "Bash", "summary": "Check post_02 cuts", "exit_code": null}
+{"ts": "2026-05-28T17:33:34+00:00", "tool": "Bash", "summary": "Dashboard directory breakdown", "exit_code": null}
+{"ts": "2026-05-28T17:33:37+00:00", "tool": "Bash", "summary": "Check port-backup contents", "exit_code": null}
+{"ts": "2026-05-28T17:33:43+00:00", "tool": "Bash", "summary": "Check empty dirs, pycache, data, outputs, jarvis", "exit_code": null}
+{"ts": "2026-05-28T17:33:49+00:00", "tool": "Bash", "summary": "Check archives, deliverables, session memory", "exit_code": null}
+{"ts": "2026-05-28T17:33:56+00:00", "tool": "Bash", "summary": "Check legacy dirs, billing, validators, routes, notion, skills", "exit_code": null}
+{"ts": "2026-05-28T17:34:06+00:00", "tool": "Bash", "summary": "Check if legacy files are referenced anywhere", "exit_code": null}
+{"ts": "2026-05-28T17:34:14+00:00", "tool": "Bash", "summary": "Check active vs stale brand files and references", "exit_code": null}
+{"ts": "2026-05-28T17:34:21+00:00", "tool": "Bash", "summary": "Check remaining references and potential duplicates", "exit_code": null}
+{"ts": "2026-05-28T17:34:28+00:00", "tool": "Bash", "summary": "Check which modules are actually imported and used", "exit_code": null}
+{"ts": "2026-05-28T17:34:37+00:00", "tool": "Bash", "summary": "Check duplicates and total file count", "exit_code": null}
+{"ts": "2026-05-28T17:37:44+00:00", "tool": "Bash", "summary": "Check project MCP settings", "exit_code": null}
+{"ts": "2026-05-28T17:37:48+00:00", "tool": "Bash", "summary": "Check user-level MCP settings", "exit_code": null}
+{"ts": "2026-05-28T17:37:51+00:00", "tool": "Bash", "summary": "Check local settings for MCP servers", "exit_code": null}
+{"ts": "2026-05-28T17:38:10+00:00", "tool": "Bash", "summary": "Identify all connected MCP servers", "exit_code": null}
+{"ts": "2026-05-28T17:38:18+00:00", "tool": "Bash", "summary": "Check installed plugins and blocklist", "exit_code": null}
+{"ts": "2026-05-28T17:38:24+00:00", "tool": "Bash", "summary": "Count custom agents and skills", "exit_code": null}
+{"ts": "2026-05-28T17:48:40+00:00", "tool": "Bash", "summary": "Move stale files to archive outside project", "exit_code": null}
+{"ts": "2026-05-28T17:48:52+00:00", "tool": "Bash", "summary": "Clean up remaining stale items", "exit_code": null}
+{"ts": "2026-05-28T17:49:19+00:00", "tool": "Edit", "file": "agents/base_agent.py"}
+{"ts": "2026-05-28T17:49:25+00:00", "tool": "Edit", "file": "agents/base_agent.py"}
+{"ts": "2026-05-28T17:49:36+00:00", "tool": "Edit", "file": "agents/base_agent.py"}
+{"ts": "2026-05-28T17:49:43+00:00", "tool": "Bash", "summary": "Verify fix and check for remaining data/ references", "exit_code": null}
+{"ts": "2026-05-28T17:55:47+00:00", "tool": "Write", "file": "docs/GRID_CONTROL_CLIENT_WORKFLOW.md"}
+{"ts": "2026-05-28T17:58:46+00:00", "tool": "Edit", "file": "docs/GRID_CONTROL_CLIENT_WORKFLOW.md"}
+{"ts": "2026-05-28T18:01:32+00:00", "tool": "Edit", "file": "docs/GRID_CONTROL_CLIENT_WORKFLOW.md"}

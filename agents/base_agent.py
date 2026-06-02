@@ -17,7 +17,11 @@ class BaseAgent:
     def __init__(self, agent_name):
         self.agent_name = agent_name
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.output_dir = "outputs/pending_approval"
+        _slug = os.getenv("ACTIVE_BRAND", "")
+        if _slug:
+            self.output_dir = os.path.join(_PROJECT_ROOT, "brands", _slug, "outputs", "pending_approval")
+        else:
+            self.output_dir = os.path.join(_PROJECT_ROOT, "outputs", "pending_approval")
         self._session_context: dict | None = None
         self._session_start_time: float = time.time()
 
@@ -309,20 +313,34 @@ class BaseAgent:
 
     # ── file I/O ──────────────────────────────────────────────────────────────
 
+    def _brand_dir(self) -> str:
+        """Return brands/{slug}/ path using ACTIVE_BRAND env var.
+        Falls back to data/ for backwards compatibility."""
+        slug = os.getenv("ACTIVE_BRAND", "")
+        if slug:
+            brand_path = os.path.join(_PROJECT_ROOT, "brands", slug)
+            if os.path.isdir(brand_path):
+                return brand_path
+        return os.path.join(_PROJECT_ROOT, "data")
+
     def load_brand_profile(self):
-        with open("data/brand_profile.json", "r") as f:
+        path = os.path.join(self._brand_dir(), "brand_profile.json")
+        with open(path, "r") as f:
             return json.load(f)
 
     def load_session_state(self):
-        with open("data/session_state.json", "r") as f:
+        path = os.path.join(self._brand_dir(), "session_state.json")
+        with open(path, "r") as f:
             return json.load(f)
 
     def load_competitors(self):
-        with open("data/competitors_db.json", "r") as f:
+        path = os.path.join(self._brand_dir(), "competitors_db.json")
+        with open(path, "r") as f:
             return json.load(f)
 
     def load_trends(self):
-        with open("data/trends_live.json", "r") as f:
+        path = os.path.join(self._brand_dir(), "trends_live.json")
+        with open(path, "r") as f:
             return json.load(f)
 
     def save_output(self, output_dict, subfolder):
@@ -339,7 +357,8 @@ class BaseAgent:
         state = self.load_session_state()
         state[key] = value
         state["last_run"] = datetime.now().isoformat()
-        with open("data/session_state.json", "w") as f:
+        path = os.path.join(self._brand_dir(), "session_state.json")
+        with open(path, "w") as f:
             json.dump(state, f, indent=2)
 
     def log(self, message):

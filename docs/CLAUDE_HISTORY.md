@@ -493,3 +493,56 @@ Full 10-step guide exists in the cached-stirring-fog.md plan file. Summary:
 - CLAUDE.md screen map corrected
 
 ---
+
+## Session — May 28-29, 2026: Grid Control Client Workflow + Security Lockdown
+
+### What was built
+- **Full client workflow walkthrough** — documented in `docs/GRID_CONTROL_CLIENT_WORKFLOW.md`
+- **Onboarding wizard wired** — "New brand" button in LeftRail now navigates to `/onboarding`
+- **Slug auto-generation fix** — slug now updates with every keystroke, not just first
+- **User-scoped brand API** — `/api/brands` returns only brands the user is a member of (via `brand_members`), super admins see all
+- **OnboardingGuard loading fix** — waits for brands query to resolve before redirecting
+- **useEffect infinite loop fix** — removed `brands` from deps in OnboardingGuard
+- **Brain chat security lockdown** — clients get brand-only prompt, no tools, 800 token cap, 30 msg/hr rate limit, Sonnet only
+- **Token cost tracking** — `brain_usage` table in Supabase, logs every Brain chat message with brand, user, model, tokens, cost
+- **Admin-only "New brand"** — hidden from client view in LeftRail dropdown
+- **Sample brand created** — GlowLab (skincare D2C), demo client user: demo@glowlab.in
+- **Graphify updated** — 4498 nodes, 6942 edges, 408 communities
+
+### Files changed
+- `dashboard/src/pages/OnboardingPage.tsx` — slug fix
+- `dashboard/src/components/layout/LeftRail.tsx` — New brand onClick + admin-only gate
+- `dashboard/src/App.tsx` — OnboardingGuard loading + infinite loop fix
+- `dashboard_api.py` — `/api/brands` user filtering, Brain chat auth + restrictions + rate limit + cost tracking
+- `docs/GRID_CONTROL_CLIENT_WORKFLOW.md` — full workflow documentation
+- `brands/glowlab/brand_profile.json` — sample brand
+
+### Key decisions
+- Client Brain chat is marketing-only — refuses code, apps, homework, general chat
+- 30 msgs/hour rate limit per brand (in-memory, resets on server restart)
+- Cost tracking per brand enables future billing and margin calculation
+- GlowLab sample brand used for all client UX testing
+
+---
+
+## Session — May 29, 2026: Security Review + Pillar Video Plan
+
+### Security Review (Opus)
+- **CRITICAL: 54 Flask routes have dead auth** — `@require_auth` above `@app.route` is a no-op in Flask. Proven live: `/api/outputs/download/.env` returns full .env (HTTP 200, no token). `/api/brain/execute` (RCE) also unauthenticated. Production Railway endpoint confirmed exposed.
+- **Action required:** Rotate ALL keys before recharging. Fix decorator ordering. Lock CORS.
+- Full findings in session transcript.
+
+### Pillar Video Plan (PILLAR-FORGE-29MAY)
+- Gaurav recorded 8 video clips + 8 voice tracks for AskGauravAI YouTube long-form
+- Mapped to script sections (Hook extracted from Clip maker 1, Section 4 mislabeled as "Section 3")
+- Pipeline: Creative Director → Script Writer → Content Planner
+- BLOCKED: Anthropic credits at $0, security key rotation needed first
+- Plan doc: `docs/PILLAR_FORGE_29MAY.md`
+
+### Client workflow bugs fixed (carried from May 28 session)
+- Brain chat locked down: brand-only for clients, 30 msg/hr, 800 tokens, no tools
+- brain_usage table created in Supabase for cost tracking
+- OnboardingGuard loading race + infinite loop fixed
+- /api/brands now user-scoped via brand_members
+
+---

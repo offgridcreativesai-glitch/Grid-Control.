@@ -83,30 +83,48 @@ Make it feel premium and quiet. Prioritize hierarchy and spacing over decoration
 
 ---
 
-## Screen 2 — Admin All-Brands Overview (operator zoom-out)
+## Screen 2 — Admin Panel (owner-only, top altitude) — BUILD FIRST
 
-Gaurav's aggregate view above the individual cockpits.
+The owner's (Gaurav's) top-level control tower. ONLY the owner ever sees this — gated by
+super-admin role. It controls Grid Control itself AND lists all brands; selecting a brand drills
+down into that brand's cockpit (Screen 1). A client never sees this layer.
+
+Two altitudes:
+  ADMIN PANEL (this screen, owner-only) → select a brand ↓ → BRAND PANEL (Screen 1 cockpit)
+
+IMPORTANT — the System/Health strip is READ-ONLY. It shows what's wrong; it never edits or runs
+code. Software changes to Grid Control are made by Claude Code (terminal), not from this panel.
 
 ```
 [Paste global taste guardrails first]
 
-Build an "All Brands" overview for an operator who runs 3-4 marketing brands. Zoom-out view that
-sits ABOVE the individual brand cockpits.
+Build an owner-only "Admin Panel" — the top-level control tower for a marketing operating system
+called Grid Control. This sits ABOVE the individual brand cockpits. Only the owner sees it.
 
-TOP: title "All Brands" + a small summary strip: total pending approvals across brands,
-total agents running, any brand with a red alert.
+TOP BAR: "Grid Control · Admin" on the left; owner avatar on the right. No brand switcher here
+(this IS the level above brands).
 
-BODY: a grid of BRAND CARDS (3-4 cards). Each card:
+SECTION 1 — "System Health" (a slim READ-ONLY status strip, full width):
+  - 4-5 compact status tiles: API status (green "Operational"), Last deploy ("2h ago · success"),
+    Daily pipeline ("ran 9:14 AM · ok"), Errors (24h) ("0"), Background jobs ("2 running").
+  - Muted, glanceable. NO action buttons — this only reports state, it does not change anything.
+  - If something is wrong, that one tile turns soft-amber/red with a one-line reason.
+
+SECTION 2 — summary strip: total pending approvals across all brands, total agents running,
+count of brands needing attention.
+
+SECTION 3 — "Your Brands" — a grid of BRAND CARDS (3-4 cards). Each card:
   - Brand name + tiny logo placeholder.
-  - A health indicator (soft green / amber / red dot + one word: Healthy / Attention / Blocked).
+  - Health indicator (soft green / amber / red dot + one word: Healthy / Attention / Blocked).
   - 3 small stats: "Pending: 4", "Trends: 5 new", "Last run: 2h ago".
-  - The Trend Sentinel verdict badge (PIVOT / TRACK / STAY) muted.
-  - A quiet "Open cockpit →" affordance on the whole card (clickable).
+  - Trend Sentinel verdict badge (PIVOT / TRACK / STAY), muted.
+  - The whole card is clickable: "Open cockpit →" (this is the drill-down into the brand panel).
 
-Below the grid: a slim "Recent activity across all brands" feed — 5-6 lines like
+SECTION 4 — a slim "Recent activity across all brands" feed: 5-6 lines like
 "[DropVolt] Script Writer generated 3 scripts · 1h ago".
 
-Calm, dense-but-breathable. This is a control tower, not a sales page.
+Calm, dense-but-breathable. A control tower, not a sales page. Same visual language as the
+brand cockpit (reuse the saved design system).
 ```
 
 ---

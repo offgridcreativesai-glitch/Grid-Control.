@@ -1,0 +1,17 @@
+---
+source_file: "brands/offgrid-creatives-ai/brand_profile.json"
+type: "code"
+community: "OffGrid Brand — Creative, Data"
+location: "L128"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/OffGrid_Brand__Creative_Data
+---
+
+# what_to_never_say
+
+## Connections
+- [[brand_profile.json_1]] - `contains` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/OffGrid_Brand__Creative_Data

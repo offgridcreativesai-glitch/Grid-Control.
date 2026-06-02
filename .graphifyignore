@@ -1,0 +1,15 @@
+# Stale brand deliverables — not part of the system architecture
+brands/*/deliverables/
+brands/*/_archive_predupes/
+brands/*/visuals/carousels/
+brands/*/raw_recordings/
+brands/*/voice_samples/
+brands/*/brand_books/
+
+# Old strategy/content PDFs (static snapshots, not system code)
+brands/*/outputs/pending_approval/
+brands/*/outputs/approved/
+brands/*/outputs/blocked/
+
+# Transcription sidecars (already extracted)
+graphify-out/
