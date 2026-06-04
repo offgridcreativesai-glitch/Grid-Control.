@@ -1,0 +1,150 @@
+{
+  "output_type": "hooks_Instagram_4",
+  "winner_index": 1,
+  "synthesis": "Variant B wins because it delivers the highest hook strength and brand voice scores on the two heaviest-weighted criteria, combining a deeply relatable specific pain point ('staring at Meta Ads Manager for hours') with a concrete, surprising payoff ('90 seconds') that creates an irresistible before/after contrast. Its language sounds authentically human \u2014 frustrated but self-aware \u2014 avoiding the AI-speak that undermines Variant A's otherwise decent structure. To push Variant B further, it could borrow the specificity of Variant C's 'D2C brand' framing to ground the claim in a real use case, and all three variants would benefit significantly from adding an explicit CTA (e.g., 'Here's the exact pattern it found \ud83d\udc47' or 'Drop a comment if you want the breakdown') to address the shared weakness across the set.",
+  "scores": [
+    {
+      "variant_index": 0,
+      "criterion": "hook_strength",
+      "score": 6.0,
+      "reasoning": "The time anchor '3 weeks ago' creates some narrative pull, but 'had no idea' and 'I was guessing' are fairly generic confessions. The payoff \u2014 'AI surfaced what I couldn't see' \u2014 is vague and doesn't land with enough specificity to truly stop the scroll."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "brand_voice",
+      "score": 6.0,
+      "reasoning": "Conversational and personal, which is good. However, 'AI surfaced what I couldn't see' edges toward AI-generated phrasing. The three-sentence rhythm feels slightly formulaic rather than natural."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "There is no explicit CTA present. The implication is that the reader should care about AI for Meta ads, but there's no direction given \u2014 no 'swipe,' 'comment,' 'click,' or 'here's how.'"
+    },
+    {
+      "variant_index": 0,
+      "criterion": "platform_fit",
+      "score": 6.0,
+      "reasoning": "Short enough for LinkedIn or Instagram caption opener. The personal narrative suits LinkedIn. However, the lack of a hook visual cue or formatting element limits its standalone scroll-stopping power."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "hook_strength",
+      "score": 8.0,
+      "reasoning": "'Staring at Meta Ads Manager for hours' is viscerally specific and instantly relatable for the target audience. '90 seconds' is a concrete, contrasting payoff that creates a strong before/after tension \u2014 genuinely scroll-stopping."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "Feels authentically human \u2014 frustrated practitioner energy. No corporate speak, no AI-sounding language. The short declarative sentences mirror how marketers actually talk about their pain points."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "cta_clarity",
+      "score": 5.0,
+      "reasoning": "Like Variant A, there's no explicit CTA. The '90 seconds' stat implies a follow-up reveal is coming, which creates curiosity, but the action the reader should take remains unstated."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "platform_fit",
+      "score": 8.0,
+      "reasoning": "Perfectly calibrated for LinkedIn or Twitter/X \u2014 tight, punchy, problem-solution in three sentences. The '90 seconds' hook would also work as a video caption or ad headline. Strong format awareness."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "hook_strength",
+      "score": 7.0,
+      "reasoning": "'Winning pattern buried in this D2C brand's Meta data' is specific and intriguing \u2014 'buried' and 'no human spotted it' create genuine mystery. However, it's slightly more distant (third-person brand) which reduces personal relatability compared to Variant B."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "brand_voice",
+      "score": 7.0,
+      "reasoning": "Confident, declarative, and jargon-appropriate for a marketing/DTC audience. 'No human spotted it. AI did.' is a punchy two-sentence close with good rhythm. Avoids corporate language well, though slightly more formal than B."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "Again, no explicit CTA. The intrigue around the 'winning pattern' implies more content follows, but the reader has no clear instruction on what to do next."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Works well as a LinkedIn post opener or case study teaser. The third-person framing suits a thought leadership or agency context. Less universal than B but effective for a specific content strategy."
+    }
+  ],
+  "raw_scores": [
+    {
+      "variant": "A",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 6,
+          "reasoning": "The time anchor '3 weeks ago' creates some narrative pull, but 'had no idea' and 'I was guessing' are fairly generic confessions. The payoff \u2014 'AI surfaced what I couldn't see' \u2014 is vague and doesn't land with enough specificity to truly stop the scroll."
+        },
+        "brand_voice": {
+          "score": 6,
+          "reasoning": "Conversational and personal, which is good. However, 'AI surfaced what I couldn't see' edges toward AI-generated phrasing. The three-sentence rhythm feels slightly formulaic rather than natural."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "There is no explicit CTA present. The implication is that the reader should care about AI for Meta ads, but there's no direction given \u2014 no 'swipe,' 'comment,' 'click,' or 'here's how.'"
+        },
+        "platform_fit": {
+          "score": 6,
+          "reasoning": "Short enough for LinkedIn or Instagram caption opener. The personal narrative suits LinkedIn. However, the lack of a hook visual cue or formatting element limits its standalone scroll-stopping power."
+        }
+      },
+      "weighted_total": 5.65
+    },
+    {
+      "variant": "B",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 8,
+          "reasoning": "'Staring at Meta Ads Manager for hours' is viscerally specific and instantly relatable for the target audience. '90 seconds' is a concrete, contrasting payoff that creates a strong before/after tension \u2014 genuinely scroll-stopping."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "Feels authentically human \u2014 frustrated practitioner energy. No corporate speak, no AI-sounding language. The short declarative sentences mirror how marketers actually talk about their pain points."
+        },
+        "cta_clarity": {
+          "score": 5,
+          "reasoning": "Like Variant A, there's no explicit CTA. The '90 seconds' stat implies a follow-up reveal is coming, which creates curiosity, but the action the reader should take remains unstated."
+        },
+        "platform_fit": {
+          "score": 8,
+          "reasoning": "Perfectly calibrated for LinkedIn or Twitter/X \u2014 tight, punchy, problem-solution in three sentences. The '90 seconds' hook would also work as a video caption or ad headline. Strong format awareness."
+        }
+      },
+      "weighted_total": 7.25
+    },
+    {
+      "variant": "C",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 7,
+          "reasoning": "'Winning pattern buried in this D2C brand's Meta data' is specific and intriguing \u2014 'buried' and 'no human spotted it' create genuine mystery. However, it's slightly more distant (third-person brand) which reduces personal relatability compared to Variant B."
+        },
+        "brand_voice": {
+          "score": 7,
+          "reasoning": "Confident, declarative, and jargon-appropriate for a marketing/DTC audience. 'No human spotted it. AI did.' is a punchy two-sentence close with good rhythm. Avoids corporate language well, though slightly more formal than B."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "Again, no explicit CTA. The intrigue around the 'winning pattern' implies more content follows, but the reader has no clear instruction on what to do next."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Works well as a LinkedIn post opener or case study teaser. The third-person framing suits a thought leadership or agency context. Less universal than B but effective for a specific content strategy."
+        }
+      },
+      "weighted_total": 6.35
+    }
+  ],
+  "timestamp": "2026-06-03T13:42:15.370940",
+  "agent": "script-writer",
+  "variant_count": 3
+}

@@ -70,48 +70,61 @@ function AgentCard({ agent, onClick }: { agent: Agent; onClick: () => void }) {
         <span className="text-xs font-mono text-muted-foreground">
           {agent.lastRun ? formatTimeAgo(agent.lastRun) : "—"}
         </span>
-        {isHovered && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                runAgent.mutate(agent.slug);
-              }}
-              disabled={runAgent.isPending && runAgent.variables === agent.slug}
-              className="flex h-6 w-6 items-center justify-center rounded hover:bg-background transition-colors disabled:opacity-50"
-              title="Run"
-            >
-              <Play className="h-3 w-3" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setScope(agent.slug);
-                setBrainOpen(true);
-              }}
-              className="flex h-6 w-6 items-center justify-center rounded hover:bg-background transition-colors"
-              title={`Chat scoped to ${agent.name}`}
-            >
-              <MessageSquare className="h-3 w-3" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-              }}
-              className="flex h-6 w-6 items-center justify-center rounded hover:bg-background transition-colors"
-              title="Outputs"
-            >
-              <FileOutput className="h-3 w-3" />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              runAgent.mutate(agent.slug);
+            }}
+            disabled={runAgent.isPending && runAgent.variables === agent.slug}
+            className={cn(
+              "flex items-center gap-1 rounded px-2 h-7 text-xs font-medium transition-colors disabled:opacity-50",
+              "bg-primary text-primary-foreground hover:bg-primary/90",
+            )}
+            title="Run"
+          >
+            <Play className="h-3 w-3" />
+            {runAgent.isPending && runAgent.variables === agent.slug ? "Running…" : "Run"}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setScope(agent.slug);
+              setBrainOpen(true);
+            }}
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded transition-colors",
+              isHovered ? "bg-secondary" : "hover:bg-secondary",
+            )}
+            title={`Chat scoped to ${agent.name}`}
+          >
+            <MessageSquare className="h-3 w-3" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded transition-colors",
+              isHovered ? "bg-secondary" : "hover:bg-secondary",
+            )}
+            title="Outputs"
+          >
+            <FileOutput className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 function AgentDetail({ agent, onBack }: { agent: Agent; onBack: () => void }) {
+  const runAgent = useRunAgent();
+  const { setBrainOpen } = useAppStore();
+  const { setScope } = useBrainStore();
+  const isRunning = runAgent.isPending && runAgent.variables === agent.slug;
+  const openChat = () => { setScope(agent.slug); setBrainOpen(true); };
   const runHistory = [
     { id: 1, timestamp: new Date(Date.now() - 1000 * 60 * 5), status: "success" as const, duration: "12s", output: "Generated 3 content ideas" },
     { id: 2, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), status: "success" as const, duration: "8s", output: "Updated content calendar" },
@@ -144,13 +157,13 @@ function AgentDetail({ agent, onBack }: { agent: Agent; onBack: () => void }) {
             <p className="text-sm text-muted-foreground">{agent.role}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={openChat}>
               <MessageSquare className="h-4 w-4 mr-1" />
               Chat
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={() => runAgent.mutate(agent.slug)} disabled={isRunning}>
               <Play className="h-4 w-4 mr-1" />
-              Run now
+              {isRunning ? "Running…" : "Run now"}
             </Button>
           </div>
         </div>

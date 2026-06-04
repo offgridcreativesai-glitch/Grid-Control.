@@ -169,10 +169,16 @@ class CarouselDesigner:
 
     def _extract_handle(self) -> str:
         handles = self.brand_profile.get("platform_handles") or []
-        for h in handles:
-            if h.get("platform", "").lower() == "instagram":
-                return f"@{h.get('handle', self.brand_slug)}"
-        return f"@{self.brand_profile.get('instagram_handle', self.brand_slug)}"
+        # platform_handles may be a dict {platform: handle} or a list [{platform, handle}]
+        if isinstance(handles, dict):
+            ig = handles.get("instagram") or self.brand_profile.get("social_handles", {}).get("instagram")
+            if ig:
+                return f"@{str(ig).lstrip('@')}"
+        elif isinstance(handles, list):
+            for h in handles:
+                if isinstance(h, dict) and h.get("platform", "").lower() == "instagram":
+                    return f"@{h.get('handle', self.brand_slug)}"
+        return f"@{str(self.brand_profile.get('instagram_handle', self.brand_slug)).lstrip('@')}"
 
     # ── Slide JSON generation (Claude) ───────────────────────────────────────
     def generate_slide_spec(self, topic: str, hook_text: str, body_summary: str,

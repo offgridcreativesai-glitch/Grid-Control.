@@ -204,7 +204,7 @@ def _build_niche_hashtags(brand_profile: dict) -> list:
                           "smallbusiness"])
 
     # Always add competitor handles as hashtags if available
-    for handle in competitor_handles[:3]:
+    for handle in competitor_handles[:4]:
         clean = handle.lstrip("@").lower().replace(" ", "")
         if clean:
             hashtags.add(clean)

@@ -558,12 +558,34 @@ Return ONLY valid JSON in this structure:
 
     def _edit_video(self, video_path: "Path", transcript: dict, output_dir: "Path") -> "str | None":
         """
-        Edit raw footage:
-        - Crop to 9:16, resize to 1080×1920
-        - Add Whisper-generated caption overlay
-        - Export optimised MP4 for Instagram Reels
-        Returns output file path relative to brand_dir, or None on failure.
+        Founder-Journal reel assembly (delegates to reel_editor):
+          • footage to vertical 1080×1920 + warm grade (no crop when already 9:16)
+          • kinetic captions timed to the transcript
+          • branded motion-graphic inserts at the script beats
+          • AI b-roll (FAL t2v) at chosen beats
+        Returns output path relative to brand_dir, or None on failure.
         """
+        try:
+            import reel_editor
+            handle = "@" + (self.brand_profile.get("instagram_handle") or self.brand_slug).lstrip("@")
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out = output_dir / f"{ts}_{video_path.stem.lower().replace(' ', '_')[:30]}_reel.mp4"
+            res = reel_editor.build_reel(
+                video_path, transcript, out, handle=handle,
+                work_dir=output_dir / "_work", enable_broll=bool(FAL_API_KEY), log=self.log,
+            )
+            if res and Path(out).exists():
+                self.log(f"  ✅ Reel saved: {out.name} "
+                         f"({res['inserts']} inserts, {res['captions']} captions)")
+                return str(out.relative_to(self.brand_dir))
+            self.log("  ⚠️  reel_editor returned no output")
+            return None
+        except Exception as e:
+            self.log(f"  ⚠️  Reel assembly failed for {video_path.name}: {e}")
+            return None
+
+    def _edit_video_legacy(self, video_path: "Path", transcript: dict, output_dir: "Path") -> "str | None":
+        """Deprecated moviepy caption-only path (kept for reference)."""
         try:
             from moviepy.editor import VideoFileClip, CompositeVideoClip
 

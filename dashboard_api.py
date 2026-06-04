@@ -3986,6 +3986,14 @@ def approve_output():
     output_id = body.get("output_id", "")  # Supabase UUID — optional
     next_agent_slug: str | None = None
 
+    # The Review UI sends just a filename — resolve it to a real filepath so the
+    # move + skill-learning + Supabase match all work. (Without this, approve no-ops.)
+    filename = body.get("filename", "")
+    if not filepath and filename and "/" not in filename and ".." not in filename:
+        found = _find_output(get_brand_dir(brand_slug), filename)
+        if found:
+            filepath = str(found.relative_to(BASE_DIR))
+
     # Supabase approval
     if _DB_AVAILABLE:
         brand_id = _get_brand_id(brand_slug)
@@ -4060,6 +4068,13 @@ def reject_output():
     output_id = body.get("output_id", "")  # Supabase UUID — optional
     reason = body.get("reason", "")
     agent_slug_key = ""
+
+    # Review UI sends just a filename — resolve to a real filepath (else reject no-ops).
+    filename = body.get("filename", "")
+    if not filepath and filename and "/" not in filename and ".." not in filename:
+        found = _find_output(get_brand_dir(brand_slug), filename)
+        if found:
+            filepath = str(found.relative_to(BASE_DIR))
 
     if _DB_AVAILABLE:
         brand_id = _get_brand_id(brand_slug)

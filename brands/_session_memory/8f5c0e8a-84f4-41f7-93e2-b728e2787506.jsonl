@@ -112,3 +112,79 @@
 {"ts": "2026-06-02T13:48:36+00:00", "tool": "Bash", "summary": "Check for running git and lock state", "exit_code": null}
 {"ts": "2026-06-02T13:48:53+00:00", "tool": "Bash", "summary": "Kill hung git, clear lock, inspect dir sizes", "exit_code": null}
 {"ts": "2026-06-02T13:49:07+00:00", "tool": "Bash", "summary": "Check backup for leakable secrets", "exit_code": null}
+{"ts": "2026-06-02T13:49:21+00:00", "tool": "Bash", "summary": "Ignore backup, stage all, verify clean", "exit_code": null}
+{"ts": "2026-06-02T13:49:29+00:00", "tool": "Bash", "summary": "Commit checkpoint and verify", "exit_code": null}
+{"ts": "2026-06-02T13:51:19+00:00", "tool": "Bash", "summary": "Map existing publish + approval infrastructure", "exit_code": null}
+{"ts": "2026-06-02T13:58:47+00:00", "tool": "Bash", "summary": "Find outputs/approve/reject endpoints and hooks", "exit_code": null}
+{"ts": "2026-06-02T13:59:01+00:00", "tool": "Bash", "summary": "Read /api/published endpoint", "exit_code": null}
+{"ts": "2026-06-02T13:59:44+00:00", "tool": "Bash", "summary": "Read published return shape and hook types", "exit_code": null}
+{"ts": "2026-06-02T13:59:58+00:00", "tool": "Write", "file": "publishing/base.py"}
+{"ts": "2026-06-02T14:00:31+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-06-02T14:00:40+00:00", "tool": "Edit", "file": "dashboard/src/hooks/useGridApi.ts"}
+{"ts": "2026-06-02T14:00:49+00:00", "tool": "Edit", "file": "dashboard/src/hooks/useGridApi.ts"}
+{"ts": "2026-06-02T14:02:13+00:00", "tool": "Write", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-06-02T14:02:21+00:00", "tool": "Bash", "summary": "Syntax-check Python and typecheck dashboard", "exit_code": null}
+{"ts": "2026-06-02T14:02:33+00:00", "tool": "Bash", "summary": "Restart Flask, verify new route registers", "exit_code": null}
+{"ts": "2026-06-02T18:07:47+00:00", "tool": "Bash", "summary": "Functional test of publisher registry", "exit_code": null}
+{"ts": "2026-06-02T18:07:52+00:00", "tool": "Bash", "summary": "Stage scaffold files, verify no secrets", "exit_code": null}
+{"ts": "2026-06-02T18:08:00+00:00", "tool": "Bash", "summary": "Commit scaffold and verify", "exit_code": null}
+{"ts": "2026-06-02T18:08:09+00:00", "tool": "Bash", "summary": "Commit refreshed graphify output", "exit_code": null}
+{"ts": "2026-06-02T18:10:57+00:00", "tool": "Bash", "summary": "Verify publisher dependencies installed", "exit_code": null}
+{"ts": "2026-06-02T18:11:42+00:00", "tool": "Write", "file": "publishing/linkedin_publisher.py"}
+{"ts": "2026-06-02T18:11:58+00:00", "tool": "Write", "file": "publishing/twitter_publisher.py"}
+{"ts": "2026-06-02T18:12:14+00:00", "tool": "Write", "file": "publishing/youtube_publisher.py"}
+{"ts": "2026-06-02T18:12:22+00:00", "tool": "Edit", "file": "publishing/base.py"}
+{"ts": "2026-06-02T18:13:01+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-06-02T18:13:11+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-06-02T18:13:24+00:00", "tool": "Bash", "summary": "Syntax check + live auth probe for 3 publishers", "exit_code": null}
+{"ts": "2026-06-02T18:13:32+00:00", "tool": "Edit", "file": "dashboard/src/hooks/useGridApi.ts"}
+{"ts": "2026-06-02T18:13:37+00:00", "tool": "Edit", "file": "dashboard/src/pages/ReviewPage.tsx"}
+{"ts": "2026-06-02T18:13:49+00:00", "tool": "Bash", "summary": "tsc, restart Flask, verify routes", "exit_code": null}
+{"ts": "2026-06-02T18:13:59+00:00", "tool": "Bash", "summary": "Commit the 3 publishers + wiring", "exit_code": null}
+{"ts": "2026-06-02T18:14:13+00:00", "tool": "Bash", "summary": "Commit refreshed graphify output", "exit_code": null}
+{"ts": "2026-06-02T18:24:30+00:00", "tool": "Bash", "summary": "Build vocab and check candidate tokens", "exit_code": null}
+{"ts": "2026-06-02T18:24:35+00:00", "tool": "Bash", "summary": "Run graphify query on agent flow", "exit_code": null}
+{"ts": "2026-06-02T18:24:53+00:00", "tool": "Bash", "summary": "Save query result to graph", "exit_code": null}
+{"ts": "2026-06-02T18:27:17+00:00", "tool": "Bash", "summary": "Find agent-run UI controls in dashboard", "exit_code": null}
+{"ts": "2026-06-02T18:30:51+00:00", "tool": "Bash", "summary": "Pre-flight: agent files, brand inputs, credentials", "exit_code": null}
+{"ts": "2026-06-02T18:31:00+00:00", "tool": "Bash", "summary": "Find Apify env var name the agent expects", "exit_code": null}
+{"ts": "2026-06-02T18:31:15+00:00", "tool": "Bash", "summary": "Live-check Apify + Anthropic + agent imports", "exit_code": null}
+{"ts": "2026-06-02T18:31:25+00:00", "tool": "Bash", "summary": "Locate cost_reporter and the real agent-run command", "exit_code": null}
+{"ts": "2026-06-02T18:31:40+00:00", "tool": "Bash", "summary": "Replicate real launch import + read runner", "exit_code": null}
+{"ts": "2026-06-02T18:42:49+00:00", "tool": "Bash", "summary": "Inspect useLiveAgents slug + postJson", "exit_code": null}
+{"ts": "2026-06-02T18:42:55+00:00", "tool": "Bash", "summary": "Read postJson and approve endpoint", "exit_code": null}
+{"ts": "2026-06-02T18:43:07+00:00", "tool": "Bash", "summary": "Locate approve/reject routes by current line", "exit_code": null}
+{"ts": "2026-06-02T18:43:48+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-06-02T18:43:54+00:00", "tool": "Edit", "file": "dashboard_api.py"}
+{"ts": "2026-06-02T18:44:19+00:00", "tool": "Edit", "file": "dashboard/src/pages/AgentsPage.tsx"}
+{"ts": "2026-06-02T18:44:27+00:00", "tool": "Edit", "file": "dashboard/src/pages/AgentsPage.tsx"}
+{"ts": "2026-06-02T18:44:32+00:00", "tool": "Edit", "file": "dashboard/src/pages/AgentsPage.tsx"}
+{"ts": "2026-06-02T18:44:44+00:00", "tool": "Bash", "summary": "Typecheck, restart Flask, verify health", "exit_code": null}
+{"ts": "2026-06-02T18:47:14+00:00", "tool": "Bash", "summary": "Find where /agents lives in nav and view-mode gating", "exit_code": null}
+{"ts": "2026-06-02T18:48:52+00:00", "tool": "Edit", "file": "dashboard/src/components/layout/LeftRail.tsx"}
+{"ts": "2026-06-02T18:49:00+00:00", "tool": "Edit", "file": "dashboard/src/components/layout/LeftRail.tsx"}
+{"ts": "2026-06-02T18:49:03+00:00", "tool": "Bash", "summary": "Typecheck after nav change", "exit_code": null}
+{"ts": "2026-06-02T18:51:47+00:00", "tool": "Bash", "summary": "Read App.tsx route table", "exit_code": null}
+{"ts": "2026-06-02T18:52:00+00:00", "tool": "Bash", "summary": "Check page imports in App.tsx", "exit_code": null}
+{"ts": "2026-06-02T18:52:08+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-06-02T18:52:15+00:00", "tool": "Edit", "file": "dashboard/src/App.tsx"}
+{"ts": "2026-06-02T18:52:18+00:00", "tool": "Bash", "summary": "Typecheck after route add", "exit_code": null}
+{"ts": "2026-06-02T18:57:46+00:00", "tool": "Bash", "summary": "Trace run button: data, hook, endpoint", "exit_code": null}
+{"ts": "2026-06-02T18:58:11+00:00", "tool": "Bash", "summary": "Check log for run hits + auth bypass", "exit_code": null}
+{"ts": "2026-06-02T18:58:24+00:00", "tool": "Bash", "summary": "Find agents status route vs what FE polls", "exit_code": null}
+{"ts": "2026-06-02T18:58:36+00:00", "tool": "Bash", "summary": "Curl status endpoint and read its handler", "exit_code": null}
+{"ts": "2026-06-02T18:59:04+00:00", "tool": "Bash", "summary": "Inspect getJson and AgentStatus typing", "exit_code": null}
+{"ts": "2026-06-02T18:59:20+00:00", "tool": "Bash", "summary": "Inspect AGENTS_ENRICHED fields and AgentStatus type", "exit_code": null}
+{"ts": "2026-06-02T18:59:25+00:00", "tool": "Bash", "summary": "Read AgentStatus interface and enrich fn", "exit_code": null}
+{"ts": "2026-06-02T19:00:06+00:00", "tool": "Edit", "file": "dashboard/src/hooks/useGridApi.ts"}
+{"ts": "2026-06-02T19:00:19+00:00", "tool": "Edit", "file": "dashboard/src/hooks/useGridApi.ts"}
+{"ts": "2026-06-02T19:00:34+00:00", "tool": "Bash", "summary": "Check single Flask + typecheck", "exit_code": null}
+{"ts": "2026-06-02T19:00:46+00:00", "tool": "Bash", "summary": "Verify earlier run produced output", "exit_code": null}
+{"ts": "2026-06-02T19:01:03+00:00", "tool": "Bash", "summary": "Check if brand_guardian is alive or crashed", "exit_code": null}
+{"ts": "2026-06-02T19:01:19+00:00", "tool": "Bash", "summary": "Reset stuck Brand Guardian status", "exit_code": null}
+{"ts": "2026-06-02T19:01:35+00:00", "tool": "Bash", "summary": "Clear stuck Supabase running rows", "exit_code": null}
+{"ts": "2026-06-02T19:02:31+00:00", "tool": "Bash", "summary": "Poll read-only for Brand Guardian to land", "exit_code": null}
+{"ts": "2026-06-02T19:12:40+00:00", "tool": "Bash", "summary": "Locate last script, Gary Vee vibe, real account data, BG status", "exit_code": null}
+{"ts": "2026-06-02T19:21:28+00:00", "tool": "Bash", "summary": "Read brand brief + summarize candidate prior scripts", "exit_code": null}
+{"ts": "2026-06-02T19:29:15+00:00", "tool": "Bash", "summary": "Verify scrape field + Script Writer inputs", "exit_code": null}
+{"ts": "2026-06-02T19:29:39+00:00", "tool": "Bash", "summary": "Find where Trend Researcher reads scrape handles", "exit_code": null}

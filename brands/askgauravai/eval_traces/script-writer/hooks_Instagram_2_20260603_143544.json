@@ -1,0 +1,150 @@
+{
+  "output_type": "hooks_Instagram_2",
+  "winner_index": 0,
+  "synthesis": "Variant A wins because it maximizes the two highest-weighted criteria simultaneously: it delivers an exceptionally specific, tension-filled hook ('every single week, the same thing broke') that creates a powerful open loop, and it does so in an unmistakably human practitioner voice that avoids every form of AI or corporate language. The specificity of 'Meta ads' and 'D2C brands' acts as a precision filter, attracting exactly the right audience while instantly establishing credibility. Variant C's strength \u2014 its clear implicit promise to show rather than tell \u2014 is an element that could meaningfully strengthen Variant A if appended (e.g., '...and I'm going to show you exactly what it was'), adding directional pull without sacrificing the authentic, experience-grounded voice. Variant B's core concept (leverage via systems) is compelling but needs a concrete, specific reframe to compete at the hook level.",
+  "scores": [
+    {
+      "variant_index": 0,
+      "criterion": "hook_strength",
+      "score": 9.0,
+      "reasoning": "Highly specific ('Meta ads,' 'D2C brands,' 'every single week') and creates immediate tension with 'the same thing broke.' The open loop compels continued reading. Specific enough to filter and attract the right audience instantly."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "brand_voice",
+      "score": 9.0,
+      "reasoning": "Sounds like a real practitioner speaking. Conversational, first-person, experience-based. No corporate speak, no AI-sounding filler. 'The same thing broke' is natural, punchy, and human."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "cta_clarity",
+      "score": 5.0,
+      "reasoning": "There is no explicit CTA in this snippet, but the open loop structure implicitly pulls the reader forward. Scored mid-range because the hook alone doesn't direct action."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "platform_fit",
+      "score": 8.0,
+      "reasoning": "Short, punchy, two-sentence structure works excellently for LinkedIn or Twitter/X. The line break creates a scroll-stopping rhythm. Optimized for text-first social platforms."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "hook_strength",
+      "score": 6.0,
+      "reasoning": "The 'What if' framing is a common opening device and feels slightly overused. The concept is interesting (one person vs. five) but the phrasing 'built the right back-end' is vague and slows the pattern interrupt. Not as scroll-stopping as it could be."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "brand_voice",
+      "score": 6.0,
+      "reasoning": "Reads more like a thought-leadership post than an authentic voice. 'Built the right back-end' leans toward jargon. It's not corporate, but it doesn't feel as natural or personality-driven as Variant A."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "Like A, there's no explicit CTA. The question format implies a reveal is coming, but it's even less directional than A's open loop. The reader doesn't know what action to take."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Single-sentence question works for LinkedIn or Twitter. The format is clean, but the length and rhetorical question style fit LinkedIn better than shorter-form platforms."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "hook_strength",
+      "score": 7.0,
+      "reasoning": "The contrast between 'theory' and 'actual outputs' is a strong differentiator and creates credibility. However, 'Most AI content you see' is a broader, more generic setup. It's effective but not as personally specific as Variant A."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "Direct, confident, and no-fluff. 'I'm going to show you the actual outputs' sounds like a real person making a promise. Slightly blunt in a good way. Avoids AI-sounding or corporate language well."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "cta_clarity",
+      "score": 7.0,
+      "reasoning": "The implicit CTA ('I'm going to show you') is the strongest directional signal of the three variants. It sets an expectation and signals demonstration-based content is coming. Still not an explicit action directive, but directionally clearer."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Works well for LinkedIn, YouTube description, or a newsletter intro. The two-sentence format is platform-agnostic and clean, though it doesn't leverage any platform-specific formatting advantages."
+    }
+  ],
+  "raw_scores": [
+    {
+      "variant": "A",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 9,
+          "reasoning": "Highly specific ('Meta ads,' 'D2C brands,' 'every single week') and creates immediate tension with 'the same thing broke.' The open loop compels continued reading. Specific enough to filter and attract the right audience instantly."
+        },
+        "brand_voice": {
+          "score": 9,
+          "reasoning": "Sounds like a real practitioner speaking. Conversational, first-person, experience-based. No corporate speak, no AI-sounding filler. 'The same thing broke' is natural, punchy, and human."
+        },
+        "cta_clarity": {
+          "score": 5,
+          "reasoning": "There is no explicit CTA in this snippet, but the open loop structure implicitly pulls the reader forward. Scored mid-range because the hook alone doesn't direct action."
+        },
+        "platform_fit": {
+          "score": 8,
+          "reasoning": "Short, punchy, two-sentence structure works excellently for LinkedIn or Twitter/X. The line break creates a scroll-stopping rhythm. Optimized for text-first social platforms."
+        }
+      },
+      "weighted_total": 7.9
+    },
+    {
+      "variant": "B",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 6,
+          "reasoning": "The 'What if' framing is a common opening device and feels slightly overused. The concept is interesting (one person vs. five) but the phrasing 'built the right back-end' is vague and slows the pattern interrupt. Not as scroll-stopping as it could be."
+        },
+        "brand_voice": {
+          "score": 6,
+          "reasoning": "Reads more like a thought-leadership post than an authentic voice. 'Built the right back-end' leans toward jargon. It's not corporate, but it doesn't feel as natural or personality-driven as Variant A."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "Like A, there's no explicit CTA. The question format implies a reveal is coming, but it's even less directional than A's open loop. The reader doesn't know what action to take."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Single-sentence question works for LinkedIn or Twitter. The format is clean, but the length and rhetorical question style fit LinkedIn better than shorter-form platforms."
+        }
+      },
+      "weighted_total": 5.95
+    },
+    {
+      "variant": "C",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 7,
+          "reasoning": "The contrast between 'theory' and 'actual outputs' is a strong differentiator and creates credibility. However, 'Most AI content you see' is a broader, more generic setup. It's effective but not as personally specific as Variant A."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "Direct, confident, and no-fluff. 'I'm going to show you the actual outputs' sounds like a real person making a promise. Slightly blunt in a good way. Avoids AI-sounding or corporate language well."
+        },
+        "cta_clarity": {
+          "score": 7,
+          "reasoning": "The implicit CTA ('I'm going to show you') is the strongest directional signal of the three variants. It sets an expectation and signals demonstration-based content is coming. Still not an explicit action directive, but directionally clearer."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Works well for LinkedIn, YouTube description, or a newsletter intro. The two-sentence format is platform-agnostic and clean, though it doesn't leverage any platform-specific formatting advantages."
+        }
+      },
+      "weighted_total": 7.4
+    }
+  ],
+  "timestamp": "2026-06-03T14:35:44.817400",
+  "agent": "script-writer",
+  "variant_count": 3
+}

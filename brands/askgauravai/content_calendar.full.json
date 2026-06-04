@@ -1,0 +1,403 @@
+{
+  "created_at": "2026-06-03T07:53:02.093921+00:00",
+  "brand": "askgauravai",
+  "calendar_angle": "Curiosity-driven hooks showing real AI marketing intelligence outputs for D2C founders running Meta ads. Every post opens with a pattern interrupt or contrarian take, delivers a real system output inside, and closes with an open-loop diagnostic CTA. No system named. No freebie offered. Pure earn-attention-then-show-the-work.",
+  "posting_frequency": {
+    "youtube_longform_per_week": 1,
+    "ig_reels_per_week": 4,
+    "youtube_shorts_per_week": 2,
+    "ig_carousels_per_week": 3,
+    "linkedin_repurpose_per_week": 2,
+    "twitter_repurpose_per_week": 2,
+    "total_original_per_week": 8,
+    "total_with_repurpose_per_week": 12
+  },
+  "content_pillars": [
+    "PILLAR_1: Real AI system outputs applied to D2C Meta ads — what did the AI find, what decision did it inform, what happened",
+    "PILLAR_2: What a 1-person D2C brand can do with AI that used to need a 5-person marketing team",
+    "PILLAR_3: Contrarian takes against generic AI hype and vanity metrics"
+  ],
+  "week_1": {
+    "theme": "The System Exists — First Proof of Real AI Marketing Intelligence",
+    "posts": [
+      {
+        "day": 1,
+        "platform": "Instagram",
+        "format": "Carousel (5 slides)",
+        "topic": "5 things a 1-person D2C brand can now do with AI that used to need a 5-person marketing team",
+        "hook": "You don't need a media buyer, a strategist, and an analyst. You need this.",
+        "caption_direction": "List 5 tasks: competitor ad analysis, creative fatigue detection, audience shift spotting, budget signals, weekly brief.",
+        "cta": "Which of these 5 would save you the most time? Drop the number.",
+        "content_pillar": "PILLAR_2",
+        "trend_angle_used": "what a 1-person D2C brand can do with AI that used to need a 5-person marketing team",
+        "production_notes": "Independent carousel. Bold text slides, minimal design."
+      },
+      {
+        "day": 2,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "Founder intro — who I am + the AI marketing-intelligence system I'm building, and why D2C founders should follow",
+        "hook": "Most D2C founders are guessing what's actually working in their Meta ads. I built a system that ends the guessing — here's who I am.",
+        "caption_direction": "Founder-to-founder. Open on the value hook (the guessing problem), then introduce Gaurav: ran Meta ads for D2C brands for years, now building an AI marketing-intelligence system that shows what's really working. State what this account will deliver: real system outputs, not theory. Mix of raw energy + tactical + behind-the-scenes. No motivational fluff.",
+        "cta": "Follow for the real outputs, not theory.",
+        "content_pillar": "PILLAR_2: What a 1-person D2C brand can do with AI",
+        "trend_angle_used": "I built my entire business around AI — not a chatbot, a full system that runs day-to-day",
+        "production_notes": "CHANNEL INTRO REEL. Founder on camera, value-hook-led, weave in who/why. Reused as YouTube Short. Gaurav records from the word-for-word script.",
+        "requires_human_face": true,
+        "is_channel_intro": true
+      },
+      {
+        "day": 3,
+        "platform": "Instagram",
+        "format": "Carousel (5 slides)",
+        "topic": "Why most D2C brands waste ad spend on Meta — and can't see where it's leaking",
+        "hook": "Your Meta ads dashboard is hiding your biggest waste. Here's where to look.",
+        "caption_direction": "Show 3-4 specific budget leak spots: creative fatigue undetected, wrong expansion, dayparting ignored.",
+        "cta": "What's your biggest Meta ads bottleneck right now? DM me — I'll tell you what I'd look at.",
+        "content_pillar": "PILLAR_3",
+        "trend_angle_used": "Audience fatigued by generic brand strategy advice and generic AI hype. They want proof-of-system",
+        "production_notes": "Independent carousel. Data-forward slides."
+      },
+      {
+        "day": 4,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "AI found what was actually working in a D2C brand's Meta ads — I couldn't see it manually",
+        "hook": "3 weeks ago I had no idea what was actually working. Now I do.",
+        "caption_direction": "Show a real AI output that surfaced a hidden winning ad pattern in Meta data. No system name.",
+        "cta": "What's one thing you wish you could see in your Meta ads data? Drop it below.",
+        "content_pillar": "PILLAR_1",
+        "trend_angle_used": "3 weeks ago I had no idea what was actually working. Now I do — because AI told me.",
+        "production_notes": "Cut from YouTube longform Day 2. Screen record of real AI output. Face to camera intro."
+      },
+      {
+        "day": 5,
+        "platform": "YouTube",
+        "format": "Longform (10-15 min)",
+        "topic": "Walkthrough: how a multi-agent system I'm building analyzes a D2C brand's Meta ad data",
+        "hook": "I built something that reads my Meta ads data better than I can. Let me show you.",
+        "caption_direction": "Full walkthrough of system analyzing real D2C Meta data. Show inputs, agent steps, output.",
+        "cta": "What would you want an AI system to find in your ad account? Tell me in the comments.",
+        "content_pillar": "PILLAR_1",
+        "trend_angle_used": "walkthrough of how a multi-agent system I am building analyzes a D2C brand's Meta ad data",
+        "production_notes": "Single recording session. Screen share + face cam. Source for 4 Reels + 2 Shorts this week."
+      },
+      {
+        "day": 6,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "You don't need another marketing course — you need a system that tells you what to do next",
+        "hook": "You don't need another ebook. You need to implement what you already know.",
+        "caption_direction": "Contrarian: D2C founders drowning in info. Show how AI system gives a specific next action.",
+        "cta": "What's one marketing question you wish AI could just answer for your brand? Tell me below.",
+        "content_pillar": "PILLAR_3",
+        "trend_angle_used": "You don't need another ebook. You need to implement what you already know.",
+        "production_notes": "Cut from YouTube longform Day 2."
+      },
+      {
+        "day": 7,
+        "platform": "Instagram",
+        "format": "Carousel (5 slides)",
+        "topic": "Real output: what my AI system found when it analyzed a D2C brand's last 30 days of Meta ads",
+        "hook": "I ran a D2C brand's Meta data through my AI system. Here's what it found.",
+        "caption_direction": "Anonymized real output: top finding, recommended action, predicted impact. Slide by slide.",
+        "cta": "Would you want to see what this finds in YOUR ad account? DM me your biggest question.",
+        "content_pillar": "PILLAR_1",
+        "trend_angle_used": "Competitors show AI systems but never explain the marketing intelligence output — what decisions does the AI actually inform",
+        "production_notes": "Independent carousel. Screenshot-style slides of real output, anonymized."
+      },
+      {
+        "day": 8,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "The AI system spotted creative fatigue 5 days before I would have caught it manually",
+        "hook": "My AI caught something in my Meta ads I would have missed for 5 more days.",
+        "caption_direction": "Quick story: AI flagged creative fatigue, I acted, saved budget. Before/after shown.",
+        "cta": "How do you currently spot creative fatigue? Drop your method below.",
+        "content_pillar": "PILLAR_1",
+        "trend_angle_used": "3 weeks ago I had no idea what was actually working. Now I do — because AI told me.",
+        "production_notes": "Cut from YouTube longform Day 2. Creative fatigue detection walkthrough segment."
+      }
+    ]
+  },
+  "week_2": {
+    "theme": "Decisions the AI Informed — Show the Marketing Intelligence Loop",
+    "posts": [
+      {
+        "day": 8,
+        "platform": "YouTube",
+        "format": "Longform (10-15 min)",
+        "topic": "How AI told me to kill my best-looking Meta ad — and why the data was right"
+      },
+      {
+        "day": 8,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "AI said kill this ad. I didn't want to. The data was right."
+      },
+      {
+        "day": 9,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "3 marketing decisions AI made better than I did this week — with the data shown"
+      },
+      {
+        "day": 10,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "Your competitors are running ads you've never seen. AI can find them in 10 minutes."
+      },
+      {
+        "day": 11,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "The AI marketing stack most D2C founders use is 5 tools doing 1 job badly"
+      },
+      {
+        "day": 12,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "I asked my AI system one question about audience overlap. The answer changed my targeting."
+      },
+      {
+        "day": 13,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "What an AI marketing intelligence report actually looks like for a D2C brand"
+      },
+      {
+        "day": 14,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "Every D2C founder checks ROAS daily. Almost none check what AI can show you instead."
+      }
+    ]
+  },
+  "week_3": {
+    "theme": "The Gap Between You and Brands With Marketing Teams — AI Closes It",
+    "posts": [
+      {
+        "day": 15,
+        "platform": "YouTube",
+        "format": "Longform (10-15 min)",
+        "topic": "What a 5-person marketing team does that you're skipping — and how AI handles each task"
+      },
+      {
+        "day": 15,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "A funded D2C brand has 5 people on marketing. You have you. Here's how to close the gap."
+      },
+      {
+        "day": 16,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "The weekly marketing briefing my AI system generates — what it covers and what I do with it"
+      },
+      {
+        "day": 17,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "I stopped trusting Meta's recommended budget — here's what AI recommended instead"
+      },
+      {
+        "day": 18,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "Generic AI advice vs specific AI marketing intelligence — the difference in one example"
+      },
+      {
+        "day": 19,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "The AI found a pattern in my competitor's ad launches I never would have spotted"
+      },
+      {
+        "day": 20,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "Why your AI tool gives you summaries but never tells you what to do next"
+      },
+      {
+        "day": 21,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "AI doesn't replace your marketing instinct. It gives your instinct better data."
+      }
+    ]
+  },
+  "week_4": {
+    "theme": "Proof Compounds — System Outputs Stack Up, Freebie Prep in Background",
+    "posts": [
+      {
+        "day": 22,
+        "platform": "YouTube",
+        "format": "Longform (10-15 min)",
+        "topic": "30 days of AI marketing intelligence: every decision it informed and what happened"
+      },
+      {
+        "day": 22,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "30 days of letting AI inform my Meta ads decisions. Here's the honest scorecard."
+      },
+      {
+        "day": 23,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "The 3 questions every D2C founder should ask their AI tools — most can't answer even 1"
+      },
+      {
+        "day": 24,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "I built a system that reads competitor ads, spots creative fatigue, and writes my weekly brief"
+      },
+      {
+        "day": 25,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "Real data: how AI-informed budget shifts performed vs my manual decisions"
+      },
+      {
+        "day": 26,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "Your Meta ads manager checks in once a week. My AI checks every day. Here's what it caught."
+      },
+      {
+        "day": 27,
+        "platform": "Instagram",
+        "format": "Carousel",
+        "topic": "What I'd build differently if I started this AI marketing system from scratch"
+      },
+      {
+        "day": 28,
+        "platform": "Instagram",
+        "format": "Reel",
+        "topic": "Most AI content shows you a tool. I'm showing you what the tool actually decided for a real brand."
+      }
+    ]
+  },
+  "posting_rules": [
+    "All Reels are cut from that week's YouTube longform — no original Reel production needed",
+    "All carousels are independently produced — strategy/education sidecars, not cuts from video",
+    "YouTube Shorts are cut from same longform — pick the 2 highest-hook moments from each longform",
+    "LinkedIn repurpose: take top 2 carousels per week, adapt caption for LinkedIn text post format",
+    "Twitter repurpose: take top 2 Reel hooks per week, post as text tweets with link to Reel",
+    "Hashtags on every IG post: #D2CMarketing #MetaAds #AIMarketing #D2CFounders — avoid #BrandStrategy #DigitalMarketing",
+    "No system name used in any post Days 1-28. Use: a multi-agent system I'm building or the AI system I'm building",
+    "All CTAs are open-loop diagnostic: ask questions, invite stack-sharing, invite DMs with specific questions. No comment-gating, no freebies, no deliverables promised",
+    "Every post must answer: what did the AI find, what decision did it inform, what happened",
+    "Film each YouTube longform in a single session. Batch-cut Reels and Shorts same day."
+  ],
+  "what_not_to_post": [
+    "No naming Grid Control or any system name before Day 29",
+    "No naming Third Gen Tribe, TGT, or any past brand by name — use the brands I ran if referencing lived history",
+    "No framing any past brand as AI-built — they were agency-run",
+    "No hire-me CTAs, no consulting offers, no DM me to work together",
+    "No comment-gated CTAs (comment WORD to get X)",
+    "No freebie offers before Day 29 and before DM automation is built and tested",
+    "No unverifiable claims, no fabricated stats, no fake testimonials",
+    "No hype or guru tone, no get-rich-quick framing, no fear-mongering",
+    "No dunking on named competitors, no politics, no religion",
+    "Never use: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer, paradigm shift, master AI in 7 days",
+    "No original LinkedIn-first or Twitter-first content — repurpose only",
+    "No posts optimizing for follower count — optimize for saves, shares, and qualified DMs only"
+  ],
+  "data_provenance": [
+    {
+      "claim": "AI marketing intelligence outputs from a multi-agent system being built, every post answers what did the AI find what decision did it inform",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.content_focus",
+      "source_value": "Show real marketing intelligence outputs from a multi-agent system being built. Every post answers: what did the AI find, what decision did it inform,"
+    },
+    {
+      "claim": "what a 1-person D2C brand can do with AI that used to need a 5-person marketing team",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.key_actions[2]",
+      "source_value": "Week 1-4: Publish 3 IG carousels per week. Topics: (a) what a 1-person D2C brand can do with AI that used to need a 5-person marketing team, (b) real"
+    },
+    {
+      "claim": "real marketing decisions informed by AI output with data shown, contrarian takes against generic AI hype and vanity metrics",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.key_actions[2]",
+      "source_value": "Week 1-4: Publish 3 IG carousels per week. Topics: (a) what a 1-person D2C brand can do with AI that used to need a 5-person marketing team, (b) real"
+    },
+    {
+      "claim": "3 weeks ago I had no idea what was actually working. Now I do — because AI told me.",
+      "source_file": "trends_live.json",
+      "source_path": "instagram_trends.top_hooks[2].hook",
+      "source_value": "3 weeks ago I had no idea what was actually working. Now I do — because AI told me."
+    },
+    {
+      "claim": "I built my entire business around AI — not a chatbot, a full system that runs day-to-day",
+      "source_file": "trends_live.json",
+      "source_path": "instagram_trends.top_hooks[0].hook",
+      "source_value": "I built my entire business around AI — not a chatbot, a full system that runs day-to-day"
+    },
+    {
+      "claim": "You don't need another ebook. You need to implement what you already know.",
+      "source_file": "trends_live.json",
+      "source_path": "instagram_trends.top_hooks[3].hook",
+      "source_value": "You don't need another ebook. You need to implement what you already know."
+    },
+    {
+      "claim": "No competitor speaks specifically to D2C founders or e-commerce brand owners — all AI content is generic",
+      "source_file": "trends_live.json",
+      "source_path": "competitor_intel.gaps_identified[0].gap",
+      "source_value": "No competitor speaks specifically to D2C founders or e-commerce brand owners — all AI content is generic 'build systems' positioning with no vertical specificity"
+    },
+    {
+      "claim": "Competitors show AI systems but never explain the marketing intelligence output — what decisions does the AI actually inform",
+      "source_file": "trends_live.json",
+      "source_path": "competitor_intel.gaps_identified[1].gap",
+      "source_value": "Competitors show AI systems but never explain the marketing intelligence output — what decisions does the AI actually inform for a brand owner?"
+    },
+    {
+      "claim": "Audience fatigued by generic brand strategy advice and generic AI hype. They want proof-of-system, specific outcomes",
+      "source_file": "trends_live.json",
+      "source_path": "instagram_trends.sentiment",
+      "source_value": "Audience is fatigued by generic brand strategy advice and generic AI hype. They want proof-of-system, specific outcomes, and tools they can actually use."
+    },
+    {
+      "claim": "All CTAs are open-loop diagnostic only. Drop your current AI tool stack below. What is one marketing question you wish AI could answer",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.key_actions[3]",
+      "source_value": "Week 1-4: All CTAs are open-loop diagnostic only. Examples: Drop your current AI tool stack below. What is one marketing question you wish AI could answer for your brand?"
+    },
+    {
+      "claim": "Use hashtag territory at the AI plus D2C plus Meta ads intersection: D2CMarketing, MetaAds, AIMarketing, D2CFounders",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.key_actions[6]",
+      "source_value": "Week 1-4: Use hashtag territory at the AI plus D2C plus Meta ads intersection: D2CMarketing, MetaAds, AIMarketing, D2CFounders. Avoid saturated generi"
+    },
+    {
+      "claim": "walkthrough of how a multi-agent system I am building analyzes a D2C brand's Meta ad data and surfaces what is actually working",
+      "source_file": "strategy_90day.json",
+      "source_path": "phase_1.key_actions[1]",
+      "source_value": "Week 1-2: Publish first YouTube longform: walkthrough of how a multi-agent system I am building analyzes a D2C brand's Meta ad data and surfaces what is actually working."
+    },
+    {
+      "claim": "Concrete agent count plus outcome makes the promise tangible and credible for time-poor D2C founders",
+      "source_file": "trends_live.json",
+      "source_path": "instagram_trends.top_hooks[1].why_it_works",
+      "source_value": "Concrete agent count plus outcome makes the promise tangible and credible for time-poor D2C founders; top-performing format in competitor set"
+    }
+  ],
+  "provenance_validation": {
+    "engine": "rule_10_v1",
+    "fuzzy_match_threshold": 0.3,
+    "passed": false,
+    "claims_total": 13,
+    "claims_validated": 12,
+    "missing_citations": [
+      {
+        "entry_index": 2,
+        "claim": "real marketing decisions informed by AI output with data shown, contrarian takes against generic AI ",
+        "error": "claim doesn't reflect source_value (jaccard=0.08 < 0.3)",
+        "key_attempted": "strategy_90day.json#phase_1.key_actions[2]"
+      }
+    ]
+  }
+}

@@ -44,14 +44,18 @@ HARD_SALES_CTA_KEYWORDS = {
 }
 
 PRICE_DOWN_KEYWORDS = {
-    "cheap", "affordable", "discount", "discounted", "% off", "save money",
-    "lowest price", "budget-friendly", "free trial", "no cost",
+    # NOTE: "save money" removed — it usually describes CUSTOMER value (the client saves),
+    # not the brand discounting its own price. It was a false-positive source.
+    "cheap", "affordable", "discount", "discounted", "% off",
+    "lowest price", "budget-friendly", "free trial",
     "cut cost", "reduce cost", "slash price", "price drop",
 }
 
 PREMIUM_KEYWORDS = {
-    "premium", "exclusive", "luxury", "high-end", "boutique", "bespoke", "private",
-    "no discount", "no sale", "no markdown",
+    # NOTE: "exclusive"/"private" removed — they commonly mean "exclusive position/access",
+    # not premium PRICING, and falsely triggered pricing-contradiction.
+    "premium", "luxury", "high-end", "boutique", "bespoke",
+    "no discount", "no sale", "no markdown", "premium pricing",
 }
 
 PHASE1_BLOCKED_PATTERNS = HARD_SALES_CTA_KEYWORDS  # Phase 1 = awareness, no hard sales
@@ -177,14 +181,20 @@ def rule_what_to_never_say_violation(brand: dict) -> list:
     # For each banned guideline, extract distinctive 2-3 word phrases (skip generic words)
     # Then check if those phrases appear in any agent output
     def _extract_quoted_or_distinctive(banned_text: str) -> list:
-        # Pull anything in quotes first
+        # Only trust EXPLICITLY QUOTED banned terms. The old fallback regex extracted
+        # capitalized word-pairs from the guideline itself — which were the negations
+        # ("No hype", "No dunking on"). That then false-flagged on-brand copy that
+        # *avoids* hype (e.g. a production note saying "no hype words"). If the brand
+        # wants a term banned, it must quote it in what_to_never_say (e.g. 'guru').
         quoted = re.findall(r"['\"]([^'\"]{4,40})['\"]", banned_text)
-        if quoted:
-            return [q.strip().lower() for q in quoted]
-        # Otherwise: skip — too vague to match. Substring "AI guru" yes, full sentence no.
-        # Look for 2-3 word noun phrases (rough heuristic: capitalized words OR specific term patterns)
-        terms = re.findall(r"\b([A-Z][a-z]+(?:\s+[A-Z]?[a-z]+){0,2})\b", banned_text)
-        return [t.lower() for t in terms if len(t) > 5]
+        out = []
+        for q in quoted:
+            q = q.strip().lower()
+            # Strip leading negation so a quoted "no hype" bans "hype", not "no hype".
+            q = re.sub(r"^(?:no|not|never|avoid)\s+", "", q).strip()
+            if len(q) >= 4:
+                out.append(q)
+        return out
 
     # Check across all agent outputs
     targets = {

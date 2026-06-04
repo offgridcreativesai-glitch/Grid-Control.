@@ -1,0 +1,81 @@
+{"ts": "2026-06-04T08:09:17+00:00", "tool": "Bash", "summary": "Locate the re-saved trimmed file", "exit_code": null}
+{"ts": "2026-06-04T08:09:40+00:00", "tool": "Bash", "summary": "Read Creative Director agent header", "exit_code": null}
+{"ts": "2026-06-04T08:09:47+00:00", "tool": "Bash", "summary": "Find CD asset/video generation interface", "exit_code": null}
+{"ts": "2026-06-04T08:10:01+00:00", "tool": "Bash", "summary": "Read CD video-edit pipeline", "exit_code": null}
+{"ts": "2026-06-04T08:10:26+00:00", "tool": "Bash", "summary": "Pre-flight FAL key, raw_footage, moviepy", "exit_code": null}
+{"ts": "2026-06-04T08:17:00+00:00", "tool": "Bash", "summary": "Read CD init/FAL setup", "exit_code": null}
+{"ts": "2026-06-04T08:17:04+00:00", "tool": "Bash", "summary": "Read CD image gen + transcribe + caption clip methods", "exit_code": null}
+{"ts": "2026-06-04T08:18:46+00:00", "tool": "Bash", "summary": "Check for existing FAL video model refs + fal_client", "exit_code": null}
+{"ts": "2026-06-04T08:19:44+00:00", "tool": "Write", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:19:54+00:00", "tool": "Bash", "summary": "Test scatter motion scene", "exit_code": null}
+{"ts": "2026-06-04T08:20:01+00:00", "tool": "Bash", "summary": "Sample frames + probe test scene", "exit_code": null}
+{"ts": "2026-06-04T08:20:27+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:22:00+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:23:11+00:00", "tool": "Bash", "summary": "Build reel v2 (motion only, no b-roll)", "exit_code": null}
+{"ts": "2026-06-04T08:23:24+00:00", "tool": "Bash", "summary": "Sample v2 frames", "exit_code": null}
+{"ts": "2026-06-04T08:23:50+00:00", "tool": "Bash", "summary": "Probe dims + rotation", "exit_code": null}
+{"ts": "2026-06-04T08:24:10+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:24:23+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:24:29+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:25:45+00:00", "tool": "Bash", "summary": "Rebuild v2 with vertical-fill compose", "exit_code": null}
+{"ts": "2026-06-04T08:25:50+00:00", "tool": "Bash", "summary": "Sample reworked v2 frames", "exit_code": null}
+{"ts": "2026-06-04T08:26:39+00:00", "tool": "Bash", "summary": "Build with AI b-roll via FAL", "exit_code": null}
+{"ts": "2026-06-04T08:27:56+00:00", "tool": "Bash", "summary": "Build with AI b-roll via FAL", "exit_code": null}
+{"ts": "2026-06-04T08:33:08+00:00", "tool": "Bash", "summary": "Run b-roll build with FAL key loaded", "exit_code": null}
+{"ts": "2026-06-04T08:33:23+00:00", "tool": "Bash", "summary": "Check certifi availability", "exit_code": null}
+{"ts": "2026-06-04T08:33:34+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:38:27+00:00", "tool": "Bash", "summary": "Rebuild with b-roll (SSL fixed)", "exit_code": null}
+{"ts": "2026-06-04T08:38:34+00:00", "tool": "Bash", "summary": "Sample b-roll frame", "exit_code": null}
+{"ts": "2026-06-04T08:39:03+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:39:24+00:00", "tool": "Edit", "file": "agents/creative_director.py"}
+{"ts": "2026-06-04T08:39:37+00:00", "tool": "Bash", "summary": "Stage trimmed file in raw_footage", "exit_code": null}
+{"ts": "2026-06-04T08:44:59+00:00", "tool": "Bash", "summary": "Run Creative Director footage pipeline", "exit_code": null}
+{"ts": "2026-06-04T08:45:09+00:00", "tool": "Bash", "summary": "Probe + sample agent-produced reel", "exit_code": null}
+{"ts": "2026-06-04T08:45:30+00:00", "tool": "Bash", "summary": "Open finished reel for review", "exit_code": null}
+{"ts": "2026-06-04T08:49:35+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:49:47+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:49:54+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:50:04+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:50:18+00:00", "tool": "Edit", "file": "agents/reel_editor.py"}
+{"ts": "2026-06-04T08:52:08+00:00", "tool": "Bash", "summary": "Re-run CD pipeline with held end card", "exit_code": null}
+{"ts": "2026-06-04T08:52:24+00:00", "tool": "Bash", "summary": "Check held end-card frames", "exit_code": null}
+{"ts": "2026-06-04T08:52:43+00:00", "tool": "Bash", "summary": "Open final reel", "exit_code": null}
+{"ts": "2026-06-04T08:52:53+00:00", "tool": "Bash", "summary": "Approve final reel, remove superseded", "exit_code": null}
+{"ts": "2026-06-04T08:54:10+00:00", "tool": "Bash", "summary": "Read approved first-3 content", "exit_code": null}
+{"ts": "2026-06-04T08:54:22+00:00", "tool": "Bash", "summary": "Check carousels + calendar dates", "exit_code": null}
+{"ts": "2026-06-04T08:58:59+00:00", "tool": "Bash", "summary": "Inspect week_1 post structure", "exit_code": null}
+{"ts": "2026-06-04T08:59:09+00:00", "tool": "Bash", "summary": "Check carousel_dir + youtube fields", "exit_code": null}
+{"ts": "2026-06-04T08:59:29+00:00", "tool": "Bash", "summary": "Write posting schedule into calendar", "exit_code": null}
+{"ts": "2026-06-04T09:49:34+00:00", "tool": "Bash", "summary": "List IG/Meta-related env key names, values redacted", "exit_code": null}
+{"ts": "2026-06-04T09:50:00+00:00", "tool": "Bash", "summary": "Verify token identity + publish scope (token never printed)", "exit_code": null}
+{"ts": "2026-06-04T09:50:21+00:00", "tool": "Bash", "summary": "Append IG_USER_ID if missing", "exit_code": null}
+{"ts": "2026-06-04T09:50:46+00:00", "tool": "Bash", "summary": "List P1 carousel files", "exit_code": null}
+{"ts": "2026-06-04T09:52:30+00:00", "tool": "Bash", "summary": "Locate publisher code", "exit_code": null}
+{"ts": "2026-06-04T09:52:38+00:00", "tool": "Bash", "summary": "Inspect IG publisher media hosting", "exit_code": null}
+{"ts": "2026-06-04T09:53:04+00:00", "tool": "Bash", "summary": "Enumerate credential key names", "exit_code": null}
+{"ts": "2026-06-04T09:53:47+00:00", "tool": "Bash", "summary": "Pre-flight all 4 platforms + Supabase hosting", "exit_code": null}
+{"ts": "2026-06-04T09:54:18+00:00", "tool": "Bash", "summary": "Inspect LinkedIn + X publisher media support", "exit_code": null}
+{"ts": "2026-06-04T09:58:33+00:00", "tool": "Bash", "summary": "Read base.py + YouTube publisher signatures", "exit_code": null}
+{"ts": "2026-06-04T09:59:42+00:00", "tool": "Edit", "file": "publishing/instagram_publisher.py"}
+{"ts": "2026-06-04T10:00:03+00:00", "tool": "Edit", "file": "publishing/linkedin_publisher.py"}
+{"ts": "2026-06-04T10:00:27+00:00", "tool": "Edit", "file": "publishing/linkedin_publisher.py"}
+{"ts": "2026-06-04T10:00:38+00:00", "tool": "Edit", "file": "publishing/twitter_publisher.py"}
+{"ts": "2026-06-04T10:01:05+00:00", "tool": "Edit", "file": "publishing/twitter_publisher.py"}
+{"ts": "2026-06-04T10:01:13+00:00", "tool": "Bash", "summary": "Check X text lengths vs 280 limit", "exit_code": null}
+{"ts": "2026-06-04T10:01:45+00:00", "tool": "Bash", "summary": "Read YouTube upload_video signature", "exit_code": null}
+{"ts": "2026-06-04T10:02:18+00:00", "tool": "Write", "file": "publishing/publish_runner.py"}
+{"ts": "2026-06-04T10:02:24+00:00", "tool": "Bash", "summary": "Dry-run plan for P1/P2/P3", "exit_code": null}
+{"ts": "2026-06-04T10:02:57+00:00", "tool": "Bash", "summary": "Check system TZ + IST now", "exit_code": null}
+{"ts": "2026-06-04T10:03:13+00:00", "tool": "Edit", "file": "publishing/publish_runner.py"}
+{"ts": "2026-06-04T10:03:19+00:00", "tool": "Bash", "summary": "Verify auto dispatcher fires nothing before scheduled time", "exit_code": null}
+{"ts": "2026-06-04T10:04:06+00:00", "tool": "Write", "file": "publishing/validate_media.py"}
+{"ts": "2026-06-04T10:05:12+00:00", "tool": "Bash", "summary": "Validate media upload paths (no posting)", "exit_code": null}
+{"ts": "2026-06-04T10:05:29+00:00", "tool": "Bash", "summary": "Get python path + existing crontab", "exit_code": null}
+{"ts": "2026-06-04T10:05:38+00:00", "tool": "Bash", "summary": "Resolve python binary + confirm deps", "exit_code": null}
+{"ts": "2026-06-04T10:05:57+00:00", "tool": "Bash", "summary": "Install auto-post dispatcher cron", "exit_code": null}
+{"ts": "2026-06-04T10:12:49+00:00", "tool": "Bash", "summary": "Inspect memory dir + git status", "exit_code": null}
+{"ts": "2026-06-04T10:13:49+00:00", "tool": "Write", "file": "voffgrid-offgrid-marketing-os/memory/context_packages/GRIDLOCK-AUTOPOST-04JUN.md"}
+{"ts": "2026-06-04T10:14:13+00:00", "tool": "Edit", "file": "grid/.claude/projects/-Users-gauravoffgrid-offgrid-marketing-os/memory/MEMORY.md"}
+{"ts": "2026-06-04T10:14:19+00:00", "tool": "Edit", "file": "grid/.claude/projects/-Users-gauravoffgrid-offgrid-marketing-os/memory/MEMORY.md"}
+{"ts": "2026-06-04T10:14:43+00:00", "tool": "Bash", "summary": "Check gitignore + scratch sizes", "exit_code": null}
+{"ts": "2026-06-04T10:14:56+00:00", "tool": "Bash", "summary": "Append gitignore rules", "exit_code": null}

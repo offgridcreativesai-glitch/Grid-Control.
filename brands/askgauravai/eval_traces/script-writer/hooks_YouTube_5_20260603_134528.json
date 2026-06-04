@@ -1,0 +1,150 @@
+{
+  "output_type": "hooks_YouTube_5",
+  "winner_index": 1,
+  "synthesis": "Variant B wins because it nails the two highest-weighted criteria simultaneously \u2014 the hook is viscerally specific and relatable ('I stare at my Meta dashboard every morning'), and the brand voice is authentically human and vulnerable in a way that builds immediate trust with a marketer or founder audience. The confession-to-solution arc is a proven storytelling structure that works across platforms. Its main weakness, shared by all three variants, is the absence of an explicit CTA; borrowing Variant C's directional language ('I'm going to show you every single step') as a follow-on sentence would significantly strengthen B's conversion potential without sacrificing its voice.",
+  "scores": [
+    {
+      "variant_index": 0,
+      "criterion": "hook_strength",
+      "score": 7.0,
+      "reasoning": "Personification of the ad account is clever and creates intrigue, but 'something that actually listens' is vague. It stops the scroll with a relatable tension but lacks specificity about what was built."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "Conversational, slightly sardonic tone. Feels human and founder-coded. 'Finally built something' has authentic frustration-to-solution energy without sounding corporate."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "No explicit CTA. The hook implies a reveal but doesn't direct the viewer to do anything \u2014 watch, click, follow, or engage. The payoff is unclear."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "platform_fit",
+      "score": 6.0,
+      "reasoning": "Works for Twitter/X or LinkedIn as an opener. Short enough for mobile. But without knowing the platform target, the lack of visual or format cues limits optimization score."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "hook_strength",
+      "score": 9.0,
+      "reasoning": "Extremely relatable and specific \u2014 'I stare at my Meta dashboard every morning' is a vivid, concrete scene millions of marketers live in. The vulnerability is disarming and the pivot to 'built agents to read it for me' is a strong payoff. Scroll-stopping."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "brand_voice",
+      "score": 9.0,
+      "reasoning": "Authentically human. 'I have no idea what half of it actually means' is the kind of honest admission that builds trust. Zero AI-sounding language. Sounds like a real founder talking to peers."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "cta_clarity",
+      "score": 5.0,
+      "reasoning": "Implies a solution was built but doesn't explicitly ask the viewer to do anything. Better than A in that 'agents to read it for me' teases a tangible concept, but still no direct CTA."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "platform_fit",
+      "score": 8.0,
+      "reasoning": "Perfect length and energy for LinkedIn or Twitter/X. The confessional format performs well on both platforms. Could serve as a video hook or text post opener effectively."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "hook_strength",
+      "score": 6.0,
+      "reasoning": "'This is the actual back-end' has some specificity and credibility signals, but opens with 'This is' which is a weak construction. The hook is more of a table of contents than a scroll-stopper. It informs rather than intrigues."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "brand_voice",
+      "score": 6.0,
+      "reasoning": "Functional and direct, but slightly mechanical. 'Multi-agent system' and 'analyze a real D2C ad account' sound closer to a product description than authentic founder voice. Not corporate, but not warm either."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "cta_clarity",
+      "score": 8.0,
+      "reasoning": "'I'm going to show you every single step' is the clearest implicit CTA of the three \u2014 it sets an expectation of a tutorial or walkthrough and gives the viewer a reason to keep watching or reading."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Well-suited for YouTube, LinkedIn video, or a thread opener where educational content is expected. 'Back-end' and 'every single step' signal long-form, which fits those contexts well."
+    }
+  ],
+  "raw_scores": [
+    {
+      "variant": "A",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 7,
+          "reasoning": "Personification of the ad account is clever and creates intrigue, but 'something that actually listens' is vague. It stops the scroll with a relatable tension but lacks specificity about what was built."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "Conversational, slightly sardonic tone. Feels human and founder-coded. 'Finally built something' has authentic frustration-to-solution energy without sounding corporate."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "No explicit CTA. The hook implies a reveal but doesn't direct the viewer to do anything \u2014 watch, click, follow, or engage. The payoff is unclear."
+        },
+        "platform_fit": {
+          "score": 6,
+          "reasoning": "Works for Twitter/X or LinkedIn as an opener. Short enough for mobile. But without knowing the platform target, the lack of visual or format cues limits optimization score."
+        }
+      },
+      "weighted_total": 6.45
+    },
+    {
+      "variant": "B",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 9,
+          "reasoning": "Extremely relatable and specific \u2014 'I stare at my Meta dashboard every morning' is a vivid, concrete scene millions of marketers live in. The vulnerability is disarming and the pivot to 'built agents to read it for me' is a strong payoff. Scroll-stopping."
+        },
+        "brand_voice": {
+          "score": 9,
+          "reasoning": "Authentically human. 'I have no idea what half of it actually means' is the kind of honest admission that builds trust. Zero AI-sounding language. Sounds like a real founder talking to peers."
+        },
+        "cta_clarity": {
+          "score": 5,
+          "reasoning": "Implies a solution was built but doesn't explicitly ask the viewer to do anything. Better than A in that 'agents to read it for me' teases a tangible concept, but still no direct CTA."
+        },
+        "platform_fit": {
+          "score": 8,
+          "reasoning": "Perfect length and energy for LinkedIn or Twitter/X. The confessional format performs well on both platforms. Could serve as a video hook or text post opener effectively."
+        }
+      },
+      "weighted_total": 7.75
+    },
+    {
+      "variant": "C",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 6,
+          "reasoning": "'This is the actual back-end' has some specificity and credibility signals, but opens with 'This is' which is a weak construction. The hook is more of a table of contents than a scroll-stopper. It informs rather than intrigues."
+        },
+        "brand_voice": {
+          "score": 6,
+          "reasoning": "Functional and direct, but slightly mechanical. 'Multi-agent system' and 'analyze a real D2C ad account' sound closer to a product description than authentic founder voice. Not corporate, but not warm either."
+        },
+        "cta_clarity": {
+          "score": 8,
+          "reasoning": "'I'm going to show you every single step' is the clearest implicit CTA of the three \u2014 it sets an expectation of a tutorial or walkthrough and gives the viewer a reason to keep watching or reading."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Well-suited for YouTube, LinkedIn video, or a thread opener where educational content is expected. 'Back-end' and 'every single step' signal long-form, which fits those contexts well."
+        }
+      },
+      "weighted_total": 6.65
+    }
+  ],
+  "timestamp": "2026-06-03T13:45:28.398770",
+  "agent": "script-writer",
+  "variant_count": 3
+}

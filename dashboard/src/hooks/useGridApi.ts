@@ -92,9 +92,28 @@ export function useAgents() {
 }
 
 export function useAgentStatus() {
+  const { activeBrand } = useBrandStore()
   return useQuery({
-    queryKey: ["agents", "status"],
-    queryFn: () => getJson<{ agents: AgentStatus[] }>("/api/agents/status"),
+    queryKey: ["agents", "status", activeBrand.slug],
+    enabled: !!activeBrand.slug,
+    queryFn: async () => {
+      // Endpoint returns { success, data: [...] } with camelCase `lastRun` and
+      // session status "running"/"done"/"idle". Normalize to AgentStatus shape.
+      const resp = await getJson<{ success: boolean; data: Array<Record<string, unknown>> }>(
+        `/api/agents/status?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      )
+      const agents: AgentStatus[] = (resp.data ?? []).map((a) => {
+        const raw = (a.status as string) ?? "idle"
+        const status = (raw === "done" ? "success" : raw) as AgentStatus["status"]
+        return {
+          slug: (a.slug as string) ?? "",
+          name: (a.name as string) ?? "",
+          status,
+          last_run: (a.lastRun as string) ?? (a.last_run as string) ?? null,
+        }
+      })
+      return { agents }
+    },
     refetchInterval: 10_000,
   })
 }
@@ -119,9 +138,11 @@ export function useLiveAgents(): Agent[] {
   const { data } = useAgentStatus()
   if (!data?.agents) return AGENTS
 
-  const liveBySlug = new Map(data.agents.map((a) => [a.slug, a]))
+  // Match by name — present on both the static roster and the endpoint payload
+  // (backend items don't reliably carry a slug).
+  const liveByName = new Map(data.agents.map((a) => [a.name, a]))
   return AGENTS.map((a) => {
-    const live = liveBySlug.get(a.slug)
+    const live = liveByName.get(a.name)
     if (!live) return a
     return {
       ...a,

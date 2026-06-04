@@ -1,0 +1,19 @@
+{"ts": "2026-06-03T13:48:55+00:00", "tool": "Bash", "summary": "Create video folder + open brand .env", "exit_code": null}
+{"ts": "2026-06-03T16:47:11+00:00", "tool": "Bash", "summary": "Inspect video file + check ffmpeg/whisper", "exit_code": null}
+{"ts": "2026-06-04T07:54:17+00:00", "tool": "Bash", "summary": "Confirm video file + specs", "exit_code": null}
+{"ts": "2026-06-04T07:54:26+00:00", "tool": "Bash", "summary": "Extract audio for transcription", "exit_code": null}
+{"ts": "2026-06-04T07:54:29+00:00", "tool": "Bash", "summary": "Transcribe with word timestamps", "exit_code": null}
+{"ts": "2026-06-04T07:56:37+00:00", "tool": "Bash", "summary": "Read transcript segments", "exit_code": null}
+{"ts": "2026-06-04T07:56:58+00:00", "tool": "Bash", "summary": "Extract word timestamps", "exit_code": null}
+{"ts": "2026-06-04T07:57:26+00:00", "tool": "Bash", "summary": "Grab a frame to check framing", "exit_code": null}
+{"ts": "2026-06-04T07:57:56+00:00", "tool": "Write", "file": "brands/askgauravai/visuals/videos/_edit/make_cards.py"}
+{"ts": "2026-06-04T07:58:04+00:00", "tool": "Bash", "summary": "Render cutaway cards", "exit_code": null}
+{"ts": "2026-06-04T07:58:37+00:00", "tool": "Write", "file": "brands/askgauravai/visuals/videos/_edit/make_captions.py"}
+{"ts": "2026-06-04T07:58:55+00:00", "tool": "Bash", "summary": "Render caption PNGs", "exit_code": null}
+{"ts": "2026-06-04T08:00:17+00:00", "tool": "Write", "file": "brands/askgauravai/visuals/videos/_edit/build_reel.py"}
+{"ts": "2026-06-04T08:00:58+00:00", "tool": "Bash", "summary": "Build the edited reel", "exit_code": null}
+{"ts": "2026-06-04T08:01:05+00:00", "tool": "Bash", "summary": "Extract verification frames", "exit_code": null}
+{"ts": "2026-06-04T08:01:38+00:00", "tool": "Bash", "summary": "Extract card-window frames", "exit_code": null}
+{"ts": "2026-06-04T08:01:46+00:00", "tool": "Bash", "summary": "Re-extract card frames with correct cwd", "exit_code": null}
+{"ts": "2026-06-04T08:02:21+00:00", "tool": "Edit", "file": "brands/askgauravai/visuals/videos/_edit/build_reel.py"}
+{"ts": "2026-06-04T08:02:26+00:00", "tool": "Edit", "file": "brands/askgauravai/visuals/videos/_edit/build_reel.py"}

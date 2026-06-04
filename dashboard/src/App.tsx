@@ -10,6 +10,7 @@ import { ReviewPage } from "@/pages/ReviewPage"
 import { CalendarPage } from "@/pages/CalendarPage"
 import { InsightsPage } from "@/pages/InsightsPage"
 import { ConnectionsPage } from "@/pages/ConnectionsPage"
+import { AgentsPage } from "@/pages/AgentsPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
@@ -151,6 +152,8 @@ export default function App() {
               <Routes>
                 {/* Brand cockpit — the operator's home for a single brand */}
                 <Route path="/" element={<BrandCockpitPage />} />
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/agents/:id" element={<AgentsPage />} />
                 <Route path="/review" element={<ReviewPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/insights" element={<InsightsPage />} />

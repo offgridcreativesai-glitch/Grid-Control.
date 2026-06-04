@@ -14,6 +14,7 @@ import {
   Eye,
   ArrowLeftRight,
   Plug,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -29,6 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const clientNavItems = [
   { path: "/", icon: LayoutDashboard, label: "Cockpit" },
+  { path: "/agents", icon: Bot, label: "Agents" },
   { path: "/review", icon: CheckSquare, label: "Review" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
@@ -37,6 +39,7 @@ const clientNavItems = [
 
 const adminNavItems = [
   { path: "/admin", icon: ShieldCheck, label: "Overview" },
+  { path: "/agents", icon: Bot, label: "Agents" },
   { path: "/admin/clients", icon: Building2, label: "Clients" },
   { path: "/admin/revenue", icon: TrendingUp, label: "Revenue" },
   { path: "/admin/system", icon: Cpu, label: "System" },

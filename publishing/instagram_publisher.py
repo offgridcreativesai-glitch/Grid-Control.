@@ -175,6 +175,75 @@ def publish_carousel(image_urls: list[str], caption: str, token: str) -> dict[st
     return {"published": True, "media_id": media_id, "permalink": permalink}
 
 
+def upload_video_to_storage(brand_slug: str, video_path: str, post_id: str) -> str:
+    """Upload a reel MP4 to the public bucket. Returns its public HTTPS URL.
+    (Instagram's publish API fetches the video from a URL — never local bytes.)"""
+    url, key = _supabase()
+    _ensure_bucket(url, key)
+    p = (BASE_DIR / video_path) if not os.path.isabs(video_path) else Path(video_path)
+    if not p.exists():
+        raise FileNotFoundError(f"Reel video not found on disk: {p}")
+    ctype = mimetypes.guess_type(str(p))[0] or "video/mp4"
+    object_path = f"{brand_slug}/{post_id}/reel{p.suffix}"
+    with open(p, "rb") as fh:
+        data = fh.read()
+    up = requests.post(
+        f"{url}/storage/v1/object/{STORAGE_BUCKET}/{object_path}",
+        headers={"Authorization": f"Bearer {key}", "Content-Type": ctype, "x-upsert": "true"},
+        data=data, timeout=180,
+    )
+    if up.status_code not in (200, 201):
+        raise RuntimeError(f"Storage upload failed for {object_path}: {up.status_code} {up.text[:200]}")
+    return f"{url}/storage/v1/object/public/{STORAGE_BUCKET}/{object_path}"
+
+
+def publish_reel(video_url: str, caption: str, token: str, share_to_feed: bool = True) -> dict[str, Any]:
+    """REELS container (video_url) → wait for processing → media_publish.
+    Video processing is slower than images, so we poll longer."""
+    node = _ig_node()
+    r = requests.post(
+        f"{GRAPH_HOST}/{GRAPH_VERSION}/{node}/media",
+        data={
+            "media_type": "REELS",
+            "video_url": video_url,
+            "caption": caption or "",
+            "share_to_feed": "true" if share_to_feed else "false",
+            "access_token": token,
+        },
+        timeout=60,
+    )
+    j = r.json() or {}
+    if "id" not in j:
+        return {"published": False, "stage": "reel_container", "error": j.get("error", j)}
+    container_id = j["id"]
+
+    # Reels need real processing time — poll up to ~90s.
+    ready = _wait_container_ready(container_id, token, tries=30, delay=3.0)
+    if ready != "FINISHED":
+        return {"published": False, "stage": "container_ready", "error": f"container status {ready}", "container_id": container_id}
+
+    r = requests.post(
+        f"{GRAPH_HOST}/{GRAPH_VERSION}/{node}/media_publish",
+        data={"creation_id": container_id, "access_token": token},
+        timeout=60,
+    )
+    j = r.json() or {}
+    if "id" not in j:
+        return {"published": False, "stage": "media_publish", "error": j.get("error", j)}
+    media_id = j["id"]
+
+    permalink = ""
+    try:
+        pr = requests.get(
+            f"{GRAPH_HOST}/{GRAPH_VERSION}/{media_id}",
+            params={"fields": "permalink", "access_token": token}, timeout=15,
+        )
+        permalink = (pr.json() or {}).get("permalink", "")
+    except Exception:
+        pass
+    return {"published": True, "media_id": media_id, "permalink": permalink}
+
+
 def token_status(token: str) -> dict[str, Any]:
     """Read-only liveness probe for the IG token. Used by the publish endpoint to
     decide auto-publish vs prepare-only, and by a /api/publish/check route."""

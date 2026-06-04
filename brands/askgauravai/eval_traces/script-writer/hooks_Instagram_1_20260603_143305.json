@@ -1,0 +1,150 @@
+{
+  "output_type": "hooks_Instagram_1",
+  "winner_index": 2,
+  "synthesis": "Variant C wins because it executes the hardest part of content \u2014 the hook \u2014 with the most sophisticated structure: it opens with a broad social observation to create identification, introduces tension through shared failure, and pivots to personal credibility before teasing a resolution, all without sounding formulaic or self-congratulatory. The self-inclusion ('I was too') is a key differentiator that gives it authenticity Variant A lacks, while the specificity of 'tracking what actually mattered' gives it more directional pull than Variant B's intrigue-only approach. To make Variant C even stronger, it could borrow Variant B's specific mystery element \u2014 something like naming the overlooked data type \u2014 to sharpen the knowledge-gap hook from a 9 toward a 10, and adding a one-line explicit CTA after the hook would address its only meaningful weakness.",
+  "scores": [
+    {
+      "variant_index": 0,
+      "criterion": "hook_strength",
+      "score": 5.0,
+      "reasoning": "The 'years of experience + X things I wish I knew' format is extremely common on LinkedIn and social feeds. It signals value but doesn't create urgency or genuine curiosity. The scroll-stop factor is weak because readers have seen this structure hundreds of times."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "brand_voice",
+      "score": 6.0,
+      "reasoning": "Conversational and first-person, which is good. However, 'here are 3 things I wish someone had told me' is a clich\u00e9 phrase that reads as templated. It's not AI-sounding but it is formula-sounding."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "There is no CTA present. The hook implies a list will follow but gives no direction on what the reader should do, feel, or expect beyond generic 'lessons learned'."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "platform_fit",
+      "score": 6.0,
+      "reasoning": "The listicle format works on LinkedIn but feels generic. No platform-specific formatting signals like line breaks, emojis, or engagement hooks that would optimize for algorithmic or human engagement."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "hook_strength",
+      "score": 7.0,
+      "reasoning": "The phrase 'data nobody was looking at' creates genuine intrigue and a knowledge gap. It's specific enough to feel credible and different. However, 'I managed Meta ads for D2C brands for years' is a slow opener that buries the real hook in the second sentence."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "This reads like a real practitioner talking. The understatement in 'data nobody was looking at' feels earned, not performative. No corporate speak, no AI filler phrases. Sounds like someone who actually knows what they're talking about."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "Like Variant A, there is no explicit CTA. The mystery of 'data nobody was looking at' invites curiosity but doesn't direct any specific action from the reader."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "The concise, understated tone works well for LinkedIn's professional audience and X/Twitter's brevity norms. The two-sentence structure is clean and scannable, though it lacks platform-native formatting choices."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "hook_strength",
+      "score": 9.0,
+      "reasoning": "Opens with social proof ('every D2C founder'), creates identification with a shared pain point (mistakes), then pivots with personal vulnerability ('I was too') before offering a resolution tease. This structure is specific, emotionally resonant, and gives multiple reasons to keep reading \u2014 all within two sentences."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "The self-inclusion ('I was too') prevents it from sounding preachy or expert-from-above. 'What actually mattered' is casual and direct. It reads like a practitioner reflecting honestly, not a content marketer performing expertise."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "cta_clarity",
+      "score": 6.0,
+      "reasoning": "While there's no hard CTA button or directive, the hook strongly implies what follows and creates a desire to read on. The phrase 'tracking what actually mattered' teases the payoff clearly. Implicit CTA is stronger than the other two variants."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Works well on LinkedIn and newsletter intros. The narrative arc in two sentences is optimized for fast-scrolling environments. Could benefit from a line break between the two sentences for feed readability, but structurally sound."
+    }
+  ],
+  "raw_scores": [
+    {
+      "variant": "A",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 5,
+          "reasoning": "The 'years of experience + X things I wish I knew' format is extremely common on LinkedIn and social feeds. It signals value but doesn't create urgency or genuine curiosity. The scroll-stop factor is weak because readers have seen this structure hundreds of times."
+        },
+        "brand_voice": {
+          "score": 6,
+          "reasoning": "Conversational and first-person, which is good. However, 'here are 3 things I wish someone had told me' is a clich\u00e9 phrase that reads as templated. It's not AI-sounding but it is formula-sounding."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "There is no CTA present. The hook implies a list will follow but gives no direction on what the reader should do, feel, or expect beyond generic 'lessons learned'."
+        },
+        "platform_fit": {
+          "score": 6,
+          "reasoning": "The listicle format works on LinkedIn but feels generic. No platform-specific formatting signals like line breaks, emojis, or engagement hooks that would optimize for algorithmic or human engagement."
+        }
+      },
+      "weighted_total": 5.25
+    },
+    {
+      "variant": "B",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 7,
+          "reasoning": "The phrase 'data nobody was looking at' creates genuine intrigue and a knowledge gap. It's specific enough to feel credible and different. However, 'I managed Meta ads for D2C brands for years' is a slow opener that buries the real hook in the second sentence."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "This reads like a real practitioner talking. The understatement in 'data nobody was looking at' feels earned, not performative. No corporate speak, no AI filler phrases. Sounds like someone who actually knows what they're talking about."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "Like Variant A, there is no explicit CTA. The mystery of 'data nobody was looking at' invites curiosity but doesn't direct any specific action from the reader."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "The concise, understated tone works well for LinkedIn's professional audience and X/Twitter's brevity norms. The two-sentence structure is clean and scannable, though it lacks platform-native formatting choices."
+        }
+      },
+      "weighted_total": 6.6
+    },
+    {
+      "variant": "C",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 9,
+          "reasoning": "Opens with social proof ('every D2C founder'), creates identification with a shared pain point (mistakes), then pivots with personal vulnerability ('I was too') before offering a resolution tease. This structure is specific, emotionally resonant, and gives multiple reasons to keep reading \u2014 all within two sentences."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "The self-inclusion ('I was too') prevents it from sounding preachy or expert-from-above. 'What actually mattered' is casual and direct. It reads like a practitioner reflecting honestly, not a content marketer performing expertise."
+        },
+        "cta_clarity": {
+          "score": 6,
+          "reasoning": "While there's no hard CTA button or directive, the hook strongly implies what follows and creates a desire to read on. The phrase 'tracking what actually mattered' teases the payoff clearly. Implicit CTA is stronger than the other two variants."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Works well on LinkedIn and newsletter intros. The narrative arc in two sentences is optimized for fast-scrolling environments. Could benefit from a line break between the two sentences for feed readability, but structurally sound."
+        }
+      },
+      "weighted_total": 7.75
+    }
+  ],
+  "timestamp": "2026-06-03T14:33:05.236082",
+  "agent": "script-writer",
+  "variant_count": 3
+}

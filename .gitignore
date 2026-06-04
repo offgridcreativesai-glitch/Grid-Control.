@@ -54,3 +54,12 @@ brands/*/visuals/cuts/*.mp4
 
 # Local dated brand backups (large, not for git)
 brands/_BACKUP_brands_*/
+
+# AskGauravAI reel session (Jun 4) — scratch, dupes, large source/rejected takes
+brands/*/raw_footage/
+brands/*/visuals/videos/_edit/
+brands/*/visuals/videos/_reelwork/
+brands/*/visuals/videos/*.mov
+brands/*/visuals/videos/AskGauravAI_reel1_edited.mp4
+brands/*/visuals/videos/AskGauravAI_reel1_v2.mp4
+_work/

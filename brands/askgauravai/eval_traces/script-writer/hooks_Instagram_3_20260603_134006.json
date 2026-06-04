@@ -1,0 +1,150 @@
+{
+  "output_type": "hooks_Instagram_3",
+  "winner_index": 1,
+  "synthesis": "Variant B wins on the strength of its radical specificity and human storytelling \u2014 '3 leaks,' '20 minutes,' and '4 months missed' work together to create credibility, urgency, and identification in a single sentence, making it the most effective scroll-stopper of the three. Its first-person voice feels lived-in rather than constructed, which gives it the strongest brand voice score. The primary weakness across all variants is the absence of an explicit CTA; the ideal version of this content would append Variant B's hook with a clear, low-friction action step (e.g., 'Here's what to check first \u2193' or 'Drop your ad spend in the comments and I'll show you'). Variant C's '47 vs. 3' framing could be incorporated into the body of Variant B's content to reinforce the contrast with data-backed specificity.",
+  "scores": [
+    {
+      "variant_index": 0,
+      "criterion": "hook_strength",
+      "score": 7.0,
+      "reasoning": "The contrast between 'shows you numbers' and 'where the money dies' is punchy and evocative. 'Where the money dies' is a strong phrase. However, it's slightly abstract \u2014 it doesn't give a specific, concrete problem or outcome that immediately grounds the reader."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "brand_voice",
+      "score": 8.0,
+      "reasoning": "Conversational, sharp, no corporate speak. Reads like something a savvy practitioner would say. The phrase 'where the money dies' has personality and edge without feeling forced."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "cta_clarity",
+      "score": 3.0,
+      "reasoning": "No CTA present. As a standalone hook this works, but there's no direction for the reader on what to do next."
+    },
+    {
+      "variant_index": 0,
+      "criterion": "platform_fit",
+      "score": 6.0,
+      "reasoning": "Works well as a social post opener or ad hook, but the lack of specificity and CTA makes it feel incomplete for most platform formats. Better suited as a teaser line than a full post."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "hook_strength",
+      "score": 9.0,
+      "reasoning": "Highly specific \u2014 '3 budget leaks,' '20 minutes,' '4 months missed' \u2014 every word earns its place. The specificity creates instant credibility and curiosity. The founder detail adds a relatable, human element that triggers identification. Strong scroll-stopper."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "brand_voice",
+      "score": 9.0,
+      "reasoning": "First-person, story-driven, zero corporate fluff. Reads like a practitioner sharing a real experience. 'The founder had missed them for 4 months' creates narrative tension without being manipulative. Authentically human."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "cta_clarity",
+      "score": 4.0,
+      "reasoning": "No explicit CTA, but the implied invitation to learn more is strong. The setup creates a natural pull for continuation. Still, without an actionable directive, it leaves conversion to chance."
+    },
+    {
+      "variant_index": 1,
+      "criterion": "platform_fit",
+      "score": 8.0,
+      "reasoning": "Excellent for LinkedIn and Twitter/X where story-based hooks with specific numbers perform well. Works as an ad hook leading to a thread or article. The first-person narrative suits social-native content formats."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "hook_strength",
+      "score": 8.0,
+      "reasoning": "'47 metrics' vs '3 that matter' is a classic but effective contrast that creates instant tension and clarity of value. The specificity of 47 feels researched and credible. Slightly more formulaic than Variant B but still very effective at stopping the scroll."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "brand_voice",
+      "score": 6.0,
+      "reasoning": "Clean and direct, but slightly more instructional/listicle-adjacent in tone. Loses some human texture compared to A and B. Doesn't sound corporate, but also doesn't sound like a distinct voice \u2014 it's competent but generic."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "cta_clarity",
+      "score": 6.0,
+      "reasoning": "The implicit CTA ('find the 3 metrics') is reasonably clear in intent. A reader knows they're about to learn which 3 metrics matter. Still no explicit action step, but the implied promise is more CTA-adjacent than the other variants."
+    },
+    {
+      "variant_index": 2,
+      "criterion": "platform_fit",
+      "score": 7.0,
+      "reasoning": "Works well for educational content on LinkedIn or as an ad headline. The listicle framing ('3 tell you') fits platform content patterns well, especially for carousel posts or lead magnets. Slightly generic for organic social."
+    }
+  ],
+  "raw_scores": [
+    {
+      "variant": "A",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 7,
+          "reasoning": "The contrast between 'shows you numbers' and 'where the money dies' is punchy and evocative. 'Where the money dies' is a strong phrase. However, it's slightly abstract \u2014 it doesn't give a specific, concrete problem or outcome that immediately grounds the reader."
+        },
+        "brand_voice": {
+          "score": 8,
+          "reasoning": "Conversational, sharp, no corporate speak. Reads like something a savvy practitioner would say. The phrase 'where the money dies' has personality and edge without feeling forced."
+        },
+        "cta_clarity": {
+          "score": 3,
+          "reasoning": "No CTA present. As a standalone hook this works, but there's no direction for the reader on what to do next."
+        },
+        "platform_fit": {
+          "score": 6,
+          "reasoning": "Works well as a social post opener or ad hook, but the lack of specificity and CTA makes it feel incomplete for most platform formats. Better suited as a teaser line than a full post."
+        }
+      },
+      "weighted_total": 6.05
+    },
+    {
+      "variant": "B",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 9,
+          "reasoning": "Highly specific \u2014 '3 budget leaks,' '20 minutes,' '4 months missed' \u2014 every word earns its place. The specificity creates instant credibility and curiosity. The founder detail adds a relatable, human element that triggers identification. Strong scroll-stopper."
+        },
+        "brand_voice": {
+          "score": 9,
+          "reasoning": "First-person, story-driven, zero corporate fluff. Reads like a practitioner sharing a real experience. 'The founder had missed them for 4 months' creates narrative tension without being manipulative. Authentically human."
+        },
+        "cta_clarity": {
+          "score": 4,
+          "reasoning": "No explicit CTA, but the implied invitation to learn more is strong. The setup creates a natural pull for continuation. Still, without an actionable directive, it leaves conversion to chance."
+        },
+        "platform_fit": {
+          "score": 8,
+          "reasoning": "Excellent for LinkedIn and Twitter/X where story-based hooks with specific numbers perform well. Works as an ad hook leading to a thread or article. The first-person narrative suits social-native content formats."
+        }
+      },
+      "weighted_total": 7.55
+    },
+    {
+      "variant": "C",
+      "criteria_scores": {
+        "hook_strength": {
+          "score": 8,
+          "reasoning": "'47 metrics' vs '3 that matter' is a classic but effective contrast that creates instant tension and clarity of value. The specificity of 47 feels researched and credible. Slightly more formulaic than Variant B but still very effective at stopping the scroll."
+        },
+        "brand_voice": {
+          "score": 6,
+          "reasoning": "Clean and direct, but slightly more instructional/listicle-adjacent in tone. Loses some human texture compared to A and B. Doesn't sound corporate, but also doesn't sound like a distinct voice \u2014 it's competent but generic."
+        },
+        "cta_clarity": {
+          "score": 6,
+          "reasoning": "The implicit CTA ('find the 3 metrics') is reasonably clear in intent. A reader knows they're about to learn which 3 metrics matter. Still no explicit action step, but the implied promise is more CTA-adjacent than the other variants."
+        },
+        "platform_fit": {
+          "score": 7,
+          "reasoning": "Works well for educational content on LinkedIn or as an ad headline. The listicle framing ('3 tell you') fits platform content patterns well, especially for carousel posts or lead magnets. Slightly generic for organic social."
+        }
+      },
+      "weighted_total": 6.85
+    }
+  ],
+  "timestamp": "2026-06-03T13:40:06.686818",
+  "agent": "script-writer",
+  "variant_count": 3
+}

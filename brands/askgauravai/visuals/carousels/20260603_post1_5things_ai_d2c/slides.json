@@ -1,0 +1,84 @@
+{
+  "topic": "5 things a 1-person D2C brand can now do with AI that used to need a 5-person team",
+  "platform": "instagram",
+  "slide_count": 5,
+  "slides": [
+    {
+      "number": 1,
+      "type": "hook",
+      "headline": "Fire the team. Build the system.",
+      "body": "",
+      "bullets": [],
+      "visual_emphasis": "huge"
+    },
+    {
+      "number": 2,
+      "type": "value",
+      "headline": "Your competitors leak their strategy",
+      "body": "AI scrapes every ad your competitors launch, pause, or kill. You see what creative they're scaling and what they gave up on — without guessing or paying an analyst to check manually.",
+      "bullets": [],
+      "visual_emphasis": "body"
+    },
+    {
+      "number": 3,
+      "type": "value",
+      "headline": "Spot dying ads before ROAS drops",
+      "body": "Creative fatigue is invisible until it's expensive. The right system flags winning ads losing steam so you swap creative early — not after your cost per acquisition spikes.",
+      "bullets": [],
+      "visual_emphasis": "split"
+    },
+    {
+      "number": 4,
+      "type": "value",
+      "headline": "Weekly brief, zero meetings needed",
+      "body": "Audience shifts, budget signals, and what to do next — delivered in plain language every week. One system replaces the strategist, the media buyer, and the Monday standup.",
+      "bullets": [
+        "Audience shift detection",
+        "Budget signal reads",
+        "Plain-language action steps"
+      ],
+      "visual_emphasis": "headline"
+    },
+    {
+      "number": 5,
+      "type": "cta",
+      "headline": "Which of these 5 saves you the most time?",
+      "body": "Drop the number below. @askgauravai",
+      "bullets": [],
+      "visual_emphasis": "cta"
+    }
+  ],
+  "post_caption": "You don't need a media buyer, a strategist, and an analyst. You need a system that does what they did — with real data, not vibes.\n\nA year ago these 5 capabilities cost you 3-5 hires or an agency retainer. Today a solo D2C founder can run all of it. Faster decisions compound into cheaper growth.\n\nWhich of the 5 would save you the most hours? Drop the number.\n\n#D2C #AIforBrands #SoloFounder #MarketingIntelligence #DataDrivenMarketing",
+  "save_prompt": "Save this as your checklist for the 5 AI capabilities that replace a full marketing team for a solo D2C brand.",
+  "data_provenance": [
+    {
+      "claim": "Direct, founder-to-founder tone with no fluff or agency speak",
+      "source_file": "brand_profile.json",
+      "source_path": "tone_of_voice",
+      "source_value": "Direct, founder-to-founder, no fluff. Practical and confident — show the work and the data, not hype. Teach by doing, slightly contrarian."
+    },
+    {
+      "claim": "Real data-backed intelligence from actual competitor and market scraping — zero guesswork",
+      "source_file": "brand_profile.json",
+      "source_path": "brand_brief",
+      "source_value": "I pair real, data-backed marketing intelligence (from actual competitor and market scraping — zero guesswork) with done-for-you AI execution. Founder-to-founder, no agency fluff, every output traceable to real data."
+    },
+    {
+      "claim": "No hype/guru tone, no get-rich-quick framing, no fabricated stats",
+      "source_file": "brand_profile.json",
+      "source_path": "what_to_never_say",
+      "source_value": "No fake or unverifiable claims — everything traces to real data. No hype/guru tone, no get-rich-quick, no fear-mongering. No dunking on named people, no politics or religion, no fabricated testimonials or stats."
+    }
+  ],
+  "brand_slug": "askgauravai",
+  "handle": "@askgauravai",
+  "palette": {
+    "primary_bg": "#FFFFFF",
+    "secondary_bg": "#FAFAFA",
+    "accent": "#0F4C5C",
+    "text_primary": "#1A1A1A",
+    "highlight_sparing": "#E07A5F"
+  },
+  "generated_at": "2026-06-03T08:42:58.305569+00:00",
+  "post_id": "post1_5things_ai_d2c"
+}

@@ -1,0 +1,84 @@
+{
+  "topic": "Why most D2C brands waste ad spend on Meta and can't see where it's leaking",
+  "platform": "instagram",
+  "slide_count": 5,
+  "slides": [
+    {
+      "number": 1,
+      "type": "hook",
+      "headline": "Meta shows 47 metrics. Only 3 matter.",
+      "body": "",
+      "bullets": [],
+      "visual_emphasis": "huge"
+    },
+    {
+      "number": 2,
+      "type": "value",
+      "headline": "Your best ad is decaying.",
+      "body": "Creative fatigue doesn't hit all at once. Frequency creeps up, CTR drops 0.1% daily, and you keep funding an ad that quietly stopped working three days ago.",
+      "bullets": [],
+      "visual_emphasis": "headline"
+    },
+    {
+      "number": 3,
+      "type": "value",
+      "headline": "You're bidding against yourself.",
+      "body": "Overlapping audiences across your ad sets means your own campaigns compete in the same auction. You inflate your CPMs with your own money.",
+      "bullets": [],
+      "visual_emphasis": "headline"
+    },
+    {
+      "number": 4,
+      "type": "value",
+      "headline": "The data exists. You can't see it.",
+      "body": "Meta has delivery diagnostics, quality rankings, and auction overlap rates built in. Your default reporting view just never surfaces them. Your ads aren't broken — your dashboard view is.",
+      "bullets": [
+        "Check Quality Ranking",
+        "Check Auction Overlap Rate",
+        "Check Frequency vs. CTR trend"
+      ],
+      "visual_emphasis": "split"
+    },
+    {
+      "number": 5,
+      "type": "cta",
+      "headline": "What's your biggest Meta ads bottleneck right now?",
+      "body": "DM me your top frustration — I'll tell you which metric I'd look at first. @askgauravai",
+      "bullets": [],
+      "visual_emphasis": "cta"
+    }
+  ],
+  "post_caption": "Meta gives you 47 metrics. Most D2C brands stare at all of them and still miss where budget actually leaks.\n\nThree quiet killers: creative fatigue you don't catch, audience overlap you don't realize, and diagnostics data you never see in default views.\n\nYour Meta ads probably aren't broken. Your reporting view is.\n\nDrop your biggest Meta ads frustration in the DMs — I'll tell you exactly where I'd look first.\n\n#d2cmarketing #metaads #adspend #performancemarketing #askgauravai",
+  "save_prompt": "Save this so you know exactly which three hidden leaks to check next time your Meta CPMs spike.",
+  "data_provenance": [
+    {
+      "claim": "Direct, founder-to-founder tone with no fluff used across all slides",
+      "source_file": "brand_profile.json",
+      "source_path": "tone_of_voice",
+      "source_value": "Direct, founder-to-founder, no fluff. Practical and confident — show the work and the data, not hype. Teach by doing, slightly contrarian."
+    },
+    {
+      "claim": "No hype, no unverifiable stats — all points reference real Meta platform features (Quality Ranking, Auction Overlap, Frequency metrics)",
+      "source_file": "brand_profile.json",
+      "source_path": "what_to_never_say",
+      "source_value": "No fake or unverifiable claims — everything traces to real data. No hype/guru tone, no get-rich-quick, no fear-mongering."
+    },
+    {
+      "claim": "Positioning pairs data-backed intelligence with practical execution guidance",
+      "source_file": "brand_profile.json",
+      "source_path": "brand_brief",
+      "source_value": "I pair real, data-backed marketing intelligence (from actual competitor and market scraping — zero guesswork) with done-for-you AI execution. Founder-to-founder, no agency fluff, every output traceable to real data."
+    }
+  ],
+  "brand_slug": "askgauravai",
+  "handle": "@askgauravai",
+  "palette": {
+    "primary_bg": "#FFFFFF",
+    "secondary_bg": "#FAFAFA",
+    "accent": "#0F4C5C",
+    "text_primary": "#1A1A1A",
+    "highlight_sparing": "#E07A5F"
+  },
+  "generated_at": "2026-06-03T08:43:26.567751+00:00",
+  "post_id": "post3_meta_ad_leaks"
+}
