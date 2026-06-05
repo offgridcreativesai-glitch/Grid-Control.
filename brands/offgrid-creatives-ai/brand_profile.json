@@ -1,0 +1,139 @@
+{
+  "brand_name": "OffGrid Creatives AI",
+  "product_name": "Grid Control",
+  "product_description": "An 18-agent AI marketing OS that replaces traditional marketing agencies. Strategy, content planning, scripting, carousel design, trend research, competitor analysis — all from one dashboard, powered by AI.",
+  "phase": "Phase 1 — Testing on 4 brands, building proof",
+  "industry": "AI Marketing Technology",
+  "business_type": "AI Marketing OS — currently services model, future SaaS",
+
+  "brand_brief": "OffGrid Creatives AI is the product page for Grid Control. Unlike ASKGauravAI (personal brand), this page is about the product — what it does, what it produces, who it's for. Gaurav is still the face (founder showing what he built), but the focus is on Grid Control's capabilities and results, not the personal journey.",
+
+  "unique_tension": "Every AI tool gives you suggestions. Grid Control gives you deliverables.",
+
+  "language": "English ONLY. Global market. No Hinglish.",
+
+  "audience": [
+    "D2C founders spending ₹15-50k/month on agencies and getting Canva calendars",
+    "Small brand owners doing their own marketing with no data or system",
+    "Agency owners who want to scale output without hiring more people",
+    "Solopreneurs who want their own marketing system, not another tool to learn",
+    "Marketing managers at startups looking for AI-powered workflow"
+  ],
+  "not_for_audience": [
+    "Enterprise companies with existing marketing teams of 20+",
+    "People looking for free AI tools",
+    "Developers looking for API integrations",
+    "Students"
+  ],
+
+  "market": "Global. Pricing in both INR and USD.",
+
+  "platforms": ["Instagram", "YouTube", "LinkedIn", "Twitter/X", "TikTok"],
+  "platform_handles": [
+    { "platform": "Instagram", "handle": "offgrid.creatives" },
+    { "platform": "LinkedIn", "handle": "offgrid-creatives-1198753b3" },
+    { "platform": "YouTube", "handle": "OffGridCreativesAI" }
+  ],
+
+  "content_model": {
+    "method": "GaryVee Pillar Model",
+    "pillar": "1 YouTube long-form (10-12 min) per week — product demos, system walkthroughs, client results",
+    "derivatives": "Shorts/Reels (dashboard clips, deliverable reveals), carousels (agent breakdowns, before/after), LinkedIn (product positioning), X threads (feature walkthroughs)",
+    "on_camera": "Gaurav as founder showing the product. Mix talking head + heavy screen recordings of dashboard.",
+    "tone": "Confident product demo. Not salesy. 'Let me show you what this does' energy."
+  },
+
+  "tone_of_voice": "Product-confident founder. Shows, doesn't sell. Uses real deliverables as proof. Technical enough to be credible, accessible enough for non-coders. English only.",
+
+  "visual_aesthetic": "Dashboard screenshots, PDF deliverable reveals, clean product UI. Same palette as ASKGauravAI for brand consistency.",
+  "brand_palette": {
+    "primary_bg": "#FFFFFF",
+    "secondary_bg": "#FAFAFA",
+    "accent": "#0F4C5C",
+    "text_primary": "#1A1A1A",
+    "highlight_sparing": "#E07A5F"
+  },
+
+  "grid_control_agents": {
+    "total": 18,
+    "core_agents": [
+      "CEO Brain (orchestrator)",
+      "Trend Researcher (scrapes real-time trends)",
+      "Strategy Agent (90-day roadmap from data)",
+      "Content Planner (30-day calendar)",
+      "Script Writer (voice-matched scripts)",
+      "Carousel Designer (editorial HTML/CSS)",
+      "Brand Guardian (voice + tone check)",
+      "Creative Director (AI visuals)",
+      "Data Analyst (performance metrics)",
+      "Performance Tracker (winning/dead patterns)",
+      "Trend Sentinel (fad vs structural shift)",
+      "Ad Strategist (Meta/X funnels — when budget confirmed)",
+      "Funnel Specialist (conversion journey)",
+      "Website Agent (site + GA4)",
+      "SEO/AEO Agent (search + answer engine)",
+      "Email Marketing Agent (sequences)",
+      "Community Manager (replies, mentions)",
+      "DM Customer Hunter (warm leads)"
+    ]
+  },
+
+  "what_grid_control_delivers": [
+    "90-day strategy (data-backed, not opinions)",
+    "30-day content calendar (every post mapped to funnel stage)",
+    "Full scripts with hooks, body, close, platform directions",
+    "Editorial carousels (not Canva templates)",
+    "Brand voice profile (voice bible)",
+    "Trend intelligence (what's working in your category right now)",
+    "Competitor analysis (what your rivals are doing that works)",
+    "Performance tracking (what's winning, what's dead)"
+  ],
+
+  "products": {
+    "phase_1_services": {
+      "content_system_setup": { "price": "$199-349 / ₹15-25k", "type": "one-time", "description": "Brand profile + voice profile + 90-day strategy + 30-day calendar + 10 scripts + 4 carousels" },
+      "monthly_content_retainer": { "price": "$199-449/mo / ₹15-35k/mo", "type": "recurring", "description": "Trend research → calendar → 20 scripts → 8 carousels → delivered monthly" },
+      "strategy_session_90min": { "price": "$99-149 / ₹5-10k", "type": "one-time", "description": "Strategy Agent pre-run + Zoom walkthrough + PDF after" },
+      "brand_voice_dna": { "price": "$49-79 / ₹3-5k", "type": "one-time", "description": "Brand Guardian voice profiling → voice bible document" },
+      "carousel_pack": { "price": "$99-199/mo / ₹8-15k/mo", "type": "recurring", "description": "8 editorial carousels/month" },
+      "script_pack": { "price": "$129-249/mo / ₹10-20k/mo", "type": "recurring", "description": "20 scripts/month with hooks, CTAs, platform versions" },
+      "trend_intelligence_brief": { "price": "$69-99/mo / ₹5-8k/mo", "type": "recurring", "description": "Weekly/bi-weekly trend report for your niche" },
+      "full_agency_replacement": { "price": "$349-649/mo / ₹25-50k/mo", "type": "recurring", "description": "Everything: strategy + calendar + scripts + carousels + trends + reporting" }
+    },
+    "phase_2_product": {
+      "saas": "Client dashboard login. Self-serve. After 2 months testing.",
+      "white_label": "Agencies run Grid Control under their brand.",
+      "agency_in_a_box": "Grid Control access + SOPs + training.",
+      "lifetime_deal": "AppSumo-style one-time payment.",
+      "cohort": "4-week live. Teach while running Grid Control.",
+      "enterprise": "Custom deployment with custom agents."
+    }
+  },
+
+  "brands_running_on_grid_control": [
+    "ASKGauravAI (personal brand — AI strategy)",
+    "Reporting Project (intelligence product — pre-ad research)",
+    "OffGrid Creatives AI (this brand — Grid Control product)",
+    "Third Gen Tribe (fashion — on hold until Month 2)"
+  ],
+
+  "content_rules": {
+    "grid_control_named": true,
+    "real_data_mandate": "All content backed by real scraped data. No generic claims.",
+    "show_dont_sell": "Show deliverables, show dashboard, show results. Let the product speak.",
+    "approval_gate": "Every output → pending_approval/. Approved manually → approved/.",
+    "week_1": "Product introduction. Show capabilities. No pricing CTA yet."
+  },
+
+  "what_to_never_say": [
+    "AI buzzwords ('synergize', 'leverage', 'next-gen', 'cutting-edge')",
+    "Overpromise ('replace your entire team in 5 minutes')",
+    "Competitor name-calling",
+    "Pricing in public posts Week 1 (build curiosity first)",
+    "Technical jargon that excludes non-coders",
+    "Any Hindi or Hinglish words"
+  ],
+
+  "website_url": "",
+  "website_status": "Build after roadmap complete. Not urgent — OffGrid Creatives AI social pages serve as product presence for now."
+}

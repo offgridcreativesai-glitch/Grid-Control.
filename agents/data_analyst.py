@@ -117,12 +117,26 @@ class DataAnalyst:
         """Check which external APIs are configured."""
         return {
             "meta_graph_api":    bool(os.getenv("META_GRAPH_API_TOKEN", "").strip()),
+            "ig_insights":       bool(os.getenv("META_GRAPH_API_TOKEN", "").strip()),
             "linkedin_api":      bool(os.getenv("LINKEDIN_ACCESS_TOKEN", "").strip()),
             "ga4":               bool(os.getenv("GA4_PROPERTY_ID", "").strip()),
             "search_console":    bool(os.getenv("SEARCH_CONSOLE_SITE_URL", "").strip()),
             "anthropic":         bool(ANTHROPIC_API_KEY),
             "elevenlabs":        bool(os.getenv("ELEVENLABS_API_KEY", "").strip()),
         }
+
+    def collect_live_insights(self) -> dict:
+        """Pull live IG/FB-Page insights (real data only — never fabricated).
+        Returns the meta_insights structure; empty/with-errors if unconfigured."""
+        try:
+            from agents.meta_insights import fetch_instagram_insights
+        except ImportError:
+            from meta_insights import fetch_instagram_insights
+        benv = {
+            "META_GRAPH_API_TOKEN": os.getenv("META_GRAPH_API_TOKEN", ""),
+            "IG_USER_ID":           os.getenv("IG_USER_ID", ""),
+        }
+        return fetch_instagram_insights(benv)
 
     def collect_script_sample(self) -> list:
         """Pull a sample of script writer outputs for hook analysis."""
@@ -269,10 +283,20 @@ Return ONLY valid JSON:
         session     = self.collect_session_data()
         api_status  = self.collect_api_connection_status()
         scripts     = self.collect_script_sample()
+        live_insights = self.collect_live_insights()
 
         if not api_status["meta_graph_api"]:
             self.log("⚠️  META_GRAPH_API_TOKEN not set — live Instagram metrics unavailable.")
             self.log("   Report will be based on system output inventory only.")
+        if not api_status["ig_insights"]:
+            self.log("⚠️  META_GRAPH_API_TOKEN not set — IG insights unavailable.")
+        elif live_insights.get("connected"):
+            acct = live_insights.get("account", {})
+            self.log(f"✅ Live IG insights: @{acct.get('username','?')} · "
+                     f"{acct.get('followers_count','?')} followers · "
+                     f"reach_28d={acct.get('reach_28d','n/a')}")
+            for e in live_insights.get("errors", []):
+                self.log(f"   · insight note: {e}")
         if not api_status["linkedin_api"]:
             self.log("⚠️  LINKEDIN_ACCESS_TOKEN not set — live LinkedIn metrics unavailable.")
 
@@ -280,6 +304,7 @@ Return ONLY valid JSON:
             "output_inventory": inventory,
             "session":          session,
             "api_status":       api_status,
+            "live_insights":    live_insights,
             "script_sample":    scripts,
             "report_generated": datetime.now().isoformat(),
         }
@@ -313,6 +338,7 @@ Return ONLY valid JSON:
             "raw_data_snapshot": {
                 "output_inventory":  inventory,
                 "api_status":        api_status,
+                "live_insights":     live_insights,
                 "completed_agents":  session.get("completed_agents", []),
                 "notion_card_count": len(session.get("notion_cards", [])),
             },
@@ -320,7 +346,8 @@ Return ONLY valid JSON:
                 "LIVE API DATA: Not available — Meta Graph API and LinkedIn API tokens not set. "
                 "Report based on system output inventory. Connect APIs via Brand Onboarding to unlock live metrics."
                 if not api_status["meta_graph_api"] and not api_status["linkedin_api"]
-                else "LIVE API DATA: Partial — some connections active."
+                else f"LIVE API DATA: {'IG insights active' if live_insights.get('connected') else 'Partial'} — "
+                     f"reach/audience via Instagram Login API."
             )
         }
 
