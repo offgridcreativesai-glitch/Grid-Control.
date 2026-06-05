@@ -1,7 +1,7 @@
 {
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard_api.py": {
-    "mtime": 1780423991.3995173,
-    "ast_hash": "8352b34d013f9aa74b7d6db2fcd41a5d",
+    "mtime": 1780647447.2500973,
+    "ast_hash": "9e12714005a11ad010ff842aca69d1a1",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/main.py": {
@@ -55,9 +55,9 @@
     "semantic_hash": "1a94aa3f1cba6803e4c068e1654102f7"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/creative_director.py": {
-    "mtime": 1779820734.6895773,
-    "ast_hash": "5f465ba5082baf5e71a8ccb196a8cdc8",
-    "semantic_hash": "5f465ba5082baf5e71a8ccb196a8cdc8"
+    "mtime": 1780562364.6344151,
+    "ast_hash": "ddc24f06ca0e717ee300a24804279865",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/website_agent.py": {
     "mtime": 1777157603.5013814,
@@ -85,9 +85,9 @@
     "semantic_hash": "4e09c92416a8628096304bd5f9bc28c2"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/data_analyst.py": {
-    "mtime": 1777157603.499697,
-    "ast_hash": "733727dfda6a8301dd6eeca1730c06b3",
-    "semantic_hash": "733727dfda6a8301dd6eeca1730c06b3"
+    "mtime": 1780647416.4423869,
+    "ast_hash": "fdcaa802f9db48dae1921186beff2272",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/funnel_specialist.py": {
     "mtime": 1777157603.4998744,
@@ -100,9 +100,9 @@
     "semantic_hash": "d863602d56587a7bba006adaeeb2b082"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/trend_researcher.py": {
-    "mtime": 1779907989.2542667,
-    "ast_hash": "28df3a32b935db15fa16c5ddd5b09131",
-    "semantic_hash": "28df3a32b935db15fa16c5ddd5b09131"
+    "mtime": 1780429022.468393,
+    "ast_hash": "65cfd471c669feabc8ca001e13ca0d57",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/performance_tracker.py": {
     "mtime": 1777157603.5003276,
@@ -135,9 +135,9 @@
     "semantic_hash": "719b0ab366641374144dc4ccd571622a"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/carousel_designer.py": {
-    "mtime": 1779820757.5653937,
-    "ast_hash": "ce9234143c8cc9673e668b113d573bfd",
-    "semantic_hash": "ce9234143c8cc9673e668b113d573bfd"
+    "mtime": 1780475891.1229541,
+    "ast_hash": "3394dbb1da7307e7a2716c900567e3c6",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/agents/references/meta_ads_framework.json": {
     "mtime": 1777993758.8141856,
@@ -250,8 +250,8 @@
     "semantic_hash": "99769268874888d2ae09d0ecb8424f07"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/App.tsx": {
-    "mtime": 1780388349.976699,
-    "ast_hash": "1acae0bec226fa37cbd68d1c30f7bb5d",
+    "mtime": 1780426334.9766803,
+    "ast_hash": "81f7b6ed7c3fa75446cfe77ae44af2ae",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/main.tsx": {
@@ -575,8 +575,8 @@
     "semantic_hash": "173da98c956e7c60d0399bdff54a2c31"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/components/layout/LeftRail.tsx": {
-    "mtime": 1780388343.4591825,
-    "ast_hash": "227ab52b2a2b50bccf71a764c75683c0",
+    "mtime": 1780426140.0612333,
+    "ast_hash": "51486152ee00d19925d9e75b02462742",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/hooks/useAdmin.ts": {
@@ -610,8 +610,8 @@
     "semantic_hash": "7f234233f17a88809303e805899f9399"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/hooks/useGridApi.ts": {
-    "mtime": 1780424011.9859447,
-    "ast_hash": "17311aa44959ac812345b51476023217",
+    "mtime": 1780426819.6416352,
+    "ast_hash": "171ae07b93e500c68e6c78eb14da1d5d",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/hooks/useBilling.ts": {
@@ -675,9 +675,9 @@
     "semantic_hash": "665fc8cafd2cd47930baac32b56b7ec3"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/pages/AgentsPage.tsx": {
-    "mtime": 1778163227.999958,
-    "ast_hash": "ab721295271936fb059ca3e6e12fbfb8",
-    "semantic_hash": "ab721295271936fb059ca3e6e12fbfb8"
+    "mtime": 1780425872.6542172,
+    "ast_hash": "ce32a72fb8c979b2b7aee2c7fc74887b",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/pages/AuthPage.tsx": {
     "mtime": 1779821246.0971062,
@@ -765,9 +765,9 @@
     "semantic_hash": "97e49e5642f5b0c0924dc5a9fddc283f"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/ceo_brain/contradiction_detector.py": {
-    "mtime": 1777539956.0127985,
-    "ast_hash": "481de89b86bae1e7af70995180c47736",
-    "semantic_hash": "481de89b86bae1e7af70995180c47736"
+    "mtime": 1780479147.7587512,
+    "ast_hash": "d1807b0d4a925a067a3a475c64c3d843",
+    "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/scripts/preflight_check.sh": {
     "mtime": 1777489928.2953653,
@@ -1520,8 +1520,8 @@
     "semantic_hash": "71e168dea2bfe79db7ebe7a444c35883"
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/instagram_publisher.py": {
-    "mtime": 1780305079.9609783,
-    "ast_hash": "08c9c08b4372ccbc44eba802d52227d8",
+    "mtime": 1780567182.478457,
+    "ast_hash": "11e5e96c27958c787bc1a7bb4780d948",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/__init__.py": {
@@ -2740,28 +2740,28 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/brand_profile.json": {
-    "mtime": 1780342879.8849947,
-    "ast_hash": "16866ce0d2bde5e7b299f246fa2ebf8b",
+    "mtime": 1780477205.1799955,
+    "ast_hash": "9d3887dfa3da7e27be20eae0303d0d00",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/contradictions.json": {
-    "mtime": 1780408006.6003892,
-    "ast_hash": "26f600e15289fda06142cfcf0c052aa3",
+    "mtime": 1780477712.9193928,
+    "ast_hash": "084f99564bb046545ffb0766cd9e9a79",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/session_state.json": {
-    "mtime": 1780424037.379263,
-    "ast_hash": "7312ce94a2e4880324bacf4280812823",
+    "mtime": 1780477712.919772,
+    "ast_hash": "ac581c602605ee77c52fe7a7f342895d",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/youtube_oauth.py": {
-    "mtime": 1780398081.9300425,
-    "ast_hash": "29d3774feed10bef57ac6bed2b05d69f",
+    "mtime": 1780651804.8867857,
+    "ast_hash": "6c2eee7e226eb26f46c0ca329598ad01",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/trends_live.json": {
-    "mtime": 1780408006.5856721,
-    "ast_hash": "b73c980e95fce0a4acc6e82d567b4c1d",
+    "mtime": 1780472838.3010395,
+    "ast_hash": "178bea1659e609ea825467cd2b18852e",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/brand_memory/content_calendar.json": {
@@ -2815,7 +2815,7 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/dashboard/src/pages/ConnectionsPage.tsx": {
-    "mtime": 1780388639.6790292,
+    "mtime": 1780647456.7319806,
     "ast_hash": "75ea5b34d75f80749948b9f3889331ef",
     "semantic_hash": ""
   },
@@ -2825,8 +2825,8 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/twitter_publisher.py": {
-    "mtime": 1780423918.1045203,
-    "ast_hash": "5f2b6b9acb0e085e2ec7d71d14410c33",
+    "mtime": 1780567265.4255948,
+    "ast_hash": "538261b73ad24a32f69cf1358d542783",
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/youtube_publisher.py": {
@@ -2835,8 +2835,708 @@
     "semantic_hash": ""
   },
   "/Users/gauravoffgrid/offgrid-marketing-os/publishing/linkedin_publisher.py": {
-    "mtime": 1780423902.5435755,
-    "ast_hash": "8fca873dceec839203f736233dc9c21f",
+    "mtime": 1780567227.1179268,
+    "ast_hash": "711ae3f7dd4e7398d0383d27f103df91",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/publishing/validate_media.py": {
+    "mtime": 1780567446.8280144,
+    "ast_hash": "dc9bb2241c6b6e2a4a9faa7b5e15d5be",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/publishing/publish_runner.py": {
+    "mtime": 1780670986.0831063,
+    "ast_hash": "ff3fecd44c64e4fe42ee2134f34bf61e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/content_calendar.json": {
+    "mtime": 1780563569.7347503,
+    "ast_hash": "a52a9a502b789b2a3443945b4ba5362d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/trend_sentinel_watchlist.json": {
+    "mtime": 1780425779.415308,
+    "ast_hash": "8ec8ae9d5ff0d1bb30248c4619d7dcbf",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/pivot_decision.json": {
+    "mtime": 1780425779.4157374,
+    "ast_hash": "3abc0ef28011c1f95868c20538d3f72f",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/strategy_90day.json": {
+    "mtime": 1780473136.2850769,
+    "ast_hash": "722e2f7726eec274fe8b354860eabc65",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/pivot_impact.json": {
+    "mtime": 1780425779.4161134,
+    "ast_hash": "4f7501a0847e5b2fce17a0baea8c498c",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/content_calendar.full.json": {
+    "mtime": 1780477184.0490499,
+    "ast_hash": "3e0f56a8e2ba6f811ef3545d7f605906",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_3_20260603_143832.json": {
+    "mtime": 1780477712.8621078,
+    "ast_hash": "f4ed2dc6a798ea1b6b917522c222e0d0",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_2_20260603_133652.json": {
+    "mtime": 1780474012.5092998,
+    "ast_hash": "efcaa1f36dca179d30b87261b9085ce4",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_1_20260603_143305.json": {
+    "mtime": 1780477385.237016,
+    "ast_hash": "7271810c1b202c2530c61ff882cd68c8",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_3_20260603_134006.json": {
+    "mtime": 1780474206.6876218,
+    "ast_hash": "ddcf8e1bf9dc54be46c4ff06e8ee08f6",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_4_20260603_134215.json": {
+    "mtime": 1780474335.371828,
+    "ast_hash": "e8b6106e7ea10bcd5e03084a8a228c75",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_2_20260603_143544.json": {
+    "mtime": 1780477544.8182712,
+    "ast_hash": "4246f8f9ae9e200b778778d21f56970a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_YouTube_5_20260603_134528.json": {
+    "mtime": 1780474528.399467,
+    "ast_hash": "dd5f7ab8128ecd8af98cb84dc42a6655",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/eval_traces/script-writer/hooks_Instagram_1_20260603_133307.json": {
+    "mtime": 1780473787.1382687,
+    "ast_hash": "a749da40ced26761ffba403622b25ccd",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_manifest.json": {
+    "mtime": 1780559935.5050123,
+    "ast_hash": "b11b2e5467e7e7ad6a7e002fee8c467e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/build_reel.py": {
+    "mtime": 1780560146.0967689,
+    "ast_hash": "016680f7fa9762984e830ea7e5be8dea",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/make_captions.py": {
+    "mtime": 1780559917.3412552,
+    "ast_hash": "b37660b17aa48530f17e13ad95e8a414",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/audio.json": {
+    "mtime": 1780559682.3858237,
+    "ast_hash": "058fc256872bc16151955cfa277aaa32",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/make_cards.py": {
+    "mtime": 1780559876.7192326,
+    "ast_hash": "c9a7e96b72d0984f79b808f2d46924e2",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/outputs/first3_final_content.json": {
+    "mtime": 1780491974.156324,
+    "ast_hash": "989db5a41958954eea4fcc2c20a68b63",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/agents/carousel_editorial_renderer.py": {
+    "mtime": 1780490764.7661188,
+    "ast_hash": "9124a35129723cefd5cdbdb760608419",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/agents/reel_editor.py": {
+    "mtime": 1780563018.8819368,
+    "ast_hash": "c68566ca2820956965e20ef7b80c5557",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/graphify-out/memory/query_20260602_182453_what_is_the_intended_first_step___agent_flow_after.md": {
+    "mtime": 1780424693.3372095,
+    "ast_hash": "4d6aceb5962b591b6672183a1954b59d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/outputs/AskGauravAI_First3Posts_2026-06-03.pdf": {
+    "mtime": 1780491975.6287897,
+    "ast_hash": "1278145d088353ec5c1046b88e256d56",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/backdrop.png": {
+    "mtime": 1780561330.685083,
+    "ast_hash": "622b73707e4f85f1d7035317f87bae07",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_06.png": {
+    "mtime": 1780562027.307074,
+    "ast_hash": "7c3a2923e6bbeca9c9f9f6a6e08acea0",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_12.png": {
+    "mtime": 1780562032.022467,
+    "ast_hash": "28ac42b3894778b43246af41a13ad140",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_13.png": {
+    "mtime": 1780562032.8060002,
+    "ast_hash": "e27dfadb810b3acbbb5af5582f81200a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_07.png": {
+    "mtime": 1780562028.0959663,
+    "ast_hash": "e275efdd9c755f085206b87e24cd6072",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_11.png": {
+    "mtime": 1780562031.2379057,
+    "ast_hash": "e5e1ad3abf1cc4664993eaf5d81d5006",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_05.png": {
+    "mtime": 1780562026.5189383,
+    "ast_hash": "234841982b321ae08dc8445450b878c7",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_04.png": {
+    "mtime": 1780562025.7357337,
+    "ast_hash": "af7185c41439f3a71416203ce78f820e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_10.png": {
+    "mtime": 1780562030.4539256,
+    "ast_hash": "0a960c9a0f16b80966afe8819da6be5d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_14.png": {
+    "mtime": 1780562033.5876894,
+    "ast_hash": "1d01d614f2fd1c3960810129d763bb8a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_00.png": {
+    "mtime": 1780562022.603706,
+    "ast_hash": "43840f28c827267d9c9f540ee5e80b52",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_01.png": {
+    "mtime": 1780562023.3893573,
+    "ast_hash": "cbcccb3b1bef31f159298de6012351a2",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_15.png": {
+    "mtime": 1780562034.379888,
+    "ast_hash": "a27ea00ddd7335ccc45de5fc3d549fad",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_03.png": {
+    "mtime": 1780562024.9518182,
+    "ast_hash": "2b14b8862ad19ffda4abbfe33c1659b2",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_17.png": {
+    "mtime": 1780562035.9727888,
+    "ast_hash": "c355c70b12f2754b40057b81094aa909",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_16.png": {
+    "mtime": 1780562035.1837873,
+    "ast_hash": "ac1c2a731f5d20a385c90dfcf353c3ce",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_02.png": {
+    "mtime": 1780562024.1695848,
+    "ast_hash": "b9f4137bbf1187cc36c099125a7d7e9b",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_24.png": {
+    "mtime": 1780562041.4569697,
+    "ast_hash": "0e3045e310896360b890befbfdb619d9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_18.png": {
+    "mtime": 1780562036.7542505,
+    "ast_hash": "cf6c487c44cdf7055bf5c2cf2abf2775",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_19.png": {
+    "mtime": 1780562037.5305126,
+    "ast_hash": "d6bc5fcae9b200284dddacf449a3b892",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_09.png": {
+    "mtime": 1780562029.6740808,
+    "ast_hash": "3bab8cc47517716471cd5f787c461820",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_21.png": {
+    "mtime": 1780562039.101215,
+    "ast_hash": "dc3ad7d21b60e48be6188065feac4bbd",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_20.png": {
+    "mtime": 1780562038.316681,
+    "ast_hash": "37f1e7a9f5494c1caa02454409f691e8",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_08.png": {
+    "mtime": 1780562028.8918684,
+    "ast_hash": "ec0971867166f3e2147ed6d334a544ce",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_22.png": {
+    "mtime": 1780562039.8904183,
+    "ast_hash": "52e63b78398aa737bcb46eba2a1650fe",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/caps/cap_23.png": {
+    "mtime": 1780562040.6711462,
+    "ast_hash": "a113c2ec7a616d2d83a1043314fe55a3",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/broll_30.png": {
+    "mtime": 1780562314.1705532,
+    "ast_hash": "135c7b8914f3ab91eb576a64a3b80fa5",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_9.5.png": {
+    "mtime": 1780562708.7191658,
+    "ast_hash": "be0bf068239f47ba7c107cf81c8b1056",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/ts_1.0.png": {
+    "mtime": 1780561201.22804,
+    "ast_hash": "59438d4a42ef843c421e1016c01fb352",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_21.5.png": {
+    "mtime": 1780562708.875558,
+    "ast_hash": "79fede634014cdbb10408dc6a056b941",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_06.png": {
+    "mtime": 1780559928.7128687,
+    "ast_hash": "8b744df61201f7247bbfc65eb434a48f",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_12.png": {
+    "mtime": 1780559933.785435,
+    "ast_hash": "6b193f7113d8b18c96b29ef91e40ec9d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_21.png": {
+    "mtime": 1780561550.4550278,
+    "ast_hash": "eac99e346d13a01109feaad0c5fc3a46",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_9.2.png": {
+    "mtime": 1780561550.3066392,
+    "ast_hash": "c8699662167ce0a370d8cfbeef4b1457",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/card_problem.png": {
+    "mtime": 1780559882.5175867,
+    "ast_hash": "5ab97866683a4ea9004a003249202815",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_13.png": {
+    "mtime": 1780559934.6402547,
+    "ast_hash": "31b1b1ec024f49725083ec1fb601d0bd",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_07.png": {
+    "mtime": 1780559929.5523155,
+    "ast_hash": "899d9d97d5b128cb611911858b9cdb9b",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_11.png": {
+    "mtime": 1780559932.9403756,
+    "ast_hash": "4b6325b2fd21057c8222c3647c2b69fb",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_05.png": {
+    "mtime": 1780559927.874636,
+    "ast_hash": "b71b07b48c96dc7236bd3d4070383899",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/end_37.5.png": {
+    "mtime": 1780563143.8579457,
+    "ast_hash": "c3ed271dbd6a1498903765b067e15c79",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_36.png": {
+    "mtime": 1780561550.575066,
+    "ast_hash": "8c130903c7d9125bb55def9447f547c8",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/v_20.0.png": {
+    "mtime": 1780560065.0726564,
+    "ast_hash": "079c493e40a42b3de8eb1bc68bbbb502",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_04.png": {
+    "mtime": 1780559927.0309663,
+    "ast_hash": "eb3dfe3d103f316db6656fb5e1281ffe",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_10.png": {
+    "mtime": 1780559932.0930958,
+    "ast_hash": "0bf48799458e4b79c656bf104c9712cb",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_14.png": {
+    "mtime": 1780559935.479603,
+    "ast_hash": "d3053e2caaf5857f262796fb835c06c8",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_00.png": {
+    "mtime": 1780559923.6583455,
+    "ast_hash": "0ade1a1c16bdd028525d5b86bbf2ac48",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/card_cta.png": {
+    "mtime": 1780559884.5198126,
+    "ast_hash": "605fed70a1eb223725b6fa66163f8511",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/ts_0.5.png": {
+    "mtime": 1780561201.180768,
+    "ast_hash": "51d24dc12426056b1f159a6dbac2cc8e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_17.5.png": {
+    "mtime": 1780561550.3632941,
+    "ast_hash": "423fbc0c1036a49fc21806d0fbe1ab53",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_26.png": {
+    "mtime": 1780561550.5115108,
+    "ast_hash": "92b4d47022417ea414b930aed9319fdd",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_9.png": {
+    "mtime": 1780561403.9477537,
+    "ast_hash": "0a24cb3a602b998c602280f538156571",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/c_20.2.png": {
+    "mtime": 1780560105.797024,
+    "ast_hash": "5343358b85bf9727f940a72a09a6d778",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_01.png": {
+    "mtime": 1780559924.5071042,
+    "ast_hash": "8e5fe34e0460485566447267b30a5a28",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_03.png": {
+    "mtime": 1780559926.1955514,
+    "ast_hash": "2195fae80be45156ee8b3d629abf70f5",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/v_3.5.png": {
+    "mtime": 1780560064.5839276,
+    "ast_hash": "73a95ac00a0e38a41098ab60febea261",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_17.8.png": {
+    "mtime": 1780562708.7798085,
+    "ast_hash": "fc9733e412b340be5e08ad8a58875bb7",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_02.png": {
+    "mtime": 1780559925.352529,
+    "ast_hash": "b9dd8b74eff609109fbb184e6d33a28f",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/v_37.5.png": {
+    "mtime": 1780560065.7098181,
+    "ast_hash": "dfd723d27fe31641cf6c022e7179752e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_26.png": {
+    "mtime": 1780562708.9293323,
+    "ast_hash": "d9eb3885437b62640b45ff5e67570ccb",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_5.png": {
+    "mtime": 1780562708.6616313,
+    "ast_hash": "90e0b13bbb9347ac36ea154747dd9256",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/v_31.0.png": {
+    "mtime": 1780560065.4002404,
+    "ast_hash": "3479c9a67ea5d6ff07fa97295d332921",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_4.png": {
+    "mtime": 1780561403.8940961,
+    "ast_hash": "b7b071226197835d3eef20de224e69d0",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_30.png": {
+    "mtime": 1780562709.0368013,
+    "ast_hash": "988852ef13331e49122f41872c899a0d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/c_9.0.png": {
+    "mtime": 1780560105.5211222,
+    "ast_hash": "9290f6cae9a47bf2e7132da4151e2838",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_09.png": {
+    "mtime": 1780559931.2518587,
+    "ast_hash": "e6080ef156866b6bcb0088518ac396cb",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/end_39.6.png": {
+    "mtime": 1780563143.9472167,
+    "ast_hash": "c506dbaa171317f280d565c167260e44",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/c_37.5.png": {
+    "mtime": 1780560106.1027088,
+    "ast_hash": "dfd723d27fe31641cf6c022e7179752e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/cap_08.png": {
+    "mtime": 1780559930.4119492,
+    "ast_hash": "b0583807333813d9f2149e02d5ed3533",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/final_36.png": {
+    "mtime": 1780562709.1019819,
+    "ast_hash": "a420d98dd2c8515f87568559e720cf24",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/ts_1.9.png": {
+    "mtime": 1780561201.2759378,
+    "ast_hash": "a748c8a979d7a2623868a3e24ab0eab6",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_26.png": {
+    "mtime": 1780561404.1370783,
+    "ast_hash": "e01945290a5baf9442d0d3230c6daa2c",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/frame_check.png": {
+    "mtime": 1780559846.2411027,
+    "ast_hash": "607c3bf48b941de53f5b27230f853271",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_17.5.png": {
+    "mtime": 1780561404.0022397,
+    "ast_hash": "a7d72d54ff98203dc5d0acebf84d3215",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/r_4.png": {
+    "mtime": 1780561550.2485416,
+    "ast_hash": "d91059ab30c0c384344c4e9d959d4d37",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_21.png": {
+    "mtime": 1780561404.0848248,
+    "ast_hash": "da3097435a9d338b009a12148c46f123",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/v_12.0.png": {
+    "mtime": 1780560064.801818,
+    "ast_hash": "45074d5eaae846e50d4873f13baa6f8b",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/q_36.png": {
+    "mtime": 1780561404.1994224,
+    "ast_hash": "3f3f6d875b1432362ded4199a30ce906",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/card_build.png": {
+    "mtime": 1780559883.5384343,
+    "ast_hash": "da7e540b019852c7ce9aaf509a4e7a9a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/raw_footage/AskGauravAI insta and YT reel 1.mov": {
+    "mtime": 1780562377.6899009,
+    "ast_hash": "855f367b89b9d38e968d3ed56e075b4b",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/AskGauravAI insta and YT reel 1.mov": {
+    "mtime": 1780560426.3403661,
+    "ast_hash": "855f367b89b9d38e968d3ed56e075b4b",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/AskGauravAI_reel1_edited.mp4": {
+    "mtime": 1780560058.0579216,
+    "ast_hash": "b8017c6e5f402a62db99841a950d39d9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/AskGauravAI_reel1_v2.mp4": {
+    "mtime": 1780592843.1871383,
+    "ast_hash": "7f352d630f434abb675e51eb725b8323",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_03.mp4": {
+    "mtime": 1780562058.6279695,
+    "ast_hash": "edc56475b37414e342cc5e8aa7390062",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_02.mp4": {
+    "mtime": 1780562055.2893662,
+    "ast_hash": "c8a0cc8320271abff7170a2df369256e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_00.mp4": {
+    "mtime": 1780562045.6344004,
+    "ast_hash": "ff806096f3e8919e63237bfc6f311c42",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_01.mp4": {
+    "mtime": 1780562050.085049,
+    "ast_hash": "05a3a17027e9c7927035ff2b73a7881e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_05.mp4": {
+    "mtime": 1780562276.6773934,
+    "ast_hash": "d740857cc1cf175aea14b37b160d5b23",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_reelwork/insert_04.mp4": {
+    "mtime": 1780562272.7019336,
+    "ast_hash": "373fda630d7a7cc8ab41ded96a0a25a4",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/test_scatter.mp4": {
+    "mtime": 1780561194.455021,
+    "ast_hash": "bec9478ddf117382ebf62ee90d296950",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/visuals/videos/_edit/audio.wav": {
+    "mtime": 1780559666.4934566,
+    "ast_hash": "3d00614d4aeebda405584e826ac7aa78",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/docs/ENGAGEMENT_API_REALITY.md": {
+    "mtime": 1780578265.8584971,
+    "ast_hash": "e6c9ecab881275b11975433c53a38011",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_profile.json": {
+    "mtime": 1780646524.2776325,
+    "ast_hash": "a07fe6e1f3979b782706ec4f92c3fe5a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/content_calendar.json": {
+    "mtime": 1780646524.278096,
+    "ast_hash": "5d7f39716776a2476c31ed039bf0ac2a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/contradictions.json": {
+    "mtime": 1780646524.278479,
+    "ast_hash": "52c077e4ea885e1ce1e1e2f217fbf2d2",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/voice_profile.json": {
+    "mtime": 1780646524.2787988,
+    "ast_hash": "b070c12595c128c25d024d59c2a30ac6",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/trends_live.json": {
+    "mtime": 1780646524.2817197,
+    "ast_hash": "cfc881fb0ac95a7a507564ea7aed23be",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/session_state.json": {
+    "mtime": 1780646524.283239,
+    "ast_hash": "7156a8c1e541b201bf2e486680f1e98d",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/strategy_90day.json": {
+    "mtime": 1780646524.2840564,
+    "ast_hash": "4d601c716396f14c08d3aef0e4df7114",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/content_calendar.json": {
+    "mtime": 1780646524.2792604,
+    "ast_hash": "929dd35c529ecf99b90d4b5a530be309",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/goals.json": {
+    "mtime": 1780646524.2795713,
+    "ast_hash": "f26b1948aa90af341e26b93201d3d267",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/recording_map.json": {
+    "mtime": 1780646524.2798924,
+    "ast_hash": "6bb0c75ebd26628b85fbd9249eff4efb",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/strategy_90day.json": {
+    "mtime": 1780646524.2808032,
+    "ast_hash": "595fcd1ae13fe3f9d51581837cf9a390",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/positioning.json": {
+    "mtime": 1780646524.2810884,
+    "ast_hash": "16639f98847ca503c061af2998e19a7c",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/brand_memory/decisions_log.json": {
+    "mtime": 1780646524.2813902,
+    "ast_hash": "e522d959d9988d8dd77741521069fe2a",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/market_intelligence/trends_live.json": {
+    "mtime": 1780646524.2821705,
+    "ast_hash": "fecec7274eff23004a34fe2d8f7067e9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/market_intelligence/suggestions.json": {
+    "mtime": 1780646524.2823963,
+    "ast_hash": "fecec7274eff23004a34fe2d8f7067e9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/market_intelligence/task_scrapes.json": {
+    "mtime": 1780646524.282601,
+    "ast_hash": "fecec7274eff23004a34fe2d8f7067e9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/market_intelligence/competitor_moves.json": {
+    "mtime": 1780646524.2827957,
+    "ast_hash": "fecec7274eff23004a34fe2d8f7067e9",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/voice_profile.json": {
+    "mtime": 1780646418.552301,
+    "ast_hash": "dd01136a52e5fc16a545d53049e67658",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/askgauravai/outputs/publish_log.json": {
+    "mtime": 1780671756.2362611,
+    "ast_hash": "543f075b1a17a5682dfea9050763c933",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/agents/meta_insights.py": {
+    "mtime": 1780647392.271272,
+    "ast_hash": "3d7f721772fc20739de13f3fac02d2ac",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/scripts/onboard_brand.py": {
+    "mtime": 1780647464.1981602,
+    "ast_hash": "2ffeeeb2ab20e832d4abbfa42bc4abd2",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/brands/offgrid-creatives-ai/outputs/week1_shooting_scripts.html": {
+    "mtime": 1780646524.2850122,
+    "ast_hash": "ab040004d8cb97d116c63083b6d23c1e",
+    "semantic_hash": ""
+  },
+  "/Users/gauravoffgrid/offgrid-marketing-os/docs/BRAND_ONBOARDING.md": {
+    "mtime": 1780647473.060251,
+    "ast_hash": "fb75adae8ab0e6882e48c1196a65c84e",
     "semantic_hash": ""
   }
 }
