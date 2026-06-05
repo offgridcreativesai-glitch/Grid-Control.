@@ -98,7 +98,7 @@ def run_platform(platform: str, job: dict, post_id: str):
         if job["kind"] == "carousel":
             urls = ig.upload_slides_to_storage(BRAND, job["slides"], post_id)
             return ig.publish_carousel(urls, job["caption"], tok)
-        url = ig.upload_video_to_storage(BRAND, job["video"], post_id)
+        url = ig.upload_video_to_storage(BRAND, _abs(job["video"]), post_id)
         return ig.publish_reel(url, job["caption"], tok)
     if platform == "linkedin":
         import publishing.linkedin_publisher as li
