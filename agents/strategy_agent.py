@@ -35,8 +35,10 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
     from model_gateway import model_for
+    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
     from agents.model_gateway import model_for
+    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("strategy-agent")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -232,11 +234,13 @@ class StrategyAgent:
 Your job: produce a 90-day growth roadmap for this brand based on real scraped trend data.
 This is a beta SaaS product. The goal is the first 10 paying clients.
 
+{_UNTRUSTED_POLICY}
+
 BRAND CONTEXT:
 {brand_ctx}
 
 REAL TREND DATA (from Trend Researcher — do not invent anything not in this data):
-{trends_summary}
+{_untrusted_wrap("scraped_trend_data", trends_summary)}
 
 ---
 

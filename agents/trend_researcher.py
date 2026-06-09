@@ -30,8 +30,10 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
     from model_gateway import model_for
+    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
     from agents.model_gateway import model_for
+    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("trend-researcher")
 WHISPER_CANDIDATES_CAP = 5
 
@@ -1331,10 +1333,12 @@ class TrendResearcher:
 
         prompt = f"""You are analyzing the top-performing content posts for {self.brand_name} across platforms.
 
+{_UNTRUSTED_POLICY}
+
 Group these {len(top_posts_summary)} posts into 3-7 named topic clusters based on what they're about.
 
 TOP POSTS:
-{json.dumps(top_posts_summary, indent=2)}
+{_untrusted_wrap("scraped_post_captions", top_posts_summary)}
 
 BRAND CONTEXT:
 - Brand: {self.brand_name}
@@ -1445,14 +1449,16 @@ Return valid JSON only. No markdown.
         prompt = f"""You are the Trend Researcher for {self.brand_name}.
 Your job: identify the highest-leverage content angle for this brand this week based on real scraped data.
 
+{_UNTRUSTED_POLICY}
+
 BRAND CONTEXT:
 {json.dumps(brand_context, indent=2)}
 
 REAL SCRAPED DATA (timestamped {self.scraped_at}):
-{scraped_summary}
+{_untrusted_wrap("scraped_trend_data", scraped_summary)}
 
 COMPETITOR INSTAGRAM DATA (real scrape — use this for Gap variant):
-{competitor_summary}
+{_untrusted_wrap("competitor_profiles", competitor_summary)}
 
 ---
 
