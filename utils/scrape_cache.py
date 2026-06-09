@@ -32,7 +32,9 @@ def _disabled() -> bool:
 
 
 def _cache_dir(brand_slug: str) -> Path:
-    return _PROJECT_ROOT / "brands" / brand_slug / "cache" / "scrapes"
+    # slug becomes a directory name — strip anything that could traverse paths
+    safe = "".join(c for c in str(brand_slug) if c.isalnum() or c in "-_")
+    return _PROJECT_ROOT / "brands" / safe / "cache" / "scrapes"
 
 
 def _key_hash(target) -> str:

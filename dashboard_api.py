@@ -166,6 +166,35 @@ def require_super_admin(f):
         return f(*args, **kwargs)
     return decorated
 
+
+def _authorize_brand(brand_slug: str):
+    """Brand-scoped authorization for /api/brands/<slug>/* PATH-param routes.
+
+    require_auth proves *authentication*; this proves *authorization* for the
+    specific brand named in the URL path. The require_brand_access decorator only
+    reads brand_slug from query/body, so it cannot guard path-param routes — and
+    these routes query via the service-role client, which BYPASSES RLS, so this
+    check is the ONLY multi-tenant boundary. Deny-by-default.
+
+    Returns (brand_id, None) on success, or (None, (response, status)) — the
+    caller does `brand_id, err = _authorize_brand(slug); if err: return err`.
+    """
+    if not _DB_AVAILABLE:
+        return None, (jsonify(success=False, error="DB unavailable"), 503)
+    brand_id = _get_brand_id(brand_slug)
+    if not brand_id:
+        return None, (jsonify(success=False, error="Brand not found"), 404)
+    user = getattr(request, "user", None)
+    if user is None:
+        # require_auth already validated the legacy X-Dashboard-Secret = trusted operator
+        return brand_id, None
+    try:
+        if _db.is_super_admin(user["id"]) or _db.check_brand_access(user["id"], brand_id):
+            return brand_id, None
+    except Exception:
+        pass
+    return None, (jsonify(success=False, error="No access to this brand"), 403)
+
 # ── JSON repair utility (ported from offgrid-pdf-api/app.py) ──────────────────
 def escape_literal_newlines_in_strings(json_str: str) -> str:
     """
@@ -1568,6 +1597,9 @@ def scheduler_trigger():
     brand_slug = (data.get("brand_slug") or "").strip()
     if not brand_slug:
         return jsonify({"success": False, "error": "brand_slug required"}), 400
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", brand_slug):
+        # path-traversal guard: slug becomes a directory name below
+        return jsonify({"success": False, "error": "invalid brand_slug"}), 400
     if not (BRANDS_DIR / brand_slug).is_dir():
         return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
     print(f"[scheduler-trigger] daily pipeline for {brand_slug} (service token)")
@@ -6900,11 +6932,9 @@ def brand_agent_runs(brand_slug: str):
     """Return recent agent runs with cost data for this brand.
     Query params: limit (default 50), status (filter by status string).
     """
-    if not _DB_AVAILABLE:
-        return jsonify(success=False, error="DB unavailable"), 503
-    brand_id = _get_brand_id(brand_slug)
-    if not brand_id:
-        return jsonify(success=False, error="Brand not found"), 404
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
     limit = min(int(request.args.get("limit", 50)), 200)
     status_filter = request.args.get("status", "").strip()
     try:
@@ -6942,11 +6972,9 @@ def brand_narrative(brand_slug: str):
     Query params: n (default 20, max 100), agent (filter by agent slug).
     The narrative feeds the 'Story So Far' block in the cockpit.
     """
-    if not _DB_AVAILABLE:
-        return jsonify(success=False, error="DB unavailable"), 503
-    brand_id = _get_brand_id(brand_slug)
-    if not brand_id:
-        return jsonify(success=False, error="Brand not found"), 404
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
     n = min(int(request.args.get("n", 20)), 100)
     agent_filter = request.args.get("agent", "").strip() or None
     try:
@@ -6962,11 +6990,9 @@ def append_brand_narrative(brand_slug: str):
     """Append one entry to the brand narrative.
     Body: { agent, entry_type (decision|action|result), summary, refs? }
     """
-    if not _DB_AVAILABLE:
-        return jsonify(success=False, error="DB unavailable"), 503
-    brand_id = _get_brand_id(brand_slug)
-    if not brand_id:
-        return jsonify(success=False, error="Brand not found"), 404
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
     body = request.get_json(force=True) or {}
     agent = body.get("agent", "").strip()
     entry_type = body.get("entry_type", "action").strip()
