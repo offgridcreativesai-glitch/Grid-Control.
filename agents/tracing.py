@@ -54,7 +54,12 @@ class AgentTrace:
         self.agent_slug = agent_slug
         self.brand_id = brand_id
         self.model = model
-        self.run_id = run_id or str(uuid.uuid4())
+        # B2 fix: prefer GRID_RUN_ID from env so usage_logs links back to the
+        # agent_runs row created by dashboard_api. Fall back to new UUID for
+        # direct/pipeline runs that have no dashboard-created row.
+        env_run_id = os.getenv("GRID_RUN_ID", "").strip()
+        self.run_id = run_id or env_run_id or str(uuid.uuid4())
+        self._is_dashboard_run = bool(env_run_id)  # True when invoked via dashboard
         self.metadata = metadata or {}
         self.input_tokens = 0
         self.output_tokens = 0
@@ -141,17 +146,36 @@ class AgentTrace:
         return 0.0
 
     def _log_to_supabase(self):
-        """Write usage record to usage_logs table."""
+        """Write usage record to usage_logs and update agent_runs cost columns."""
         try:
             db = _get_db()
-            db.table("usage_logs").insert({
+            payload: dict = {
                 "brand_id": self.brand_id,
                 "agent_slug": self.agent_slug,
                 "model_used": self.model,
                 "input_tokens": self.input_tokens,
                 "output_tokens": self.output_tokens,
                 "estimated_cost_usd": self.cost_usd,
-            }).execute()
+            }
+            # B2 fix: link to the dashboard-created agent_runs row via GRID_RUN_ID.
+            if self._is_dashboard_run:
+                payload["agent_run_id"] = self.run_id
+
+            db.table("usage_logs").insert(payload).execute()
+
+            # B2 fix: also update agent_runs.api_cost_usd so the cost widget
+            # (which reads agent_runs, not usage_logs) shows a non-zero value.
+            if self._is_dashboard_run and self.input_tokens > 0:
+                from pathlib import Path as _P
+                import importlib.util as _ilu
+                _db_path = str(_P(__file__).resolve().parent.parent / "supabase" / "db.py")
+                _spec = _ilu.spec_from_file_location("_grid_db_t", _db_path)
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _mod.update_agent_run_costs(
+                    self.run_id, self.model,
+                    self.input_tokens, self.output_tokens,
+                )
         except Exception as e:
             print(f"[tracing] Failed to log usage: {e}")
 
