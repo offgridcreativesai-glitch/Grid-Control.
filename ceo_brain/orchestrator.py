@@ -30,12 +30,70 @@ class CEOBrain:
         self.session_state = self.load_json("session_state.json")
         self.log(f"CEO Brain booted for brand: {self.brand_slug}")
 
+        # ── Phase A3: load the brand's story-so-far so runs CONTINUE, not cold-start.
+        # Best-effort: DB may be offline (direct script runs). Cached for prompt injection.
+        self._db = None
+        self._brand_id = None
+        self.narrative_text = ""
+        try:
+            _supa_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "supabase")
+            if _supa_dir not in sys.path:
+                sys.path.insert(0, _supa_dir)
+            import db as _db
+            self._db = _db
+            brand_row = _db.get_brand(self.brand_slug)
+            if brand_row:
+                self._brand_id = brand_row["id"]
+                entries = _db.get_narrative(self._brand_id, n=20)
+                if entries:
+                    self.narrative_text = self._format_narrative(entries)
+                    self.log(f"Story-so-far loaded: {len(entries)} narrative entries")
+        except Exception as e:
+            self.log(f"[narrative] boot load skipped: {e}")
+
         # Verify Notion on every boot
         notion_live = test_notion_connection()
         if not notion_live:
             self.log("WARNING: Notion connection failed. Approval pipeline is offline.")
         else:
             self.log("Notion approval pipeline: LIVE")
+
+    # ── Phase A3: narrative continuity ────────────────────────────────────────
+
+    @staticmethod
+    def _format_narrative(entries: list) -> str:
+        """Render narrative entries as story-so-far text for prompt injection."""
+        lines = [
+            f"- [{(e.get('ts') or '')[:10]}] {e.get('agent','?')} · "
+            f"{e.get('entry_type','?')}: {e.get('summary','')}"
+            for e in entries
+        ]
+        return (
+            "## Story So Far (recent decisions, actions & results — continue, don't restart)\n"
+            + "\n".join(lines) + "\n"
+        )
+
+    def narrative_context(self, n: int = 20) -> str:
+        """Return story-so-far text for an agent to inject into its system prompt.
+        Uses the cache loaded at boot; re-queries if n differs and DB is live."""
+        if n != 20 and self._db and self._brand_id:
+            try:
+                entries = self._db.get_narrative(self._brand_id, n=n)
+                return self._format_narrative(entries) if entries else ""
+            except Exception:
+                pass
+        return self.narrative_text
+
+    def narrative_append(self, agent: str, entry_type: str, summary: str, refs: dict | None = None):
+        """Append one entry to the brand narrative. Best-effort (no-op if DB offline)."""
+        if not self._db or not self._brand_id:
+            return
+        try:
+            import re as _re
+            slug = _re.sub(r"[^a-z0-9-]", "", agent.lower().replace(" ", "-")).strip("-")
+            self._db.append_narrative(self._brand_id, slug, entry_type, summary, refs=refs)
+        except Exception as e:
+            self.log(f"[narrative] append skipped: {e}")
 
     def load_json(self, filename: str) -> dict:
         """Load a JSON file from the active brand directory."""
@@ -164,6 +222,19 @@ WINNER: {loop_header.get('winner', '')}
             )
         except Exception as __e:
             self.log(f"[learning-record] skipped: {__e}")
+
+        # ── Phase A3 — Append to the brand narrative (story-so-far) ─────────
+        # Universal write point: every agent output becomes a 'result' entry so
+        # the next run continues the story. Best-effort — never blocks the save.
+        try:
+            self.narrative_append(
+                agent_folder,
+                "result",
+                f"{output_type}: {(loop_header or {}).get('winner') or output_type}",
+                refs={"file": os.path.basename(filepath), "output_type": output_type},
+            )
+        except Exception as __e:
+            self.log(f"[narrative-record] skipped: {__e}")
 
         # ── BUILD H — Auto-block CRITICAL contradictions ──────────────────
         # Skip self-check for the contradiction detector itself + Brand Guardian

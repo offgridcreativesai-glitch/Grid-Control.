@@ -25,12 +25,18 @@ class BaseAgent:
         self._session_context: dict | None = None
         self._session_start_time: float = time.time()
 
-        # Supabase available flag — agents use memory only when DB is live
+        # Supabase available flag — agents use memory only when DB is live.
+        # NB: `import supabase.db` collides with the pip `supabase` package, so
+        # import the local module directly with supabase/ on the path (same as
+        # dashboard_api). This is what makes memory + narrative actually persist.
         try:
-            import supabase.db as _db
+            _supa_dir = os.path.join(_PROJECT_ROOT, "supabase")
+            if _supa_dir not in sys.path:
+                sys.path.insert(0, _supa_dir)
+            import db as _db
             self._db = _db
             self._db_available = True
-        except Exception:
+        except Exception as _e:
             self._db = None
             self._db_available = False
 
@@ -114,6 +120,63 @@ class BaseAgent:
         lines = [f"- {e['memory_key']}: {e['content']}" for e in entries]
         return "\n## Agent Memory (from previous runs)\n" + "\n".join(lines) + "\n"
 
+    # ── narrative memory (story-so-far) ───────────────────────────────────────
+    # Append-only timeline of decisions/actions/results across ALL agents, so a
+    # run CONTINUES the brand's story instead of cold-starting (Phase A).
+
+    def narrative_read(self, brand_slug: str, n: int = 20) -> list[dict]:
+        """Return the most recent N narrative entries (oldest→newest) for this
+        brand across all agents. Empty list when DB is unavailable."""
+        if not self._db_available:
+            return []
+        brand_id = self._get_brand_id(brand_slug)
+        if not brand_id:
+            return []
+        try:
+            entries = self._db.get_narrative(brand_id, n=n)
+            self.log(f"[narrative] read {len(entries)} entries")
+            return entries
+        except Exception as e:
+            self.log(f"[narrative] read failed: {e}")
+            return []
+
+    def narrative_read_as_text(self, brand_slug: str, n: int = 20) -> str:
+        """Format the story-so-far for injection into a system prompt."""
+        entries = self.narrative_read(brand_slug, n=n)
+        if not entries:
+            return ""
+        lines = [
+            f"- [{(e.get('ts') or '')[:10]}] {e.get('agent','?')} · "
+            f"{e.get('entry_type','?')}: {e.get('summary','')}"
+            for e in entries
+        ]
+        return (
+            "\n## Story So Far (recent decisions, actions & results — continue, don't restart)\n"
+            + "\n".join(lines) + "\n"
+        )
+
+    def narrative_append(
+        self,
+        brand_slug: str,
+        entry_type: str,
+        summary: str,
+        refs: dict | None = None,
+    ) -> None:
+        """Append one entry to the brand narrative.
+        entry_type: 'decision' | 'action' | 'result'."""
+        if not self._db_available:
+            return
+        brand_id = self._get_brand_id(brand_slug)
+        if not brand_id:
+            return
+        try:
+            self._db.append_narrative(
+                brand_id, self._agent_slug(), entry_type, summary, refs=refs
+            )
+            self.log(f"[narrative] appended {entry_type}: {summary[:60]}")
+        except Exception as e:
+            self.log(f"[narrative] append failed: {e}")
+
     # ── cost reporting ────────────────────────────────────────────────────────
 
     def report_costs(
@@ -167,13 +230,18 @@ class BaseAgent:
         learnings = render_recent_for_prompt(
             brand_slug, n=8, agent_filter=self._agent_slug()
         )
+        narrative = self.narrative_read_as_text(brand_slug, n=20)
         self._session_context = {
             "state": state,
             "learnings": learnings,
+            "narrative": narrative,
             "brand_slug": brand_slug,
         }
         self._session_start_time = time.time()
-        self.log(f"[session] loaded compact state + {len(learnings)} chars of learnings")
+        self.log(
+            f"[session] loaded compact state + {len(learnings)} chars learnings "
+            f"+ {len(narrative)} chars narrative"
+        )
         return self._session_context
 
     def session_save(self, brand_slug: str) -> None:
@@ -183,10 +251,20 @@ class BaseAgent:
         write_brand_state(brand_slug)
         self.log("[session] state snapshot saved")
 
-    def session_end(self, brand_slug: str, learnings: list[str] | None = None) -> None:
+    def session_end(
+        self,
+        brand_slug: str,
+        learnings: list[str] | None = None,
+        narrative_summary: str | None = None,
+        narrative_type: str = "result",
+        narrative_refs: dict | None = None,
+    ) -> None:
         """Persist session learnings + refresh _state.json. Call at agent completion.
 
         learnings: list of plain-text insight strings to persist.
+        narrative_summary: one-line summary of what this run did/decided/produced,
+            appended to the brand narrative so the next run continues the story.
+        narrative_type: 'decision' | 'action' | 'result' (default 'result').
         """
         from agents._state import write_brand_state
         from agents._learnings import append as append_learning
@@ -196,6 +274,11 @@ class BaseAgent:
             for text in learnings:
                 append_learning(brand_slug, slug, text, kind="insight")
             self.log(f"[session] persisted {len(learnings)} learnings")
+
+        if narrative_summary:
+            self.narrative_append(
+                brand_slug, narrative_type, narrative_summary, refs=narrative_refs
+            )
 
         write_brand_state(brand_slug)
         elapsed = time.time() - self._session_start_time

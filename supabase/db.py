@@ -669,6 +669,61 @@ def get_all_brand_memory(brand_id: str) -> list[dict]:
         return []
 
 
+# ── Brand Narrative (story-so-far timeline) ───────────────────────────────────
+# Append-only decision/action/result log. Distinct from brand_memory (key->value).
+# Lets agent runs CONTINUE the story instead of cold-starting (Phase A).
+
+def append_narrative(
+    brand_id: str,
+    agent: str,
+    entry_type: str,
+    summary: str,
+    refs: dict | None = None,
+    embedding: list[float] | None = None,
+) -> dict | None:
+    """Append one entry to a brand's narrative.
+    entry_type must be one of: decision | action | result.
+    """
+    if entry_type not in ("decision", "action", "result"):
+        entry_type = "action"
+    try:
+        payload: dict = {
+            "brand_id": brand_id,
+            "agent": agent,
+            "entry_type": entry_type,
+            "summary": summary[:2000],
+            "refs": refs or {},
+            "ts": _now(),
+        }
+        if embedding:
+            payload["embedding"] = embedding
+        res = _svc().table("brand_narrative").insert(payload).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        print(f"[db] append_narrative error: {e}")
+        return None
+
+
+def get_narrative(brand_id: str, n: int = 20, agent: str | None = None) -> list[dict]:
+    """Return the most recent N narrative entries in chronological order
+    (oldest -> newest) so the story reads forward. Optionally filter by agent."""
+    try:
+        q = (
+            _svc().table("brand_narrative")
+            .select("ts, agent, entry_type, summary, refs")
+            .eq("brand_id", brand_id)
+        )
+        if agent:
+            q = q.eq("agent", agent)
+        res = q.order("ts", desc=True).limit(n).execute()
+        rows = res.data or []
+        rows.reverse()  # chronological for prompt readability
+        return rows
+    except Exception as e:
+        print(f"[db] get_narrative error: {e}")
+        return []
+
+
 # ── Audit Log ─────────────────────────────────────────────────────────────────
 
 def log_audit(brand_id: str, action: str, actor: str = "system", payload: dict | None = None) -> dict | None:
