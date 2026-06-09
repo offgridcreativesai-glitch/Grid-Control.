@@ -6847,6 +6847,96 @@ def admin_system():
         return jsonify(success=False, error=str(e)), 500
 
 
+# ── Phase C — real data endpoints for the future cockpit ──────────────────────
+
+@app.route("/api/brands/<brand_slug>/runs", methods=["GET"])
+@require_auth
+def brand_agent_runs(brand_slug: str):
+    """Return recent agent runs with cost data for this brand.
+    Query params: limit (default 50), status (filter by status string).
+    """
+    if not _DB_AVAILABLE:
+        return jsonify(success=False, error="DB unavailable"), 503
+    brand_id = _get_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+    limit = min(int(request.args.get("limit", 50)), 200)
+    status_filter = request.args.get("status", "").strip()
+    try:
+        q = (
+            _db._svc().table("agent_runs")
+            .select(
+                "id, agent_slug, status, model, "
+                "input_tokens, output_tokens, api_cost_usd, fal_cost_usd, apify_cost_usd, "
+                "fal_generations, apify_runs, started_at, completed_at, error"
+            )
+            .eq("brand_id", brand_id)
+            .order("started_at", desc=True)
+            .limit(limit)
+        )
+        if status_filter:
+            q = q.eq("status", status_filter)
+        rows = q.execute().data or []
+        # Add total_cost_usd for convenience
+        for r in rows:
+            r["total_cost_usd"] = round(
+                float(r.get("api_cost_usd") or 0)
+                + float(r.get("fal_cost_usd") or 0)
+                + float(r.get("apify_cost_usd") or 0),
+                6,
+            )
+        return jsonify(success=True, data={"runs": rows, "count": len(rows)})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/brands/<brand_slug>/narrative", methods=["GET"])
+@require_auth
+def brand_narrative(brand_slug: str):
+    """Return the brand's story-so-far narrative (Phase A).
+    Query params: n (default 20, max 100), agent (filter by agent slug).
+    The narrative feeds the 'Story So Far' block in the cockpit.
+    """
+    if not _DB_AVAILABLE:
+        return jsonify(success=False, error="DB unavailable"), 503
+    brand_id = _get_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+    n = min(int(request.args.get("n", 20)), 100)
+    agent_filter = request.args.get("agent", "").strip() or None
+    try:
+        entries = _db.get_narrative(brand_id, n=n, agent=agent_filter)
+        return jsonify(success=True, data={"entries": entries, "count": len(entries)})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route("/api/brands/<brand_slug>/narrative", methods=["POST"])
+@require_auth
+def append_brand_narrative(brand_slug: str):
+    """Append one entry to the brand narrative.
+    Body: { agent, entry_type (decision|action|result), summary, refs? }
+    """
+    if not _DB_AVAILABLE:
+        return jsonify(success=False, error="DB unavailable"), 503
+    brand_id = _get_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+    body = request.get_json(force=True) or {}
+    agent = body.get("agent", "").strip()
+    entry_type = body.get("entry_type", "action").strip()
+    summary = body.get("summary", "").strip()
+    if not agent or not summary:
+        return jsonify(success=False, error="agent and summary required"), 400
+    try:
+        row = _db.append_narrative(
+            brand_id, agent, entry_type, summary, refs=body.get("refs")
+        )
+        return jsonify(success=True, data=row)
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
 if __name__ == "__main__":
     print("GRID CONTROL Flask API — port 5001")
     app.run(host="0.0.0.0", port=5001, debug=False)
