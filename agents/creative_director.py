@@ -1,7 +1,7 @@
 """
 Creative Director — OffGrid Marketing OS
 Agent ID: 4 | Runs after Script Writer is approved.
-Model: claude-opus-4-6
+Model: claude-opus-4-8 (Phase D)
 Rule 1: Zero assumptions. Reads real competitor data before any creative decision.
 Rule 9: AutoResearch Loop — Minimal/Visual-led vs Bold/Headline vs Story/Sequential.
 Reads:  brands/{slug}/pending_approval/Script Writer/ + competitors_db.json + brand_profile.json
@@ -66,7 +66,12 @@ load_dotenv(override=True)
 ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "").strip()
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
 FAL_API_KEY        = os.getenv("FAL_API_KEY", "").strip()
-MODEL = "claude-opus-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("creative-director")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 # ElevenLabs voice ID — "George" (business, authoritative)

@@ -1,7 +1,8 @@
 """
 Cost Tracker — GRID CONTROL
 Agent ID: 9 | Runs on-demand (no Apify, no scraping)
-Model: claude-haiku-4-5-20251001  (cheapest — this agent IS about saving money)
+Model: None — pure-math / template (Phase D: NO LLM. This agent is about saving
+       money; it should not spend any. Report is built deterministically.)
 
 What it does:
   - Reads all agent_runs for this brand for the current month from Supabase
@@ -23,19 +24,18 @@ Pricing used:
 import os
 import sys
 import json
+from calendar import monthrange
 from datetime import datetime
 from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
 
 load_dotenv(override=True)
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-haiku-4-5-20251001"
+# Phase D: pure-math agent. No model, no Anthropic client, no token cost.
+MODEL = None
 
 
 class CostTracker:
@@ -49,13 +49,7 @@ class CostTracker:
 
         self.ceo = CEOBrain()
         self.brand_profile = self.ceo.brand_profile
-
-        if not ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY not found in .env")
-        self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', brand_slug)}")
-        self._total_input_tokens = 0
-        self._total_output_tokens = 0
+        self.log(f"Ready (pure-math, no LLM). Brand: {self.brand_profile.get('brand_name', brand_slug)}")
 
     def log(self, msg: str):
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -83,58 +77,62 @@ class CostTracker:
             self.log(f"Supabase pull failed: {e} — returning empty data")
             return {"year": self.year, "month": self.month, "agents": [], "totals": {}}
 
-    # ── Claude analysis ───────────────────────────────────────────────────────
+    # ── Deterministic analysis (pure-math, no LLM) ────────────────────────────
 
     def _build_cost_analysis(self, cost_data: dict) -> str:
-        """Ask Claude Haiku to interpret the cost data into a plain-English report."""
+        """Build a plain-English monthly cost report from the numbers. No LLM."""
         month_name = datetime(self.year, self.month, 1).strftime("%B %Y")
         brand_name = self.brand_profile.get("brand_name", self.brand_slug)
         totals     = cost_data.get("totals", {})
         agents     = cost_data.get("agents", [])
+        total      = float(totals.get("total_usd", 0) or 0)
+        runs       = totals.get("total_runs", 0)
+        inr        = total * 85  # USD→INR ≈ 85
 
-        # Format agent table for the prompt
-        agent_lines = []
-        for a in agents:
-            agent_lines.append(
-                f"  {a['agent_slug']}: {a['runs']} runs | "
-                f"{a['input_tokens']:,} input tokens | {a['output_tokens']:,} output tokens | "
-                f"API ${a['api_cost_usd']:.4f} | "
-                f"FAL {a['fal_generations']} imgs ${a['fal_cost_usd']:.4f} | "
-                f"Apify {a['apify_runs']} runs ${a['apify_cost_usd']:.4f}"
+        if not agents or runs == 0:
+            return (
+                f"No agent runs were recorded for {brand_name} in {month_name}. "
+                f"Total spend: $0.00 (₹0). Nothing to optimise yet."
             )
-        agent_block = "\n".join(agent_lines) if agent_lines else "  No agent runs recorded this month."
 
-        prompt = f"""You are the Cost Tracker for {brand_name}'s GRID CONTROL marketing OS.
+        def agent_total(a: dict) -> float:
+            return (
+                float(a.get("api_cost_usd", 0) or 0)
+                + float(a.get("fal_cost_usd", 0) or 0)
+                + float(a.get("apify_cost_usd", 0) or 0)
+            )
 
-Month: {month_name}
+        top = max(agents, key=agent_total)
+        services = {
+            "Anthropic API": float(totals.get("api_cost_usd", 0) or 0),
+            "FAL.ai":        float(totals.get("fal_cost_usd", 0) or 0),
+            "Apify":         float(totals.get("apify_cost_usd", 0) or 0),
+        }
+        top_service = max(services, key=services.get)
 
-RAW COST DATA:
-{agent_block}
+        # Month-end projection: pro-rate by days elapsed.
+        days_in_month = monthrange(self.year, self.month)[1]
+        day_of_month  = min(self.now.day, days_in_month) or 1
+        projection    = total / day_of_month * days_in_month
 
-TOTALS:
-  Anthropic API:  ${totals.get('api_cost_usd', 0):.4f}
-  FAL.ai images:  ${totals.get('fal_cost_usd', 0):.4f}
-  Apify scraping: ${totals.get('apify_cost_usd', 0):.4f}
-  TOTAL THIS MONTH: ${totals.get('total_usd', 0):.4f}
-  Total agent runs: {totals.get('total_runs', 0)}
+        # Reasonableness band (plan §8: minimal ≈ $65-75/mo, full ≈ $110-150).
+        if total < 50:
+            verdict = "well within the expected envelope — no action needed."
+        elif total < 150:
+            verdict = "in the normal full-pipeline range; keep an eye on the top driver."
+        else:
+            verdict = "above the expected band — review the top agent/service below."
 
-Write a concise cost report in plain English with:
-1. One-sentence summary of total spend this month
-2. Which agent cost the most and why (if data available)
-3. Which service (Anthropic / FAL.ai / Apify) is the biggest cost driver
-4. Simple recommendation: is this cost reasonable for the value it creates? What to watch.
-5. Monthly projection if usage stays the same
-
-Keep it under 200 words. No JSON. No code blocks. Direct and practical."""
-
-        resp = self.client.messages.create(
-            model=MODEL,
-            max_tokens=512,
-            messages=[{"role": "user", "content": prompt}],
+        return (
+            f"{brand_name} spent ${total:.2f} (~₹{inr:,.0f}) across {runs} agent "
+            f"runs in {month_name}.\n"
+            f"Most expensive agent: {top['agent_slug']} — ${agent_total(top):.2f} "
+            f"over {top.get('runs', 0)} run(s).\n"
+            f"Biggest cost driver: {top_service} (${services[top_service]:.2f}).\n"
+            f"Assessment: this is {verdict}\n"
+            f"Projection: at the current pace ({day_of_month}/{days_in_month} days "
+            f"elapsed), month-end is tracking to ${projection:.2f} (~₹{projection*85:,.0f})."
         )
-        self._total_input_tokens += resp.usage.input_tokens
-        self._total_output_tokens += resp.usage.output_tokens
-        return resp.content[0].text.strip()
 
     # ── Save output ───────────────────────────────────────────────────────────
 
@@ -205,7 +203,7 @@ Keep it under 200 words. No JSON. No code blocks. Direct and practical."""
         print(f"Apify scraping: ${totals.get('apify_cost_usd', 0):.4f}")
         print(f"TOTAL:          ${totals.get('total_usd', 0):.4f}")
         print(f"Report saved:   {out_path}")
-        cost_reporter.record(MODEL, self._total_input_tokens, self._total_output_tokens)
+        # Pure-math agent — no LLM tokens to record.
         return out_path
 
 

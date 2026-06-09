@@ -6,10 +6,12 @@ Both agents/tracing.py and supabase/db.py import from here.
 # Short aliases → full Claude model names both resolve here
 MODEL_COSTS: dict[str, dict[str, float]] = {
     # Short aliases (used by agents/tracing.py)
+    "opus-4-8":                   {"input": 15.00, "output": 75.00},
     "opus-4-6":                   {"input": 15.00, "output": 75.00},
     "sonnet-4-6":                 {"input": 3.00,  "output": 15.00},
     "haiku":                      {"input": 0.80,  "output": 4.00},
     # Full model names (used by supabase/db.py / Anthropic API responses)
+    "claude-opus-4-8":            {"input": 15.00, "output": 75.00},
     "claude-opus-4-6":            {"input": 15.00, "output": 75.00},
     "claude-sonnet-4-6":          {"input": 3.00,  "output": 15.00},
     "claude-haiku-4-5-20251001":  {"input": 0.80,  "output": 4.00},

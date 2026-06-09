@@ -1,7 +1,7 @@
 """
 Script Writer — OffGrid Marketing OS
 Agent ID: 3 | Sequence position: 4 (runs after content-planner is approved)
-Model: claude-opus-4-6
+Model: claude-opus-4-8 (Phase D)
 Rule 1: Zero assumptions. Reads real calendar + trend data only.
 Rule 9: AutoResearch Loop — Pain-first / Result-first / Curiosity variants per piece.
 Reads:  brands/{slug}/content_calendar.json + trends_live.json + brand_profile.json
@@ -34,7 +34,12 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-opus-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("script-writer")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 

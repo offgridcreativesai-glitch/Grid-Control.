@@ -23,7 +23,12 @@ import cost_reporter
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-sonnet-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("funnel-specialist")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 

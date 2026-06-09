@@ -1,7 +1,7 @@
 """
 Content Planner — OffGrid Marketing OS
 Agent ID: 2 | Sequence position: 3 (runs after strategy-agent is approved)
-Model: claude-opus-4-6
+Model: claude-sonnet-4-6 (Phase D: floor)
 Rule 1: Zero assumptions. Reads real strategy + trend data only.
 Rule 9: AutoResearch Loop — Education / Social Proof / Curiosity variants.
 Reads:  brands/{slug}/strategy_90day.json + trends_live.json + brand_profile.json
@@ -32,7 +32,12 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-opus-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("content-planner")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 

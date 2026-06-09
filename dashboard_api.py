@@ -422,9 +422,19 @@ AGENTS = [
     {"id": 6, "name": "Data Analyst",      "role": "Metrics",          "model": "claude-sonnet-4-6", "agentFile": "data-analyst.md"},
     {"id": 7, "name": "Funnel Specialist", "role": "Conversion",       "model": "claude-sonnet-4-6", "agentFile": "funnel-specialist.md"},
     {"id": 8, "name": "Website Agent",     "role": "Site/Railway",     "model": "claude-sonnet-4-6", "agentFile": "website-agent.md"},
-    {"id": 9, "name": "Cost Tracker",      "role": "Monthly spend",    "model": "claude-haiku-4-5-20251001", "agentFile": ""},
+    {"id": 9, "name": "Cost Tracker",      "role": "Monthly spend",    "model": "none", "agentFile": ""},
     {"id": 10, "name": "Carousel Designer", "role": "Carousel slides + PNG render", "model": "claude-sonnet-4-6", "agentFile": ""},
 ]
+
+# Phase D — single source of truth: override the display models from the gateway
+# so this list can never drift from agents/model_gateway.AGENT_ROUTING.
+try:
+    from agents.model_gateway import model_for as _model_for
+    for _a in AGENTS:
+        _resolved = _model_for(_a["name"])
+        _a["model"] = _resolved or "none"
+except Exception as _mg_err:
+    print(f"[dashboard_api] model_gateway sync skipped: {_mg_err}")
 
 # Locked slug set — any agent not in this list is filtered before response
 _ACTIVE_SLUGS = {
@@ -2744,7 +2754,7 @@ def agent_group_chat():
     ceo_text  = ""
     try:
         ceo_resp = client.messages.create(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             max_tokens=1024,
             system=ceo_system,
             messages=messages,

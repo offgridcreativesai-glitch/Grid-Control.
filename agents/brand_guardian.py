@@ -1,7 +1,7 @@
 """
 Brand Guardian — OffGrid Marketing OS
 Agent ID: 10 | Sequence: runs after Script Writer / Content Planner approve outputs
-Model: claude-opus-4-6
+Model: claude-opus-4-8 (Phase D)
 Rule 1: Zero assumptions. Reads real brand profile + agent outputs only.
 Rule 9: AutoResearch Loop — Voice / Audience / Positioning lens before output.
 Rule 10: Source citation enforcement — every consistency-finding must cite the source agent output.
@@ -49,7 +49,12 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-opus-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("brand-guardian")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 

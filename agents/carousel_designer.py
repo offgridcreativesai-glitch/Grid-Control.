@@ -1,7 +1,7 @@
 """
 Carousel Designer — OffGrid Marketing OS
 Agent ID: 18 | Class-2 (generation)
-Model: claude-opus-4-6
+Model: claude-sonnet-4-6 (Phase D: floor)
 Rule 1: Zero assumptions. Reads brand_profile + voice_profile + content_calendar.
 Rule 9: AutoResearch Loop — slide variants tested internally before render.
 Rule 10: Provenance tracking — every slide cites source from brand inputs.
@@ -53,7 +53,12 @@ from _provenance import (
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
-MODEL = "claude-opus-4-6"
+# Phase D — model sourced from the single-source-of-truth gateway
+try:
+    from model_gateway import model_for
+except ImportError:
+    from agents.model_gateway import model_for
+MODEL = model_for("carousel-designer")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
