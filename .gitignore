@@ -63,3 +63,6 @@ brands/*/visuals/videos/*.mov
 brands/*/visuals/videos/AskGauravAI_reel1_edited.mp4
 brands/*/visuals/videos/AskGauravAI_reel1_v2.mp4
 _work/
+
+# Phase E2 scrape cache (runtime data, not source)
+brands/*/cache/

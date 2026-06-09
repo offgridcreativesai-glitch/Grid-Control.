@@ -1541,7 +1541,42 @@ def _daily_scheduler_loop() -> None:
 
 if os.getenv("ENABLE_DAILY_SCHEDULER", "").strip() in ("1", "true", "True"):
     threading.Thread(target=_daily_scheduler_loop, daemon=True).start()
-    print("[GRID CONTROL] ✅ Daily pipeline scheduler enabled")
+    print("[GRID CONTROL] ✅ Daily pipeline scheduler enabled (in-process — legacy)")
+
+
+# ── Phase E1 — server-side scheduler trigger (called by the Railway worker) ────
+# The dedicated APScheduler worker service (scheduler/worker.py) POSTs here on a
+# cadence instead of running inside gunicorn (which would double-fire under
+# --workers 2 and needs the Mac awake). Authed by a shared service token, NOT a
+# user JWT.
+
+def _valid_service_token() -> bool:
+    expected = os.getenv("GRID_SCHEDULER_TOKEN", "").strip()
+    if not expected:
+        return False  # fail closed — no token configured = no service access
+    provided = request.headers.get("X-Grid-Service-Token", "").strip()
+    return bool(provided) and provided == expected
+
+
+@app.route("/api/scheduler/trigger", methods=["POST"])
+def scheduler_trigger():
+    """Service-to-service: run the daily pipeline for a brand. Token-authed.
+    Body: { brand_slug }. Returns immediately; pipeline runs in background."""
+    if not _valid_service_token():
+        return jsonify({"success": False, "error": "invalid service token"}), 401
+    data = request.get_json(silent=True) or {}
+    brand_slug = (data.get("brand_slug") or "").strip()
+    if not brand_slug:
+        return jsonify({"success": False, "error": "brand_slug required"}), 400
+    if not (BRANDS_DIR / brand_slug).is_dir():
+        return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
+    print(f"[scheduler-trigger] daily pipeline for {brand_slug} (service token)")
+    threading.Thread(target=run_daily_pipeline, args=(brand_slug,), daemon=True).start()
+    return jsonify({"success": True, "data": {
+        "message": f"daily pipeline started for {brand_slug}",
+        "brand_slug": brand_slug,
+        "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }})
 
 
 # ── Instagram publishing (the "agents post it" step) ──────────────────────────

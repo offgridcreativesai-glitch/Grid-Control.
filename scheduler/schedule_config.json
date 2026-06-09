@@ -1,0 +1,19 @@
+{
+  "_comment": "Phase E1 scheduler jobs. Times are in SCHEDULER_TZ (default Asia/Kolkata). cron supports hour, minute, and optional day_of_week (mon-sun or 0-6). Set enabled=false to pause a brand without removing it.",
+  "jobs": [
+    {
+      "brand_slug": "askgauravai",
+      "enabled": true,
+      "cron": { "hour": 6, "minute": 30 },
+      "pipeline": "daily",
+      "note": "Trend Researcher + Data Analyst -> Trend Sentinel, every morning 06:30 IST"
+    },
+    {
+      "brand_slug": "offgrid-creatives-ai",
+      "enabled": true,
+      "cron": { "hour": 7, "minute": 0 },
+      "pipeline": "daily",
+      "note": "Staggered 30m after askgauravai to avoid overlap"
+    }
+  ]
+}

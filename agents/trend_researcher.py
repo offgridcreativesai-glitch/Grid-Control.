@@ -345,13 +345,42 @@ class TrendResearcher:
         """
         self.log(f"Scraping Instagram hashtags for niche: {self.niche_hashtags}...")
 
+        tags = self.niche_hashtags[:5]
+
+        # ── Phase E2: scrape cache — skip Apify cost + 120s wait on a fresh hit ──
+        try:
+            from utils import scrape_cache as _cache
+            cached = _cache.get(self.brand_slug, "ig_hashtags", tags, ttl_hours=24.0)
+            if cached:
+                self.log("Using cached IG hashtag scrape (<24h old) — no Apify call")
+                return cached
+        except Exception as _ce:
+            self.log(f"scrape_cache check skipped: {_ce}")
+
+        # ── Phase E3: official IG Hashtag Search API (off by default; Apify fallback) ──
+        try:
+            from agents import ig_hashtag_search as _ighs
+        except ImportError:
+            import ig_hashtag_search as _ighs  # script-context
+        if _ighs.enabled():
+            api_res = _ighs.scrape_hashtags(tags)
+            if api_res.get("status") == "OK":
+                self.log(f"IG Hashtag API returned {api_res['posts_scraped']} posts (no Apify, no ban risk)")
+                try:
+                    from utils import scrape_cache as _cache
+                    _cache.put(self.brand_slug, "ig_hashtags", tags, api_res, ttl_hours=24.0)
+                except Exception:
+                    pass
+                return api_res
+            self.log(f"IG Hashtag API unavailable ({api_res.get('error')}) — falling back to Apify")
+
         if not APIFY_API_KEY:
             return {"status": "FAILED", "error": "APIFY_API_KEY not set"}
 
         run_id = self.apify_start_run(
             actor_id="apify~instagram-hashtag-scraper",
             input_body={
-                "hashtags": self.niche_hashtags[:5],
+                "hashtags": tags,
                 "resultsLimit": 30
             }
         )
@@ -395,12 +424,22 @@ class TrendResearcher:
         # Sort by engagement
         top_posts.sort(key=lambda x: x["likes"] + x["comments"], reverse=True)
 
-        return {
+        result = {
             "status": "OK",
             "posts_scraped": len(items),
             "top_posts": top_posts[:10],
-            "hashtags_scraped": self.niche_hashtags[:5]
+            "hashtags_scraped": tags,
+            "source": "apify",
         }
+
+        # Phase E2: cache the fresh Apify scrape so the next run (within 24h) is free.
+        try:
+            from utils import scrape_cache as _cache
+            _cache.put(self.brand_slug, "ig_hashtags", tags, result, ttl_hours=24.0)
+        except Exception:
+            pass
+
+        return result
 
     # -------------------------------------------------------------------------
     # DATA SOURCE: Brand's Own Instagram Posts (Apify)
