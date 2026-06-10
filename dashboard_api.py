@@ -1090,6 +1090,11 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
                                 print(f"[dashboard_api] Notion page created: {notion_res.get('notion_url', '')}")
                 except Exception as _notion_err:
                     print(f"[dashboard_api] Notion push skipped: {_notion_err}")
+        # Phase L — fire approval-needed notification (best-effort, never blocks)
+        try:
+            _maybe_notify_pending(brand_slug)
+        except Exception:
+            pass
         else:
             err_lines = (result.stderr or "").strip().splitlines()
             last_err = err_lines[-1] if err_lines else "Non-zero exit"
@@ -7992,6 +7997,189 @@ def concierge_chat(brand_slug: str):
             "swap slides, re-plan the calendar, inject a trend, rewrite a script, "
             "or change strategy. What would you like to do?"
         ),
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase L — Notifications (P0 minimal — email-first)
+#
+# Ping the brand owner when something needs approval. Drives "Needs you" queue
+# + morning brief. Email via Gmail SMTP (app password). WhatsApp = P1.
+#
+# Required env vars (add to .env + Railway):
+#   NOTIFICATION_EMAIL_TO   — recipient (e.g. gaurav.khanna110@gmail.com)
+#   NOTIFICATION_SMTP_USER  — Gmail sender address
+#   NOTIFICATION_SMTP_PASS  — Gmail app password (16-char, no spaces)
+#
+# All three must be set; otherwise email silently no-ops and the needs-you
+# queue endpoint still works (no degradation to the approval flow).
+# ─────────────────────────────────────────────────────────────────────────────
+
+import smtplib
+import email.mime.text as _mime_text
+import email.mime.multipart as _mime_multi
+
+
+def _notification_email_configured() -> bool:
+    return bool(
+        os.getenv("NOTIFICATION_EMAIL_TO") and
+        os.getenv("NOTIFICATION_SMTP_USER") and
+        os.getenv("NOTIFICATION_SMTP_PASS")
+    )
+
+
+def _send_notification_email(subject: str, body_text: str) -> bool:
+    """Send a plain-text notification email via Gmail SMTP + STARTTLS.
+    Returns True on success. Never raises — log and return False on any error.
+    """
+    to_addr   = os.getenv("NOTIFICATION_EMAIL_TO", "").strip()
+    from_addr = os.getenv("NOTIFICATION_SMTP_USER", "").strip()
+    password  = os.getenv("NOTIFICATION_SMTP_PASS", "").strip()
+    if not (to_addr and from_addr and password):
+        return False
+    try:
+        msg = _mime_multi.MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = f"Grid Control <{from_addr}>"
+        msg["To"]      = to_addr
+        msg.attach(_mime_text.MIMEText(body_text, "plain", "utf-8"))
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
+            s.ehlo()
+            s.starttls()
+            s.login(from_addr, password)
+            s.sendmail(from_addr, [to_addr], msg.as_string())
+        return True
+    except Exception as exc:
+        print(f"[notification] email failed: {exc}")
+        return False
+
+
+def _needs_you_items(brand_slug: str) -> list[dict]:
+    """Return list of pending-approval items for brand_slug, newest first."""
+    root = Path("brands") / brand_slug / "outputs" / "pending_approval"
+    if not root.exists():
+        return []
+    items: list[dict] = []
+    for agent_dir in sorted(root.iterdir()):
+        if not agent_dir.is_dir():
+            continue
+        agent = agent_dir.name
+        for f in sorted(agent_dir.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+            if not f.is_file():
+                continue
+            try:
+                mtime = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).isoformat()
+            except Exception:
+                mtime = ""
+            items.append({
+                "agent":      agent,
+                "filename":   f.name,
+                "path":       str(f.relative_to(Path("brands") / brand_slug)),
+                "created_at": mtime,
+            })
+    # sort newest first overall
+    items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    return items
+
+
+def _maybe_notify_pending(brand_slug: str) -> None:
+    """Fire an approval-needed email when pending_approval/ is non-empty and
+    email is configured. Called after every successful agent run. Best-effort.
+    """
+    if not _notification_email_configured():
+        return
+    items = _needs_you_items(brand_slug)
+    if not items:
+        return
+    n = len(items)
+    subject = f"Grid Control: {n} item{'s' if n != 1 else ''} need your approval — {brand_slug}"
+    lines = [
+        f"Brand: {brand_slug}",
+        f"Pending approvals: {n}",
+        "",
+        "Items:",
+    ]
+    for item in items[:10]:
+        lines.append(f"  • [{item['agent']}] {item['filename']}  ({item['created_at'][:10]})")
+    if n > 10:
+        lines.append(f"  … and {n - 10} more")
+    lines += ["", "Review at: your Grid Control dashboard → Review tab."]
+    _send_notification_email(subject, "\n".join(lines))
+
+
+@app.route("/api/brands/<brand_slug>/needs-you", methods=["GET"])
+@require_auth
+def needs_you(brand_slug: str):
+    """L: 'Needs you' queue — pending approval items for a brand.
+    Returns count, item list, and email configuration status.
+    """
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
+
+    items = _needs_you_items(brand_slug)
+    email_to = os.getenv("NOTIFICATION_EMAIL_TO", "")
+    # Mask email for display: gaurav.khanna110@gmail.com → g***@gmail.com
+    if email_to and "@" in email_to:
+        local, domain = email_to.split("@", 1)
+        masked = local[0] + "***@" + domain
+    else:
+        masked = ""
+    return jsonify(success=True, data={
+        "count":              len(items),
+        "items":              items,
+        "email_configured":   _notification_email_configured(),
+        "notification_email": masked,
+    })
+
+
+@app.route("/api/brands/<brand_slug>/notify", methods=["POST"])
+@require_auth
+def send_notify(brand_slug: str):
+    """L: Manually trigger an approval-needed notification email.
+    Body: {} (empty) — sends current pending queue for the brand.
+    No-ops gracefully if email is not configured.
+    """
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
+
+    if not _notification_email_configured():
+        return jsonify(success=True, data={
+            "sent": False,
+            "message": (
+                "Email not configured. Set NOTIFICATION_EMAIL_TO, "
+                "NOTIFICATION_SMTP_USER, and NOTIFICATION_SMTP_PASS in .env."
+            ),
+        })
+
+    items = _needs_you_items(brand_slug)
+    if not items:
+        return jsonify(success=True, data={
+            "sent": False,
+            "message": "Nothing pending for this brand — no notification sent.",
+            "count": 0,
+        })
+
+    n = len(items)
+    subject = f"Grid Control: {n} item{'s' if n != 1 else ''} need your approval — {brand_slug}"
+    lines = [
+        f"Brand: {brand_slug}",
+        f"Pending approvals: {n}",
+        "",
+        "Items:",
+    ]
+    for item in items[:10]:
+        lines.append(f"  • [{item['agent']}] {item['filename']}  ({item['created_at'][:10]})")
+    if n > 10:
+        lines.append(f"  … and {n - 10} more")
+    lines += ["", "Review at: your Grid Control dashboard → Review tab."]
+
+    ok = _send_notification_email(subject, "\n".join(lines))
+    return jsonify(success=True, data={
+        "sent":    ok,
+        "count":   n,
+        "message": f"Notification sent for {n} item(s)." if ok else "Email send failed — check SMTP credentials.",
     })
 
 
