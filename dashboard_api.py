@@ -9,6 +9,7 @@ import re
 import sys
 import json
 import time
+import uuid as _uuid_mod
 import shutil
 import tempfile
 import subprocess
@@ -16,6 +17,7 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse as _urlparse
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_file, abort, Response, stream_with_context
 from flask_cors import CORS
@@ -7312,6 +7314,368 @@ def request_brand_book_change(brand_slug: str):
         "revisions_remaining": BRAND_BOOK_REVISION_CAP - rev,
         "status": "change_requested",
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase I — Upload surfaces
+#   I-a: Brand-asset ingestion (direct file + cloud link reference)
+#   I-b: Per-content-card production upload → routes to creative-director queue
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Extension → asset category map
+_ASSET_EXT_MAP: dict[str, str] = {
+    **{ext: "image"    for ext in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg")},
+    **{ext: "video"    for ext in (".mp4", ".mov", ".avi", ".webm", ".mkv")},
+    **{ext: "document" for ext in (".pdf", ".docx", ".doc", ".txt", ".md", ".csv")},
+    **{ext: "audio"    for ext in (".mp3", ".wav", ".m4a", ".aac", ".ogg")},
+}
+_ASSET_MAX_BYTES: dict[str, int] = {
+    "image":    10  * 1024 * 1024,   # 10 MB
+    "video":    500 * 1024 * 1024,   # 500 MB
+    "document": 20  * 1024 * 1024,   # 20 MB
+    "audio":    100 * 1024 * 1024,   # 100 MB
+}
+# Allowed cloud-storage domains for link ingestion (SSRF guard — deny everything else)
+_ASSET_CLOUD_DOMAINS = frozenset({
+    "drive.google.com", "docs.google.com",
+    "dropbox.com",
+    "onedrive.live.com", "1drv.ms", "sharepoint.com",
+})
+
+
+def _asset_dir(brand_slug: str, sub: str = "") -> Path:
+    d = Path("brands") / brand_slug / "assets"
+    if sub:
+        d = d / sub
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _manifest_path(brand_slug: str) -> Path:
+    return Path("brands") / brand_slug / "assets" / "manifest.json"
+
+
+def _read_manifest(brand_slug: str) -> list:
+    p = _manifest_path(brand_slug)
+    if not p.exists():
+        return []
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return []
+
+
+def _write_manifest(brand_slug: str, entries: list) -> None:
+    p = _manifest_path(brand_slug)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(entries, indent=2))
+
+
+def _safe_fname(name: str) -> str:
+    """Strip path components and replace shell-unsafe chars."""
+    name = Path(name).name
+    return re.sub(r"[^\w.\-]", "_", name) or "upload"
+
+
+def _classify_ext(suffix: str) -> str:
+    cat = _ASSET_EXT_MAP.get(suffix.lower())
+    if not cat:
+        raise ValueError(f"File type '{suffix}' is not allowed.")
+    return cat
+
+
+def _ssrf_check(url: str) -> bool:
+    """Return True if url is a safe cloud-storage link, False otherwise."""
+    try:
+        netloc = _urlparse(url).netloc.lower().lstrip("www.")
+        return any(
+            netloc == d or netloc.endswith("." + d)
+            for d in _ASSET_CLOUD_DOMAINS
+        )
+    except Exception:
+        return False
+
+
+@app.route("/api/brands/<brand_slug>/assets", methods=["GET"])
+@require_auth
+def list_assets(brand_slug: str):
+    """I-a: List all brand assets from manifest."""
+    _authorize_brand(brand_slug)
+    entries = _read_manifest(brand_slug)
+    return jsonify(success=True, data={"assets": entries, "count": len(entries)})
+
+
+@app.route("/api/brands/<brand_slug>/assets/upload", methods=["POST"])
+@require_auth
+def upload_asset(brand_slug: str):
+    """I-a: Accept a direct file upload into brands/{slug}/assets/{category}/."""
+    _authorize_brand(brand_slug)
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify(success=False, error="No file provided."), 400
+
+    suffix = Path(f.filename).suffix
+    try:
+        category = _classify_ext(suffix)
+    except ValueError as e:
+        return jsonify(success=False, error=str(e)), 415
+
+    data = f.read()
+    size = len(data)
+    limit = _ASSET_MAX_BYTES[category]
+    if size > limit:
+        return jsonify(
+            success=False,
+            error=f"File too large. Limit for {category}: {limit // (1024*1024)} MB."
+        ), 413
+
+    uid = _uuid_mod.uuid4().hex[:12]
+    safe = _safe_fname(f.filename)
+    dest = _asset_dir(brand_slug, category) / f"{uid}_{safe}"
+    dest.write_bytes(data)
+
+    entry = {
+        "id":          uid,
+        "filename":    safe,
+        "category":    category,
+        "size_bytes":  size,
+        "path":        str(dest),
+        "source":      "direct_upload",
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    entries = _read_manifest(brand_slug)
+    entries.append(entry)
+    _write_manifest(brand_slug, entries)
+    return jsonify(success=True, data={"asset": entry}), 201
+
+
+@app.route("/api/brands/<brand_slug>/assets/cloud-link", methods=["POST"])
+@require_auth
+def add_cloud_link(brand_slug: str):
+    """I-a: Store a cloud-link reference (Drive / Dropbox / OneDrive).
+    No HTTP fetch here — SG3 audits any future fetch path. SSRF guard rejects
+    everything outside _ASSET_CLOUD_DOMAINS.
+    """
+    _authorize_brand(brand_slug)
+    body = request.get_json(silent=True) or {}
+    url = (body.get("url") or "").strip()
+    if not url:
+        return jsonify(success=False, error="'url' is required."), 400
+    if not _ssrf_check(url):
+        return jsonify(
+            success=False,
+            error="Only Google Drive, Dropbox, and OneDrive links are accepted."
+        ), 422
+
+    category = (body.get("category") or "document")
+    if category not in _ASSET_MAX_BYTES:
+        category = "document"
+    label = (body.get("label") or Path(url).name or "cloud asset")[:200]
+
+    uid = _uuid_mod.uuid4().hex[:12]
+    entry = {
+        "id":        uid,
+        "label":     label,
+        "url":       url,
+        "category":  category,
+        "source":    "cloud_link",
+        "linked_at": datetime.now(timezone.utc).isoformat(),
+    }
+    entries = _read_manifest(brand_slug)
+    entries.append(entry)
+    _write_manifest(brand_slug, entries)
+    return jsonify(success=True, data={"asset": entry}), 201
+
+
+@app.route("/api/brands/<brand_slug>/assets/<asset_id>", methods=["DELETE"])
+@require_auth
+def delete_asset(brand_slug: str, asset_id: str):
+    """I-a: Remove an asset from the manifest. Deletes the file from disk
+    if it was a direct upload.
+    """
+    _authorize_brand(brand_slug)
+    entries = _read_manifest(brand_slug)
+    target = next((e for e in entries if e.get("id") == asset_id), None)
+    if not target:
+        return jsonify(success=False, error="Asset not found."), 404
+    fpath = target.get("path")
+    if fpath:
+        try:
+            Path(fpath).unlink(missing_ok=True)
+        except Exception:
+            pass
+    _write_manifest(brand_slug, [e for e in entries if e.get("id") != asset_id])
+    return jsonify(success=True, data={"deleted": asset_id})
+
+
+# ── I-b helpers ───────────────────────────────────────────────────────────────
+
+def _get_card(brand_slug: str, card_id: str) -> dict | None:
+    """Return the card dict from content_calendar.json or None."""
+    cal_path = Path("brands") / brand_slug / "content_calendar.json"
+    if not cal_path.exists():
+        return None
+    try:
+        cal = json.loads(cal_path.read_text())
+    except Exception:
+        return None
+    posts = cal if isinstance(cal, list) else (
+        cal.get("posts") or cal.get("calendar") or []
+    )
+    return next((p for p in posts if str(p.get("id")) == str(card_id)), None)
+
+
+def _update_card(brand_slug: str, card_id: str, updates: dict) -> bool:
+    """Merge updates into the matching card in content_calendar.json."""
+    cal_path = Path("brands") / brand_slug / "content_calendar.json"
+    if not cal_path.exists():
+        return False
+    try:
+        cal = json.loads(cal_path.read_text())
+    except Exception:
+        return False
+
+    def _patch(posts: list) -> bool:
+        for i, p in enumerate(posts):
+            if str(p.get("id")) == str(card_id):
+                posts[i].update(updates)
+                return True
+        return False
+
+    if isinstance(cal, list):
+        if not _patch(cal):
+            return False
+        cal_path.write_text(json.dumps(cal, indent=2))
+        return True
+    for key in ("posts", "calendar"):
+        posts = cal.get(key)
+        if posts and isinstance(posts, list) and _patch(posts):
+            cal_path.write_text(json.dumps(cal, indent=2))
+            return True
+    return False
+
+
+@app.route("/api/brands/<brand_slug>/content-cards/<card_id>/upload", methods=["GET"])
+@require_auth
+def get_card_upload(brand_slug: str, card_id: str):
+    """I-b: Get the upload status for a content card."""
+    _authorize_brand(brand_slug)
+    card = _get_card(brand_slug, card_id)
+    if card is None:
+        return jsonify(success=False, error="Card not found."), 404
+    return jsonify(success=True, data={
+        "card_id":         card_id,
+        "requires_upload": card.get("requires_upload", False),
+        "upload_status":   card.get("upload_status", "none"),
+        "upload_path":     card.get("upload_path"),
+        "upload_url":      card.get("upload_url"),
+        "upload_label":    card.get("upload_label"),
+        "upload_ts":       card.get("upload_ts"),
+    })
+
+
+@app.route("/api/brands/<brand_slug>/content-cards/<card_id>/upload", methods=["POST"])
+@require_auth
+def post_card_upload(brand_slug: str, card_id: str):
+    """I-b: Attach a production file or cloud link to a content card.
+    Sets upload_status='pending_edit' and writes a routing stub to
+    pending_approval/creative-director/ so it surfaces in the approval dashboard.
+    """
+    _authorize_brand(brand_slug)
+    card = _get_card(brand_slug, card_id)
+    if card is None:
+        return jsonify(success=False, error="Card not found."), 404
+
+    updates: dict = {}
+    f = request.files.get("file")
+
+    if f and f.filename:
+        # ── file upload path ──────────────────────────────────────────────────
+        suffix = Path(f.filename).suffix
+        try:
+            category = _classify_ext(suffix)
+        except ValueError as e:
+            return jsonify(success=False, error=str(e)), 415
+
+        data = f.read()
+        size = len(data)
+        limit = _ASSET_MAX_BYTES[category]
+        if size > limit:
+            return jsonify(
+                success=False,
+                error=f"File too large. Limit for {category}: {limit // (1024*1024)} MB."
+            ), 413
+
+        uid = _uuid_mod.uuid4().hex[:12]
+        safe = _safe_fname(f.filename)
+        dest = _asset_dir(brand_slug, f"production/{card_id}") / f"{uid}_{safe}"
+        dest.write_bytes(data)
+        updates = {
+            "upload_path":   str(dest),
+            "upload_label":  safe,
+            "upload_status": "pending_edit",
+            "upload_ts":     datetime.now(timezone.utc).isoformat(),
+        }
+    else:
+        # ── cloud-link path ───────────────────────────────────────────────────
+        body = request.get_json(silent=True) or {}
+        url = (body.get("url") or "").strip()
+        if not url:
+            return jsonify(
+                success=False,
+                error="Provide 'file' (multipart) or 'url' (JSON body)."
+            ), 400
+        if not _ssrf_check(url):
+            return jsonify(
+                success=False,
+                error="Only Google Drive, Dropbox, and OneDrive links are accepted."
+            ), 422
+        label = (body.get("label") or url)[:200]
+        updates = {
+            "upload_url":    url,
+            "upload_label":  label,
+            "upload_status": "pending_edit",
+            "upload_ts":     datetime.now(timezone.utc).isoformat(),
+        }
+
+    if not _update_card(brand_slug, card_id, updates):
+        return jsonify(
+            success=False,
+            error="Failed to update card. Verify content_calendar.json exists."
+        ), 500
+
+    # Write routing stub so the approval dashboard surfaces this card
+    try:
+        cd_dir = (Path("brands") / brand_slug / "outputs"
+                  / "pending_approval" / "creative-director")
+        cd_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        stub = {
+            "type":        "production_upload",
+            "card_id":     card_id,
+            "card_title":  card.get("title") or card.get("post_type") or card_id,
+            "upload":      updates,
+            "instruction": (
+                "Founder has uploaded raw footage/file for this content card. "
+                "Edit and return to the approval queue."
+            ),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        loop_header = (
+            f"LOOP: creative-director — production_upload / "
+            f"edit uploaded asset for card {card_id} / approval / VARIANTS=1 / WINNER=pending\n---\n"
+        )
+        (cd_dir / f"{ts}_card_{card_id}_upload.json").write_text(
+            loop_header + json.dumps(stub, indent=2)
+        )
+    except Exception:
+        pass  # routing stub is best-effort; the upload is already persisted
+
+    return jsonify(success=True, data={
+        "card_id": card_id,
+        "updates": updates,
+        "message": "Upload saved. Routed to Creative Director queue for editing.",
+    }), 201
 
 
 # ─────────────────────────────────────────────────────────────────────────────
