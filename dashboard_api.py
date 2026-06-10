@@ -1278,6 +1278,24 @@ def run_agent():
     if agent_name == "Ad Strategist" and not os.getenv("META_GRAPH_API_TOKEN", "").strip():
         return jsonify({"success": False, "error": "Ad Strategist requires META_GRAPH_API_TOKEN — connect Meta first"}), 400
 
+    # Phase H — Brand-Book Foundation gate (hard gate per dependency-chain rule)
+    # Strategy Agent and Content Planner require an approved Brand Foundation before they run.
+    _gate_slug = _agent_name_to_slug(agent_name)
+    if _gate_slug in ("strategy-agent", "content-planner"):
+        _bb = _brand_book_status(brand_slug)
+        if _bb.get("status") != "approved":
+            return jsonify({
+                "success": False,
+                "error": (
+                    "Brand Foundation not approved. "
+                    "Complete the Brand-Book sign-off (Step 3.5) before running "
+                    "Strategy Agent or Content Planner. "
+                    f"Current status: {_bb.get('status', 'none')}."
+                ),
+                "gate": "brand_book_foundation",
+                "brand_book_status": _bb.get("status", "none"),
+            }), 403
+
     script_val = AGENT_SCRIPTS.get(agent_name)
     if not script_val:
         return jsonify({
@@ -7006,6 +7024,297 @@ def append_brand_narrative(brand_slug: str):
         return jsonify(success=True, data=row)
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
+
+
+# ── Phase H — Brand-Book sign-off gate ───────────────────────────────────────
+# H1: generate → pending_review → approve / request-change (K3 revision cap)
+# H2: approve writes Foundation → brand_profile.json + voice_profile.json + narrative
+
+BRAND_BOOK_REVISION_CAP = 3  # K3: after this many change requests, flag as scope-creep
+
+
+def _brand_book_status(brand_slug: str) -> dict:
+    """Read brand-book gate fields from brand_profile.json. Safe: returns defaults if missing."""
+    profile_path = BRANDS_DIR / brand_slug / "brand_profile.json"
+    if not profile_path.exists():
+        return {"status": "none", "revision_count": 0, "scope_flag": False, "latest_path": None}
+    try:
+        with open(profile_path) as f:
+            bp = json.load(f)
+        return {
+            "status":         bp.get("brand_book_status", "none"),
+            "revision_count": bp.get("brand_book_revision_count", 0),
+            "scope_flag":     bp.get("brand_book_scope_flag", False),
+            "latest_path":    bp.get("brand_book_latest_path"),
+            "approved_ts":    bp.get("brand_book_approved_ts"),
+        }
+    except Exception:
+        return {"status": "none", "revision_count": 0, "scope_flag": False, "latest_path": None}
+
+
+def _update_brand_profile_fields(brand_slug: str, updates: dict) -> None:
+    """Merge `updates` into brand_profile.json (last-write wins per field)."""
+    profile_path = BRANDS_DIR / brand_slug / "brand_profile.json"
+    bp = {}
+    if profile_path.exists():
+        try:
+            with open(profile_path) as f:
+                bp = json.load(f)
+        except Exception:
+            pass
+    bp.update(updates)
+    with open(profile_path, "w") as f:
+        json.dump(bp, f, indent=2)
+
+
+def _write_foundation(brand_slug: str, foundation: dict) -> None:
+    """H2: merge approved Foundation block into brand_profile.json + write voice_profile.json."""
+    if not foundation or foundation.get("_unparsed"):
+        return
+    # brand_profile fields
+    bp_updates = {}
+    if foundation.get("positioning_statement"):
+        bp_updates["positioning_statement"] = foundation["positioning_statement"]
+    if foundation.get("value_prop"):
+        bp_updates["value_prop"] = foundation["value_prop"]
+    if foundation.get("pillars"):
+        bp_updates["messaging_pillars"] = foundation["pillars"]
+    if foundation.get("icp"):
+        bp_updates["icp"] = foundation["icp"]
+    if foundation.get("north_star"):
+        bp_updates["north_star_90d"] = foundation["north_star"]
+    if bp_updates:
+        _update_brand_profile_fields(brand_slug, bp_updates)
+    # voice_profile.json
+    voice = foundation.get("voice") or {}
+    if voice:
+        vp_path = BRANDS_DIR / brand_slug / "voice_profile.json"
+        existing_vp = {}
+        if vp_path.exists():
+            try:
+                with open(vp_path) as f:
+                    existing_vp = json.load(f)
+            except Exception:
+                pass
+        existing_vp.update({
+            "personality": voice.get("personality", existing_vp.get("personality", "")),
+            "do":          voice.get("do", existing_vp.get("do", [])),
+            "dont":        voice.get("dont", existing_vp.get("dont", [])),
+            "vocab_use":   voice.get("vocab_use", existing_vp.get("vocab_use", [])),
+            "vocab_avoid": voice.get("vocab_avoid", existing_vp.get("vocab_avoid", [])),
+            "source":      "brand_book_v6_approved",
+        })
+        with open(vp_path, "w") as f:
+            json.dump(existing_vp, f, indent=2)
+
+
+def _run_brand_book_generate(brand_slug: str, mode: str) -> None:
+    """Background thread: run BrandBook.generate(), update brand_profile status when done."""
+    try:
+        import sys
+        if str(BASE_DIR) not in sys.path:
+            sys.path.insert(0, str(BASE_DIR))
+        from agents.brand_book import BrandBook
+        bb = BrandBook(brand_slug, mode=mode)
+        result = bb.generate(render_pdf=True)
+        # result is the path to the written JSON (LOOP HEADER format)
+        latest_path = str(result) if result else None
+        _update_brand_profile_fields(brand_slug, {
+            "brand_book_status":      "pending_review",
+            "brand_book_latest_path": latest_path,
+        })
+    except Exception as e:
+        _update_brand_profile_fields(brand_slug, {
+            "brand_book_status": "error",
+            "brand_book_error":  str(e),
+        })
+        print(f"[brand-book] generate failed for {brand_slug}: {e}")
+
+
+@app.route("/api/brands/<brand_slug>/brand-book", methods=["GET"])
+@require_auth
+def get_brand_book_status(brand_slug: str):
+    """Return current brand-book gate state for the brand."""
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    info = _brand_book_status(brand_slug)
+    # Attach a summary of the latest report if we have a path
+    summary = None
+    lp = info.get("latest_path")
+    if lp and Path(lp).exists():
+        try:
+            raw = Path(lp).read_text()
+            # Strip LOOP HEADER (split on first \n---\n)
+            body = raw.split("\n---\n", 1)[1] if "\n---\n" in raw else raw
+            report = json.loads(body)
+            meta = report.get("meta", {})
+            sc = report.get("parts", {}).get("part0_scorecard", {})
+            summary = {
+                "brand":      meta.get("brand"),
+                "version":    meta.get("version"),
+                "date":       meta.get("date"),
+                "mode":       meta.get("mode"),
+                "data_basis": meta.get("data_basis"),
+                "scorecard_metrics": [
+                    {"label": lbl, "value": m.get("value"), "basis": m.get("basis")}
+                    for lbl, m in sc.get("metrics", [])
+                ],
+                "eval": report.get("eval", {}),
+            }
+        except Exception:
+            pass
+    return jsonify(success=True, data={**info, "report_summary": summary})
+
+
+@app.route("/api/brands/<brand_slug>/brand-book/generate", methods=["POST"])
+@require_auth
+def generate_brand_book(brand_slug: str):
+    """H1: Trigger Brand-Book generation. PAID RUN — Opus + (onboarding) IG Insights.
+    Body: { mode?: "cold_sellable" | "onboarding_connected" }
+    Sets status → "generating" immediately; background thread sets "pending_review" on completion.
+    """
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    body = request.get_json(force=True) or {}
+    mode = body.get("mode", "cold_sellable")
+    if mode not in ("cold_sellable", "onboarding_connected"):
+        return jsonify(success=False, error="mode must be cold_sellable or onboarding_connected"), 400
+    # Block if already generating or pending review
+    current = _brand_book_status(brand_slug)
+    if current.get("status") in ("generating",):
+        return jsonify(success=False, error="Brand-Book generation already in progress"), 409
+    # Set generating immediately
+    _update_brand_profile_fields(brand_slug, {
+        "brand_book_status": "generating",
+        "brand_book_error":  None,
+    })
+    thread = threading.Thread(
+        target=_run_brand_book_generate,
+        args=(brand_slug, mode),
+        daemon=True,
+    )
+    thread.start()
+    return jsonify(success=True, data={
+        "message": "Brand-Book generation started (PAID run). Poll GET /api/brands/<slug>/brand-book for status.",
+        "mode": mode,
+    })
+
+
+@app.route("/api/brands/<brand_slug>/brand-book/approve", methods=["POST"])
+@require_auth
+def approve_brand_book(brand_slug: str):
+    """H2: Approve the brand-book Foundation. Writes Foundation → brand_profile.json +
+    voice_profile.json + appends brand_narrative entry. Sets status → approved.
+    Body: { notes?: string }
+    """
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    info = _brand_book_status(brand_slug)
+    if info.get("status") not in ("pending_review", "change_requested"):
+        return jsonify(success=False, error=(
+            f"Cannot approve: status is '{info.get('status', 'none')}'. "
+            "Generate the Brand-Book first."
+        )), 409
+    lp = info.get("latest_path")
+    if not lp or not Path(lp).exists():
+        return jsonify(success=False, error="Brand-Book report file not found. Re-generate."), 404
+    # Parse report
+    try:
+        raw = Path(lp).read_text()
+        body_text = raw.split("\n---\n", 1)[1] if "\n---\n" in raw else raw
+        report = json.loads(body_text)
+    except Exception as e:
+        return jsonify(success=False, error=f"Could not parse Brand-Book report: {e}"), 500
+    foundation = report.get("parts", {}).get("part1_foundation", {})
+    _write_foundation(brand_slug, foundation)
+    ts = datetime.utcnow().isoformat() + "Z"
+    _update_brand_profile_fields(brand_slug, {
+        "brand_book_status":      "approved",
+        "brand_book_approved_ts": ts,
+    })
+    # Append narrative entry (Phase A)
+    ps = (foundation or {}).get("positioning_statement", "")
+    summary_text = f"Brand Foundation approved (brand-book v6). Positioning: {ps[:120]}"
+    if _DB_AVAILABLE and brand_id:
+        try:
+            _db.append_narrative(brand_id, "brand-book", "decision", summary_text, refs={"path": lp})
+        except Exception:
+            pass
+    # Also append to local brand_narrative.json for offline use
+    narr_path = BRANDS_DIR / brand_slug / "brand_narrative.json"
+    try:
+        narr = []
+        if narr_path.exists():
+            narr = json.loads(narr_path.read_text())
+        narr.append({"ts": ts, "agent": "brand-book", "entry_type": "decision", "summary": summary_text})
+        narr_path.write_text(json.dumps(narr, indent=2))
+    except Exception:
+        pass
+    return jsonify(success=True, data={
+        "message": "Brand Foundation approved. brand_profile.json + voice_profile.json updated. Strategy Agent is now unlocked.",
+        "approved_ts": ts,
+        "foundation_written": bool(foundation and not foundation.get("_unparsed")),
+    })
+
+
+@app.route("/api/brands/<brand_slug>/brand-book/request-change", methods=["POST"])
+@require_auth
+def request_brand_book_change(brand_slug: str):
+    """K3: Record a change request against the brand-book. Increments revision counter.
+    At cap (3) the flag is set — further changes are scope-creep, not revisions.
+    Body: { notes: string }
+    """
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    body = request.get_json(force=True) or {}
+    notes = (body.get("notes") or "").strip()
+    if not notes:
+        return jsonify(success=False, error="notes required — describe the change requested"), 400
+    info = _brand_book_status(brand_slug)
+    if info.get("status") not in ("pending_review", "change_requested"):
+        return jsonify(success=False, error=(
+            f"Cannot request change: status is '{info.get('status', 'none')}'. "
+            "Brand-Book must be in pending_review."
+        )), 409
+    rev = info.get("revision_count", 0) + 1
+    scope_flag = rev > BRAND_BOOK_REVISION_CAP
+    _update_brand_profile_fields(brand_slug, {
+        "brand_book_status":         "change_requested",
+        "brand_book_revision_count": rev,
+        "brand_book_scope_flag":     scope_flag,
+    })
+    # Append to narrative
+    ts = datetime.utcnow().isoformat() + "Z"
+    summary_text = f"Brand-Book change request #{rev}: {notes[:200]}"
+    if _DB_AVAILABLE and brand_id:
+        try:
+            _db.append_narrative(brand_id, "brand-book", "action", summary_text)
+        except Exception:
+            pass
+    if scope_flag:
+        return jsonify(success=True, data={
+            "message": (
+                f"Revision {rev} recorded. Revision cap ({BRAND_BOOK_REVISION_CAP}) exceeded — "
+                "this is now a scope-change, not a revision. Treat as a new brief or Phase-2 work."
+            ),
+            "revision_count": rev,
+            "scope_flag": True,
+            "status": "change_requested",
+        })
+    return jsonify(success=True, data={
+        "message": f"Change request #{rev} recorded. Re-generate the Brand-Book to address the feedback.",
+        "revision_count": rev,
+        "scope_flag": False,
+        "revisions_remaining": BRAND_BOOK_REVISION_CAP - rev,
+        "status": "change_requested",
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 if __name__ == "__main__":
