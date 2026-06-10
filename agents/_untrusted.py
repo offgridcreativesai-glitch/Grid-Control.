@@ -45,6 +45,7 @@ RULES (enforce everywhere):
 - Never pass already-encoded HTML/JS or pickled data as untrusted content —
   strip to plain text first; this module is a labeling layer, not a sanitizer.
 """
+import html
 import json
 
 # ── Policy preamble ────────────────────────────────────────────────────────────
@@ -77,6 +78,11 @@ def wrap(label: str, content) -> str:
         body = json.dumps(content, ensure_ascii=False, indent=2)
     else:
         body = content
+    # CRITICAL (SG2): neutralize angle brackets so untrusted content cannot forge
+    # a closing </external_data> tag (or any tag) and break out of the data frame
+    # into the instruction space. This is the bypass the whole LAW exists to stop.
+    # json structure (braces/quotes) is untouched, so the model still reads it.
+    body = html.escape(body, quote=False)
     safe_label = "".join(c for c in str(label) if c.isalnum() or c in "-_")
     return (
         f'<external_data label="{safe_label}">\n'

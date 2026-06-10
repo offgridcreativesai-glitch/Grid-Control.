@@ -35,8 +35,10 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
     from model_gateway import model_for
+    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
     from agents.model_gateway import model_for
+    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("content-planner")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -201,6 +203,8 @@ class ContentPlanner:
         trends_summary = json.dumps(trends, indent=2)
         if len(trends_summary) > 4000:
             trends_summary = trends_summary[:4000] + "\n... [truncated]"
+        # LAW: trends_live.json carries raw scraped captions/comments → wrap DATA-not-instruction
+        trends_summary = _untrusted_wrap("scraped_trend_data", trends_summary)
 
         import datetime as _dt
         now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat()
@@ -218,6 +222,8 @@ class ContentPlanner:
         prompt = f"""You are the Content Planner for OffGrid Marketing OS.
 Your job: produce a 30-day content calendar based on the approved 90-day strategy and real trend data.
 Every piece must be specific — platform, format, topic, hook angle, CTA.
+
+{_UNTRUSTED_POLICY}
 
 BRAND CONTEXT:
 {brand_ctx}

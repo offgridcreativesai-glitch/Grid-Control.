@@ -37,8 +37,10 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
     from model_gateway import model_for
+    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
     from agents.model_gateway import model_for
+    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("script-writer")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -349,7 +351,10 @@ class ScriptWriter:
         if isinstance(instagram_trends, dict):
             top_hooks = instagram_trends.get("top_hooks", [])
             if top_hooks:
-                trend_signals = f"Top performing hooks this week: {json.dumps(top_hooks[:3])}"
+                # LAW: top_hooks are extracted from scraped captions → wrap DATA-not-instruction
+                trend_signals = "Top performing hooks this week:\n" + _untrusted_wrap(
+                    "scraped_top_hooks", top_hooks[:3]
+                )
 
         # Token optimization: extract only the voice fields the writer actually uses.
         # Full voice_profile.json is referenced by name if Claude needs deeper detail.
@@ -403,6 +408,8 @@ Apply -20% confidence penalty to any hook that matches a DEAD pattern.
         prompt = f"""You are the Script Writer for OffGrid Marketing OS.
 Write a complete script for one content piece using the BEAT structure.
 Check brand voice. Flag if human face or voice is required.
+
+{_UNTRUSTED_POLICY}
 
 BRAND CONTEXT:
 {json.dumps(brand_ctx, indent=2)}
