@@ -40,6 +40,7 @@ AGENT_ROUTING: dict[str, tuple[str, str]] = {
     "creative-director":     ("opus",   "medium"),
     "ad-strategist":         ("opus",   "high"),
     "brand-guardian":        ("opus",   "high"),
+    "brand-book":            ("opus",   "xhigh"),  # Phase G — heavy multi-section report gen
 
     # Sonnet 4.6 — floor (everything else with an LLM)
     "content-planner":       ("sonnet", "medium"),
