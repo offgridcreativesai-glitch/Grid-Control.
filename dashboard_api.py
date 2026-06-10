@@ -7389,6 +7389,14 @@ def _safe_fname(name: str) -> str:
     return re.sub(r"[^\w.\-]", "_", name) or "upload"
 
 
+def _safe_card_id(card_id: str) -> bool:
+    """SG4: card ids are used to build asset paths (production/{card_id}/...).
+    Flask's <card_id> converter already blocks '/', but enforce a strict charset
+    so a bare '..' or odd token can never shape a path segment. Alphanumerics,
+    dash, underscore only, max 64 chars."""
+    return bool(re.match(r"^[A-Za-z0-9_-]{1,64}$", card_id or ""))
+
+
 def _classify_ext(suffix: str) -> str:
     cat = _ASSET_EXT_MAP.get(suffix.lower())
     if not cat:
@@ -7634,6 +7642,8 @@ def post_card_upload(brand_slug: str, card_id: str):
     _g = _guard_asset_brand(brand_slug)
     if _g:
         return _g
+    if not _safe_card_id(card_id):
+        return jsonify(success=False, error="Invalid card id."), 400
     card = _get_card(brand_slug, card_id)
     if card is None:
         return jsonify(success=False, error="Card not found."), 404
@@ -7774,6 +7784,42 @@ _CONCIERGE_AGENT_LABELS: dict[str, str] = {
     "strategy-agent":   "Strategy Agent",
 }
 
+# SG4 — dispatch cost-governance. A concierge dispatch spawns a REAL paid agent
+# subprocess (Opus/Sonnet). The endpoint IP rate-limit alone is not a cost gate,
+# so throttle the expensive path per-brand: a same-agent cooldown (the prior run
+# is likely still in flight) + an hourly cap on new specialist requests. Trivial
+# calendar edits are NOT throttled — they're free.
+MAX_CONCIERGE_MSG = 2000           # chars; bounds brief size + regex/prompt input
+_CONCIERGE_MAX_PER_HOUR = 6        # new specialist dispatches per brand per hour
+_CONCIERGE_AGENT_COOLDOWN = 90     # seconds before the same agent can be re-fired
+_CONCIERGE_DISPATCH_LOG: dict[str, list[float]] = {}   # brand_slug -> [timestamps]
+_CONCIERGE_AGENT_LAST: dict[str, float] = {}           # "brand:agent" -> last ts
+
+
+def _concierge_dispatch_allowed(brand_slug: str, agent_slug: str) -> tuple[bool, str | None]:
+    """SG4 throttle check for the paid dispatch path. Returns (ok, reason)."""
+    now = time.time()
+    label = _CONCIERGE_AGENT_LABELS.get(agent_slug, agent_slug)
+    last = _CONCIERGE_AGENT_LAST.get(f"{brand_slug}:{agent_slug}", 0.0)
+    if now - last < _CONCIERGE_AGENT_COOLDOWN:
+        return False, (f"The {label} is already working on your last request — "
+                       "give it a moment before sending another.")
+    window = [t for t in _CONCIERGE_DISPATCH_LOG.get(brand_slug, []) if now - t < 3600]
+    if len(window) >= _CONCIERGE_MAX_PER_HOUR:
+        return False, (f"Hourly limit reached for new specialist requests "
+                       f"({_CONCIERGE_MAX_PER_HOUR}/hr). Trivial edits — pause, "
+                       "reschedule, caption — still work.")
+    return True, None
+
+
+def _concierge_dispatch_record(brand_slug: str, agent_slug: str) -> None:
+    """Record a fired dispatch for the throttle window."""
+    now = time.time()
+    _CONCIERGE_AGENT_LAST[f"{brand_slug}:{agent_slug}"] = now
+    window = [t for t in _CONCIERGE_DISPATCH_LOG.get(brand_slug, []) if now - t < 3600]
+    window.append(now)
+    _CONCIERGE_DISPATCH_LOG[brand_slug] = window
+
 
 def _concierge_classify(text: str) -> tuple[str, str | None]:
     """Pure regex classifier — zero LLM cost.
@@ -7909,7 +7955,11 @@ def _concierge_dispatch(brand_slug: str, agent_slug: str, brief_text: str) -> di
     brief_data = {
         "type":         "concierge_brief",
         "agent":        agent_slug,
+        # SG4: 'brief' is raw client input. Length-capped by the endpoint
+        # (MAX_CONCIERGE_MSG). No agent reads this into a prompt today; ANY future
+        # consumer MUST wrap it via agents/_untrusted.py before the model.
         "brief":        brief_text,
+        "_untrusted":   True,
         "brand_slug":   brand_slug,
         "requested_at": datetime.now(timezone.utc).isoformat(),
         "status":       "dispatched",
@@ -7951,7 +8001,7 @@ def _concierge_dispatch(brand_slug: str, agent_slug: str, brief_text: str) -> di
 
 @app.route("/api/brands/<brand_slug>/concierge", methods=["POST"])
 @require_auth
-@rate_limit(max_requests=60, window_seconds=60)
+@rate_limit(max_requests=20, window_seconds=60)
 def concierge_chat(brand_slug: str):
     """J: Chief of Staff router.
 
@@ -7975,6 +8025,11 @@ def concierge_chat(brand_slug: str):
     message = (body.get("message") or "").strip()
     if not message:
         return jsonify(success=False, error="'message' is required."), 400
+    if len(message) > MAX_CONCIERGE_MSG:
+        return jsonify(
+            success=False,
+            error=f"Message too long (max {MAX_CONCIERGE_MSG} characters)."
+        ), 413
 
     context = body.get("context") or {}
     if not isinstance(context, dict):
@@ -7987,7 +8042,14 @@ def concierge_chat(brand_slug: str):
         return jsonify(success=True, data={"tier": "trivial", **result})
 
     if tier == "dispatch":
+        # SG4: throttle the paid path (each dispatch spawns a real agent run).
+        ok, reason = _concierge_dispatch_allowed(brand_slug, action_key)
+        if not ok:
+            return jsonify(success=True, data={
+                "tier": "dispatch", "throttled": True, "message": reason,
+            })
         dispatch = _concierge_dispatch(brand_slug, action_key, message)
+        _concierge_dispatch_record(brand_slug, action_key)
         return jsonify(success=True, data={"tier": "dispatch", **dispatch})
 
     return jsonify(success=True, data={
