@@ -41,6 +41,11 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
+# SG3 (Phase I uploads): hard request-body ceiling so Werkzeug rejects oversized
+# bodies with 413 BEFORE the handler buffers them. 500 MB = the largest per-category
+# limit (video); per-category checks in the upload handlers refine below this.
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
+
 # ── Rate Limiting (AgentShield) ───────────────────────────────────────────────
 _rate_store: dict[str, list[float]] = {}
 _RATE_STORE_MAX_KEYS = 10_000  # Prevent unbounded memory growth
@@ -7322,9 +7327,11 @@ def request_brand_book_change(brand_slug: str):
 #   I-b: Per-content-card production upload → routes to creative-director queue
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Extension → asset category map
+# Extension → asset category map.
+# SG3: .svg deliberately EXCLUDED — it is an active-content format (can embed
+# <script>) and is a stored-XSS vector if assets are ever served inline same-origin.
 _ASSET_EXT_MAP: dict[str, str] = {
-    **{ext: "image"    for ext in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg")},
+    **{ext: "image"    for ext in (".jpg", ".jpeg", ".png", ".gif", ".webp")},
     **{ext: "video"    for ext in (".mp4", ".mov", ".avi", ".webm", ".mkv")},
     **{ext: "document" for ext in (".pdf", ".docx", ".doc", ".txt", ".md", ".csv")},
     **{ext: "audio"    for ext in (".mp3", ".wav", ".m4a", ".aac", ".ogg")},
@@ -7385,22 +7392,46 @@ def _classify_ext(suffix: str) -> str:
 
 
 def _ssrf_check(url: str) -> bool:
-    """Return True if url is a safe cloud-storage link, False otherwise."""
+    """True only for an http(s) link to an allowlisted cloud-storage host.
+
+    Uses .hostname (NOT .netloc): hostname strips userinfo and port, so the
+    credentials-in-URL trick `https://drive.google.com@evil.com/` resolves to
+    its REAL host (evil.com) and is rejected. Allowlist + exact/sub-domain
+    match only — deny by default. No fetch happens here (SG3: any future fetch
+    path must re-clear this gate).
+    """
     try:
-        netloc = _urlparse(url).netloc.lower().lstrip("www.")
-        return any(
-            netloc == d or netloc.endswith("." + d)
-            for d in _ASSET_CLOUD_DOMAINS
-        )
+        parts = _urlparse(url)
     except Exception:
         return False
+    if parts.scheme not in ("http", "https"):
+        return False
+    host = (parts.hostname or "").lower()
+    if not host:
+        return False
+    return any(host == d or host.endswith("." + d) for d in _ASSET_CLOUD_DOMAINS)
+
+
+def _guard_asset_brand(brand_slug: str):
+    """SG3 guard for Phase I upload routes: validate slug format (blocks
+    ../ path-traversal in the brand_slug path param) THEN brand authz.
+    Returns an (response, status) tuple to return on failure, or None to proceed.
+    """
+    if not _validate_brand_slug(brand_slug):
+        return jsonify(success=False, error="Invalid brand slug."), 400
+    _bid, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    return None
 
 
 @app.route("/api/brands/<brand_slug>/assets", methods=["GET"])
 @require_auth
 def list_assets(brand_slug: str):
     """I-a: List all brand assets from manifest."""
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     entries = _read_manifest(brand_slug)
     return jsonify(success=True, data={"assets": entries, "count": len(entries)})
 
@@ -7409,7 +7440,9 @@ def list_assets(brand_slug: str):
 @require_auth
 def upload_asset(brand_slug: str):
     """I-a: Accept a direct file upload into brands/{slug}/assets/{category}/."""
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     f = request.files.get("file")
     if not f or not f.filename:
         return jsonify(success=False, error="No file provided."), 400
@@ -7420,9 +7453,15 @@ def upload_asset(brand_slug: str):
     except ValueError as e:
         return jsonify(success=False, error=str(e)), 415
 
+    limit = _ASSET_MAX_BYTES[category]
+    # Early reject by declared body size (file + multipart overhead) before reading.
+    if request.content_length and request.content_length > limit + 1024 * 1024:
+        return jsonify(
+            success=False,
+            error=f"File too large. Limit for {category}: {limit // (1024*1024)} MB."
+        ), 413
     data = f.read()
     size = len(data)
-    limit = _ASSET_MAX_BYTES[category]
     if size > limit:
         return jsonify(
             success=False,
@@ -7456,7 +7495,9 @@ def add_cloud_link(brand_slug: str):
     No HTTP fetch here — SG3 audits any future fetch path. SSRF guard rejects
     everything outside _ASSET_CLOUD_DOMAINS.
     """
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     body = request.get_json(silent=True) or {}
     url = (body.get("url") or "").strip()
     if not url:
@@ -7493,7 +7534,9 @@ def delete_asset(brand_slug: str, asset_id: str):
     """I-a: Remove an asset from the manifest. Deletes the file from disk
     if it was a direct upload.
     """
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     entries = _read_manifest(brand_slug)
     target = next((e for e in entries if e.get("id") == asset_id), None)
     if not target:
@@ -7559,7 +7602,9 @@ def _update_card(brand_slug: str, card_id: str, updates: dict) -> bool:
 @require_auth
 def get_card_upload(brand_slug: str, card_id: str):
     """I-b: Get the upload status for a content card."""
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     card = _get_card(brand_slug, card_id)
     if card is None:
         return jsonify(success=False, error="Card not found."), 404
@@ -7581,7 +7626,9 @@ def post_card_upload(brand_slug: str, card_id: str):
     Sets upload_status='pending_edit' and writes a routing stub to
     pending_approval/creative-director/ so it surfaces in the approval dashboard.
     """
-    _authorize_brand(brand_slug)
+    _g = _guard_asset_brand(brand_slug)
+    if _g:
+        return _g
     card = _get_card(brand_slug, card_id)
     if card is None:
         return jsonify(success=False, error="Card not found."), 404
@@ -7597,9 +7644,14 @@ def post_card_upload(brand_slug: str, card_id: str):
         except ValueError as e:
             return jsonify(success=False, error=str(e)), 415
 
+        limit = _ASSET_MAX_BYTES[category]
+        if request.content_length and request.content_length > limit + 1024 * 1024:
+            return jsonify(
+                success=False,
+                error=f"File too large. Limit for {category}: {limit // (1024*1024)} MB."
+            ), 413
         data = f.read()
         size = len(data)
-        limit = _ASSET_MAX_BYTES[category]
         if size > limit:
             return jsonify(
                 success=False,
