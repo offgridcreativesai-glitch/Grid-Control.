@@ -292,6 +292,13 @@ concierge, guardrails, notifications, Wave-2 agents). For each: re-read the code
 ends (unhandled errors, missing validation, silent failures, ₹0-style regressions, drift between
 `agents/*.py` and `registry.json`, un-wrapped untrusted input, missing `data_provenance`), **fix**, re-verify.
 Commit per area.
+  - **SG2-deferred (Jun 10):** the untrusted-content LAW (`agents/_untrusted.py`) is hardened (delimiter-escape
+    closed) and wired into the 4 highest-risk scrape→prompt paths (trend_researcher ×2, strategy_agent,
+    content_planner, script_writer). **W3.1 owes a per-field audit of EVERY remaining external-data consumer** —
+    confirm no raw scraped/inbound text reaches any prompt unwrapped. First-party transcripts (creative_director
+    Whisper = founder's own video) and model-derived files (`content_calendar.json`) are NOT untrusted. **Hard
+    rule for Wave 2:** community_manager + dm_customer_hunter MUST import `_untrusted` and wrap every comment/DM/
+    profile before the model — verify at their build, not after.
 
 ### W3.2 — Deep code review (`/code-review` ultra tier)
 Run `/code-review` at the **ultra** tier over the full Wave-1→pilot diff (multi-agent cloud review). Triage
