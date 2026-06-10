@@ -1652,15 +1652,12 @@ def _read_output_json(path: Path) -> dict:
 
 
 def _find_carousel_output(brand_dir: Path, filename: str) -> Path | None:
-    """Locate an approved (preferred) or still-pending carousel output by filename."""
-    candidates = [
-        brand_dir / "outputs" / "approved" / filename,
-        brand_dir / "outputs" / "pending_approval" / "carousel-designer" / filename,
-    ]
-    for c in candidates:
-        if c.exists():
-            return c
-    return None
+    """Locate a carousel output in outputs/approved/ ONLY.
+    K1 (Phase K): pending_approval files must NOT be publishable — approval gate
+    is the only path to publication. Callers get 404 for unapproved files.
+    """
+    candidate = brand_dir / "outputs" / "approved" / filename
+    return candidate if candidate.exists() else None
 
 
 @app.route("/api/publish/check", methods=["GET"])
@@ -1691,7 +1688,7 @@ def _publish_instagram_impl(brand_slug: str, filename: str):
     brand_dir = BRANDS_DIR / brand_slug
     src = _find_carousel_output(brand_dir, filename)
     if not src:
-        return jsonify({"success": False, "error": f"Carousel '{filename}' not found in approved or pending"}), 404
+        return jsonify({"success": False, "error": f"Carousel '{filename}' not found in outputs/approved/. Approve it first before publishing."}), 404
 
     try:
         data = _read_output_json(src)
@@ -1755,17 +1752,20 @@ def _publish_instagram_impl(brand_slug: str, filename: str):
 # ── Generic (non-carousel) output loading + per-platform publish impls ─────────
 
 def _find_output(brand_dir: Path, filename: str) -> Path | None:
-    """Locate an approved (preferred) or still-pending output by filename, across any
-    agent subfolder."""
-    for base in (brand_dir / "outputs" / "approved", brand_dir / "outputs" / "pending_approval"):
-        if not base.exists():
-            continue
-        direct = base / filename
-        if direct.exists():
-            return direct
-        for hit in base.rglob(filename):
-            if hit.is_file():
-                return hit
+    """Locate an output file in outputs/approved/ ONLY (direct match or rglob).
+    K1 (Phase K): pending_approval files must NOT reach publishers — the approval
+    gate is the ONLY path from agent output to publication. Returns None for any
+    file that has not been explicitly approved.
+    """
+    base = brand_dir / "outputs" / "approved"
+    if not base.exists():
+        return None
+    direct = base / filename
+    if direct.exists():
+        return direct
+    for hit in base.rglob(filename):
+        if hit.is_file():
+            return hit
     return None
 
 
