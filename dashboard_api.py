@@ -8092,53 +8092,52 @@ def concierge_chat(brand_slug: str):
 # Phase L — Notifications (P0 minimal — email-first)
 #
 # Ping the brand owner when something needs approval. Drives "Needs you" queue
-# + morning brief. Email via Gmail SMTP (app password). WhatsApp = P1.
+# + morning brief. WhatsApp = P1.
+#
+# Transport = Make.com webhook (NOT raw SMTP): Railway blocks outbound SMTP
+# ports, so we hand the email off to the same tested Make.com pipeline the
+# reporting product already uses. We POST a JSON payload; the Make scenario
+# sends the actual email.
 #
 # Required env vars (add to .env + Railway):
-#   NOTIFICATION_EMAIL_TO   — recipient (e.g. gaurav.khanna110@gmail.com)
-#   NOTIFICATION_SMTP_USER  — Gmail sender address
-#   NOTIFICATION_SMTP_PASS  — Gmail app password (16-char, no spaces)
+#   NOTIFICATION_WEBHOOK_URL — Make.com webhook that sends the email (REQUIRED)
+#   NOTIFICATION_EMAIL_TO    — recipient, passed through in the payload (optional
+#                              if the Make scenario hard-codes the recipient)
 #
-# All three must be set; otherwise email silently no-ops and the needs-you
-# queue endpoint still works (no degradation to the approval flow).
+# If NOTIFICATION_WEBHOOK_URL is unset, notifications silently no-op and the
+# needs-you queue endpoint still works (no degradation to the approval flow).
 # ─────────────────────────────────────────────────────────────────────────────
 
-import smtplib
-import email.mime.text as _mime_text
-import email.mime.multipart as _mime_multi
+
+def _notification_configured() -> bool:
+    return bool(os.getenv("NOTIFICATION_WEBHOOK_URL", "").strip())
 
 
-def _notification_email_configured() -> bool:
-    return bool(
-        os.getenv("NOTIFICATION_EMAIL_TO") and
-        os.getenv("NOTIFICATION_SMTP_USER") and
-        os.getenv("NOTIFICATION_SMTP_PASS")
-    )
-
-
-def _send_notification_email(subject: str, body_text: str) -> bool:
-    """Send a plain-text notification email via Gmail SMTP + STARTTLS.
-    Returns True on success. Never raises — log and return False on any error.
+def _send_notification(subject: str, body_text: str, *, count: int = 0) -> bool:
+    """Hand an approval-needed notification to the Make.com webhook, which sends
+    the email. Railway blocks outbound SMTP, so this is the tested path. POSTs a
+    JSON payload; the Make scenario does the send. Never raises — log + return
+    False on any error.
     """
-    to_addr   = os.getenv("NOTIFICATION_EMAIL_TO", "").strip()
-    from_addr = os.getenv("NOTIFICATION_SMTP_USER", "").strip()
-    password  = os.getenv("NOTIFICATION_SMTP_PASS", "").strip()
-    if not (to_addr and from_addr and password):
+    url = os.getenv("NOTIFICATION_WEBHOOK_URL", "").strip()
+    if not url:
         return False
+    payload = {
+        "type":    "approval_notification",
+        "to":      os.getenv("NOTIFICATION_EMAIL_TO", "").strip(),
+        "subject": subject,
+        "body":    body_text,
+        "count":   count,
+    }
     try:
-        msg = _mime_multi.MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"]    = f"Grid Control <{from_addr}>"
-        msg["To"]      = to_addr
-        msg.attach(_mime_text.MIMEText(body_text, "plain", "utf-8"))
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
-            s.ehlo()
-            s.starttls()
-            s.login(from_addr, password)
-            s.sendmail(from_addr, [to_addr], msg.as_string())
-        return True
+        import requests as _req
+        r = _req.post(url, json=payload, timeout=15)
+        if 200 <= r.status_code < 300:
+            return True
+        print(f"[notification] webhook returned {r.status_code}")
+        return False
     except Exception as exc:
-        print(f"[notification] email failed: {exc}")
+        print(f"[notification] webhook post failed: {exc}")
         return False
 
 
@@ -8174,7 +8173,7 @@ def _maybe_notify_pending(brand_slug: str) -> None:
     """Fire an approval-needed email when pending_approval/ is non-empty and
     email is configured. Called after every successful agent run. Best-effort.
     """
-    if not _notification_email_configured():
+    if not _notification_configured():
         return
     items = _needs_you_items(brand_slug)
     if not items:
@@ -8192,7 +8191,7 @@ def _maybe_notify_pending(brand_slug: str) -> None:
     if n > 10:
         lines.append(f"  … and {n - 10} more")
     lines += ["", "Review at: your Grid Control dashboard → Review tab."]
-    _send_notification_email(subject, "\n".join(lines))
+    _send_notification(subject, "\n".join(lines), count=n)
 
 
 @app.route("/api/brands/<brand_slug>/needs-you", methods=["GET"])
@@ -8216,7 +8215,7 @@ def needs_you(brand_slug: str):
     return jsonify(success=True, data={
         "count":              len(items),
         "items":              items,
-        "email_configured":   _notification_email_configured(),
+        "email_configured":   _notification_configured(),
         "notification_email": masked,
     })
 
@@ -8232,12 +8231,12 @@ def send_notify(brand_slug: str):
     if _g:
         return _g
 
-    if not _notification_email_configured():
+    if not _notification_configured():
         return jsonify(success=True, data={
             "sent": False,
             "message": (
-                "Email not configured. Set NOTIFICATION_EMAIL_TO, "
-                "NOTIFICATION_SMTP_USER, and NOTIFICATION_SMTP_PASS in .env."
+                "Notifications not configured. Set NOTIFICATION_WEBHOOK_URL "
+                "(Make.com webhook) in .env / Railway."
             ),
         })
 
@@ -8263,11 +8262,11 @@ def send_notify(brand_slug: str):
         lines.append(f"  … and {n - 10} more")
     lines += ["", "Review at: your Grid Control dashboard → Review tab."]
 
-    ok = _send_notification_email(subject, "\n".join(lines))
+    ok = _send_notification(subject, "\n".join(lines), count=n)
     return jsonify(success=True, data={
         "sent":    ok,
         "count":   n,
-        "message": f"Notification sent for {n} item(s)." if ok else "Email send failed — check SMTP credentials.",
+        "message": f"Notification sent for {n} item(s)." if ok else "Webhook send failed — check NOTIFICATION_WEBHOOK_URL / Make.com scenario.",
     })
 
 
