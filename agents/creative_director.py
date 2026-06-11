@@ -29,6 +29,12 @@ from _provenance import (
     build_violation_message,
     MAX_RERUN_ATTEMPTS,
 )
+# Untrusted-content LAW (W3.1): competitors_db.json is scraped third-party text
+# (competitor bios/captions). It must be DATA-wrapped before any model prompt.
+try:
+    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+except ImportError:
+    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 
 
 def _escape_literal_newlines_in_strings(json_str: str) -> str:
@@ -235,9 +241,17 @@ If all 4 checks pass, return passed: true and empty flags array."""
                 "requires_human_face": item.get("requires_human_face", False),
             })
 
-        competitor_summary = json.dumps(competitors, indent=2)[:800] if competitors else "No competitor data available."
+        if competitors:
+            competitor_summary = _untrusted_wrap(
+                "competitor_db_scraped",
+                json.dumps(competitors, indent=2)[:800],
+            )
+        else:
+            competitor_summary = "No competitor data available."
 
         prompt = f"""You are the Creative Director for {brand_name}.
+
+{_UNTRUSTED_POLICY}
 
 PRODUCT: {product}
 AUDIENCE: {audience}
