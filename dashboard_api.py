@@ -3052,9 +3052,9 @@ def brand_costs(brand_slug: str):
     if not _DB_AVAILABLE:
         return jsonify({"success": False, "error": "Database not available"}), 503
 
-    brand_id = _get_brand_id(brand_slug)
-    if not brand_id:
-        return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
+    brand_id, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
 
     data = _db.get_brand_monthly_costs(brand_id, year, month)
     return jsonify({"success": True, "data": data})
@@ -3069,6 +3069,10 @@ def record_agent_cost(brand_slug: str):
     """
     if not _DB_AVAILABLE:
         return jsonify({"success": True, "data": {}}), 200  # silent no-op
+
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
 
     body            = request.get_json() or {}
     run_id          = body.get("run_id", "")
@@ -3187,9 +3191,9 @@ def get_brand_memory_db(brand_slug: str):
     if not _DB_AVAILABLE:
         return jsonify({"success": True, "data": []}), 200
 
-    brand_id = _get_brand_id(brand_slug)
-    if not brand_id:
-        return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
+    brand_id, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
 
     agent_slug = request.args.get("agent_slug", "")
     if agent_slug:
@@ -3393,6 +3397,14 @@ def create_brand():
 def delete_brand(brand_slug: str):
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep — CRITICAL (rmtree)
+    if err:
+        return err
+    # Irreversible (rmtree): a brand member alone isn't enough — real users must be
+    # super-admin. The operator-secret path (user is None) stays exempt.
+    _u = getattr(request, "user", None)
+    if _u is not None and _DB_AVAILABLE and not _db.is_super_admin(_u["id"]):
+        return jsonify({"success": False, "error": "Only an admin can delete a brand"}), 403
     brand_dir = BRANDS_DIR / brand_slug
     if not brand_dir.exists():
         return jsonify({"success": False, "error": "Brand not found"}), 404
@@ -3409,6 +3421,9 @@ def get_brand_memory(brand_slug: str):
     """Return all brand_memory files for a brand."""
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
     result = {}
     for key in _MEMORY_FILES:
         result[key] = _read_memory(brand_slug, key)
@@ -3421,6 +3436,9 @@ def get_brand_intelligence(brand_slug: str):
     """Return market_intelligence files + staleness info."""
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
     result = {}
     for key in _INTELLIGENCE_FILES:
         data = _read_intelligence(brand_slug, key)
@@ -3441,6 +3459,9 @@ def approve_memory_update(brand_slug: str):
     """
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
     body = request.get_json() or {}
     memory_key = body.get("memory_key", "")
     updates    = body.get("updates", {})
@@ -3465,6 +3486,9 @@ def set_brand_goal(brand_slug: str):
     """
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
     body = request.get_json() or {}
     goal_text   = (body.get("goal") or "").strip()
     goal_metric = (body.get("metric") or "").strip()
