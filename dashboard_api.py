@@ -7219,10 +7219,17 @@ def generate_brand_book(brand_slug: str):
     mode = body.get("mode", "cold_sellable")
     if mode not in ("cold_sellable", "onboarding_connected"):
         return jsonify(success=False, error="mode must be cold_sellable or onboarding_connected"), 400
-    # Block if already generating or pending review
     current = _brand_book_status(brand_slug)
-    if current.get("status") in ("generating",):
+    if current.get("status") == "generating":
         return jsonify(success=False, error="Brand-Book generation already in progress"), 409
+    # Guard: regenerating an already-approved book resets the sign-off gate
+    # (Foundation goes back to pending_review). Require an explicit force flag.
+    if current.get("status") == "approved" and not body.get("force"):
+        return jsonify(success=False, error=(
+            "Brand-Book is already approved and the Foundation is live. Regenerating "
+            "will reset the sign-off gate to pending_review. Pass {\"force\": true} "
+            "to regenerate anyway."
+        )), 409
     # Set generating immediately
     _update_brand_profile_fields(brand_slug, {
         "brand_book_status": "generating",
@@ -7382,7 +7389,7 @@ _ASSET_CLOUD_DOMAINS = frozenset({
 
 
 def _asset_dir(brand_slug: str, sub: str = "") -> Path:
-    d = Path("brands") / brand_slug / "assets"
+    d = BRANDS_DIR / brand_slug / "assets"
     if sub:
         d = d / sub
     d.mkdir(parents=True, exist_ok=True)
@@ -7390,7 +7397,7 @@ def _asset_dir(brand_slug: str, sub: str = "") -> Path:
 
 
 def _manifest_path(brand_slug: str) -> Path:
-    return Path("brands") / brand_slug / "assets" / "manifest.json"
+    return BRANDS_DIR / brand_slug / "assets" / "manifest.json"
 
 
 def _read_manifest(brand_slug: str) -> list:
@@ -7594,7 +7601,7 @@ def delete_asset(brand_slug: str, asset_id: str):
 
 def _get_card(brand_slug: str, card_id: str) -> dict | None:
     """Return the card dict from content_calendar.json or None."""
-    cal_path = Path("brands") / brand_slug / "content_calendar.json"
+    cal_path = BRANDS_DIR / brand_slug / "content_calendar.json"
     if not cal_path.exists():
         return None
     try:
@@ -7609,7 +7616,7 @@ def _get_card(brand_slug: str, card_id: str) -> dict | None:
 
 def _update_card(brand_slug: str, card_id: str, updates: dict) -> bool:
     """Merge updates into the matching card in content_calendar.json."""
-    cal_path = Path("brands") / brand_slug / "content_calendar.json"
+    cal_path = BRANDS_DIR / brand_slug / "content_calendar.json"
     if not cal_path.exists():
         return False
     try:
@@ -7739,7 +7746,7 @@ def post_card_upload(brand_slug: str, card_id: str):
 
     # Write routing stub so the approval dashboard surfaces this card
     try:
-        cd_dir = (Path("brands") / brand_slug / "outputs"
+        cd_dir = (BRANDS_DIR / brand_slug / "outputs"
                   / "pending_approval" / "creative-director")
         cd_dir.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -7975,7 +7982,7 @@ def _concierge_dispatch(brand_slug: str, agent_slug: str, brief_text: str) -> di
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     # Write brief to pending_approval
-    brief_dir = (Path("brands") / brand_slug / "outputs"
+    brief_dir = (BRANDS_DIR / brand_slug / "outputs"
                  / "pending_approval" / agent_slug)
     brief_dir.mkdir(parents=True, exist_ok=True)
     brief_data = {
@@ -8143,7 +8150,7 @@ def _send_notification(subject: str, body_text: str, *, count: int = 0) -> bool:
 
 def _needs_you_items(brand_slug: str) -> list[dict]:
     """Return list of pending-approval items for brand_slug, newest first."""
-    root = Path("brands") / brand_slug / "outputs" / "pending_approval"
+    root = BRANDS_DIR / brand_slug / "outputs" / "pending_approval"
     if not root.exists():
         return []
     items: list[dict] = []
@@ -8161,7 +8168,7 @@ def _needs_you_items(brand_slug: str) -> list[dict]:
             items.append({
                 "agent":      agent,
                 "filename":   f.name,
-                "path":       str(f.relative_to(Path("brands") / brand_slug)),
+                "path":       str(f.relative_to(BRANDS_DIR / brand_slug)),
                 "created_at": mtime,
             })
     # sort newest first overall
