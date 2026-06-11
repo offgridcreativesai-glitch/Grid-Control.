@@ -7153,8 +7153,10 @@ def _run_brand_book_generate(brand_slug: str, mode: str) -> None:
         from agents.brand_book import BrandBook
         bb = BrandBook(brand_slug, mode=mode)
         result = bb.generate(render_pdf=True)
-        # result is the path to the written JSON (LOOP HEADER format)
-        latest_path = str(result) if result else None
+        # generate() returns the report DICT; the written-file path is in _output_path.
+        # (Bug fix: str(result) stringified the whole dict → approve() always 404'd
+        #  on Path(lp).exists() and the sign-off gate never opened.)
+        latest_path = result.get("_output_path") if isinstance(result, dict) else None
         _update_brand_profile_fields(brand_slug, {
             "brand_book_status":      "pending_review",
             "brand_book_latest_path": latest_path,
