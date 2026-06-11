@@ -1,1 +1,0 @@
-{"ts": "2026-05-22T20:21:40+00:00", "tool": "Bash", "summary": "cat /Users/gauravoffgrid/Desktop/offgrid-pdf-api/.env 2>/dev/null | head -1 | cut -c1-20", "exit_code": null}

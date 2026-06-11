@@ -1,5 +1,0 @@
-{"ts": "2026-05-29T12:26:23+00:00", "tool": "Bash", "summary": "Check for existing PILLAR-FORGE context package", "exit_code": null}
-{"ts": "2026-05-29T12:54:04+00:00", "tool": "Bash", "summary": "List raw recording files", "exit_code": null}
-{"ts": "2026-05-29T12:58:22+00:00", "tool": "Bash", "summary": "Check ffmpeg and whisper availability", "exit_code": null}
-{"ts": "2026-05-29T12:58:28+00:00", "tool": "Bash", "summary": "Get duration and size of all raw recordings", "exit_code": null}
-{"ts": "2026-05-29T12:58:43+00:00", "tool": "Bash", "summary": "Check if Section 3 video has audio track", "exit_code": null}

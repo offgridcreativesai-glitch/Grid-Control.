@@ -1,1 +1,0 @@
-{"ts": "2026-05-22T20:26:34+00:00", "tool": "Bash", "summary": "source /Users/gauravoffgrid/Desktop/offgrid-pdf-api/.env && curl -s \"https://api.apify.com/v2/store?token=[REDACTED]", "exit_code": null}
