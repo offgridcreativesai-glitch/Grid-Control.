@@ -73,3 +73,6 @@ graphify-out/
 
 # Agent session-memory logs (runtime jsonl transcripts, not source)
 brands/_session_memory/
+
+# v7 competitor intelligence (scraped data — keep local)
+brands/*/competitor_intel_v7.json
