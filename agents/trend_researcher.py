@@ -262,6 +262,28 @@ def _build_trend_keywords(brand_profile: dict) -> list:
             "social media marketing India", "content marketing India"]
 
 
+def competitor_metrics_from_profiles(competitors: dict) -> list[dict]:
+    """G3/G5 — deterministic REAL competitor engagement metrics from scraped
+    competitor profiles (apify~instagram-scraper output, as built by
+    scrape_competitor_profiles). Single source of truth so run() and the pilot
+    competitor-scrape driver emit the identical competitor_metrics shape.
+    avg_engagement = avg likes + avg comments per post (a real measured number)."""
+    out: list[dict] = []
+    for handle, c in (competitors or {}).items():
+        if not isinstance(c, dict) or c.get("status") != "OK":
+            continue
+        al = c.get("avg_likes", 0) or 0
+        ac = c.get("avg_comments", 0) or 0
+        out.append({
+            "handle": handle,
+            "avg_likes": al,
+            "avg_comments": ac,
+            "avg_engagement": round(al + ac, 1),
+            "posts_scraped": c.get("posts_scraped", 0),
+        })
+    return out
+
+
 class TrendResearcher:
 
     def __init__(self, brand_slug: str = None):
@@ -1764,6 +1786,20 @@ Aim for 8–12 provenance entries. Validation will reject claims that don't trac
 
         # BUILD B — Inject quality gate report (so downstream agents can audit data trust)
         trend_report["quality_gate"] = scraped_data.get("quality_gate", {})
+
+        # G3/G5 — inject REAL competitor engagement metrics (deterministic, computed from
+        # the competitor profile scrape) into competitor_intel. The AutoResearch synthesis
+        # only produces QUALITATIVE competitor_intel; without this the Brand-Book benchmark
+        # has no real category numbers. Additive — qualitative fields are preserved.
+        _comp_profiles = (scraped_data.get("instagram_competitor_profiles") or {}).get("competitors", {})
+        _comp_metrics = competitor_metrics_from_profiles(_comp_profiles)
+        if _comp_metrics:
+            trend_report.setdefault("competitor_intel", {})
+            trend_report["competitor_intel"]["competitor_metrics"] = _comp_metrics
+            trend_report["competitor_intel"].setdefault(
+                "metrics_source",
+                "apify~instagram-scraper — deterministic avg of scraped competitor posts")
+            self.log(f"  Injected REAL competitor_metrics for {len(_comp_metrics)} handles")
 
         # Rule 10 — Inject provenance + validation into trend_report
         trend_report["data_provenance"] = loop_result.get("data_provenance", [])

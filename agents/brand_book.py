@@ -216,6 +216,12 @@ class BrandBook:
         if scraped:
             parts.append("REAL SCRAPED DATA:\n" + self._scraped_block("scraped_brand_data", scraped))
         parts.append(instruction)
+        # G6 — the eval auto-rejects AI-filler phrases; ban them at generation time
+        # so we never pay to regenerate over a stray cliché.
+        parts.append(
+            "HARD STYLE RULE — never use these phrases or close variants "
+            "(the report is auto-rejected if any appear): " + "; ".join(_FILLER) + "."
+        )
         prompt = "\n\n".join(parts)
         res = complete(AGENT_SLUG, [{"role": "user", "content": prompt}], max_tokens=max_tokens)
         return (res.get("text") or "").strip()
@@ -343,6 +349,15 @@ class BrandBook:
         brand_metric_val = None  # populated by the pilot scrape (brand avg engagement)
         bench = benchmark(brand_metric_val, [c.get("avg_engagement") for c in comp_numbers
                                              if isinstance(c, dict)])
+        # G5 — each scraped competitor engagement figure is a REAL measured number;
+        # record it as provenance so the report cites real data (Rule 10, eval G6).
+        for c in comp_numbers:
+            if isinstance(c, dict) and isinstance(c.get("avg_engagement"), (int, float)) \
+                    and c["avg_engagement"] > 0:
+                self._record(metric(
+                    c["avg_engagement"], REAL, "apify_competitor_scrape",
+                    f"competitor_intel.competitor_metrics[{c.get('handle','?')}].avg_engagement",
+                    note="avg likes+comments per post from scraped competitor profile"))
         hard_truth = self._section(
             "assessment", "PART 2 — WHERE YOU STAND: the single hardest truth about this "
             "brand's current position vs the category, in 2–3 blunt sentences. No hedging.",
