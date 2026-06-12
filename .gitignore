@@ -76,3 +76,5 @@ brands/_session_memory/
 
 # v7 competitor intelligence (scraped data — keep local)
 brands/*/competitor_intel_v7.json
+
+brands/*/channel_scores_v7.json
