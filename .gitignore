@@ -78,3 +78,5 @@ brands/_session_memory/
 brands/*/competitor_intel_v7.json
 
 brands/*/channel_scores_v7.json
+
+brands/*/outputs/pending_approval/brand-book/*_v7_DRYRUN.pdf
