@@ -126,10 +126,12 @@ def main():
             for a in node.names:
                 add(a.asname or a.name.split(".")[0])
 
-    all_block = "\n\n# Re-exported so `from core import *` carries every name,\n" \
-                "# including _underscore helpers, into the route modules.\n" \
-                "__all__ = [\n" + \
-                "".join(f"    {n!r},\n" for n in names) + "]\n"
+    # Dynamic __all__ — exports EVERY module-level name, including ones bound
+    # inside module-level try/if blocks (e.g. `import db as _db`) that a static
+    # AST walk of direct module-body nodes would miss.
+    all_block = ("\n\n# Export every module-level name so `from core import *` carries the\n"
+                 "# full foundation (incl. _underscore + try-block-bound names) downstream.\n"
+                 '__all__ = [n for n in dir() if not n.startswith("__")]\n')
 
     core_header = (
         '"""\n'

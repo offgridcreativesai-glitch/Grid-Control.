@@ -1,0 +1,279 @@
+"""routes/system.py — GRID CONTROL system endpoints (blueprint). S2b split."""
+from core import *  # noqa: F401,F403  (app, helpers, stdlib re-exports)
+from flask import Blueprint
+
+bp = Blueprint("system", __name__)
+
+
+
+
+@bp.route("/api/events", methods=["GET"])
+def sse_events():
+    """Global SSE stream — client subscribes to get live agent activity updates.
+
+    EventSource cannot set Authorization headers, so auth is via ?token= (Supabase
+    JWT) or ?secret= (legacy dashboard secret). Deny-by-default.
+    """
+    token = request.args.get("token", "")
+    secret = request.args.get("secret", "")
+    authed = False
+    if token and _DB_AVAILABLE:
+        try:
+            authed = bool(_db.verify_jwt(token))
+        except Exception:
+            authed = False
+    if not authed and _DASHBOARD_SECRET and secret == _DASHBOARD_SECRET:
+        authed = True
+    if not authed:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+    q: _queue_mod.Queue = _queue_mod.Queue(maxsize=100)
+    with _sse_lock:
+        _sse_subscribers.append(q)
+
+    def generate():
+        try:
+            while True:
+                try:
+                    payload = q.get(timeout=30)
+                    yield f"data: {payload}\n\n"
+                except _queue_mod.Empty:
+                    yield ": keepalive\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            with _sse_lock:
+                if q in _sse_subscribers:
+                    _sse_subscribers.remove(q)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@bp.route("/api/scheduler/trigger", methods=["POST"])
+def scheduler_trigger():
+    """Service-to-service: run the daily pipeline for a brand. Token-authed.
+    Body: { brand_slug }. Returns immediately; pipeline runs in background."""
+    if not _valid_service_token():
+        return jsonify({"success": False, "error": "invalid service token"}), 401
+    data = request.get_json(silent=True) or {}
+    brand_slug = (data.get("brand_slug") or "").strip()
+    if not brand_slug:
+        return jsonify({"success": False, "error": "brand_slug required"}), 400
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", brand_slug):
+        # path-traversal guard: slug becomes a directory name below
+        return jsonify({"success": False, "error": "invalid brand_slug"}), 400
+    if not (BRANDS_DIR / brand_slug).is_dir():
+        return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
+    print(f"[scheduler-trigger] daily pipeline for {brand_slug} (service token)")
+    threading.Thread(target=run_daily_pipeline, args=(brand_slug,), daemon=True).start()
+    return jsonify({"success": True, "data": {
+        "message": f"daily pipeline started for {brand_slug}",
+        "brand_slug": brand_slug,
+        "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }})
+
+
+# ── n8n Webhook Receiver ───────────────────────────────────────────────────────
+
+@bp.route("/api/webhooks/n8n", methods=["POST"])
+@require_auth
+def n8n_webhook():
+    """
+    n8n → GRID CONTROL trigger endpoint.
+    n8n sends: { brand_slug, agent_name, trigger_source, payload }
+    GRID CONTROL starts the agent run in the background and returns run_id.
+
+    n8n setup:
+      POST https://your-domain/api/webhooks/n8n
+      Body: application/json
+      Supported trigger_source values: "n8n", "schedule", "form", "manual"
+    """
+    body           = request.get_json() or {}
+    brand_slug     = body.get("brand_slug", "").strip()
+    agent_name     = body.get("agent_name", "").strip()
+    trigger_source = body.get("trigger_source", "n8n")
+
+    if not brand_slug or not agent_name:
+        return jsonify({"success": False, "error": "brand_slug and agent_name are required"}), 400
+
+    # Validate brand exists
+    brand_dir = BRANDS_DIR / brand_slug
+    if not brand_dir.exists():
+        return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
+
+    # Validate agent exists and has a script
+    script_val = AGENT_SCRIPTS.get(agent_name)
+    if not script_val:
+        return jsonify({"success": False, "error": f"Agent '{agent_name}' not found"}), 404
+    if isinstance(script_val, dict) and script_val.get("coming_soon"):
+        return jsonify({"success": False, "error": f"Agent '{agent_name}' is coming soon"}), 400
+
+    script_path = BASE_DIR / script_val
+    if not script_path.exists():
+        return jsonify({"success": False, "error": f"Agent script not found: {script_val}"}), 404
+
+    # Rate-limit check
+    agent_slug_key = _agent_name_to_slug(agent_name)
+    if _DB_AVAILABLE:
+        try:
+            brand_id_check = _get_brand_id(brand_slug)
+            if brand_id_check:
+                existing = (
+                    _db._client.table("agent_runs")
+                    .select("id")
+                    .eq("brand_id", brand_id_check)
+                    .eq("agent_slug", agent_slug_key)
+                    .eq("status", "running")
+                    .execute()
+                )
+                if existing.data:
+                    return jsonify({"success": False, "error": "Agent already running"}), 409
+        except Exception:
+            pass
+
+    # Mark running + create DB row
+    _update_session_agent_status(brand_slug, agent_name, "running")
+    db_run_id: str | None = None
+    if _DB_AVAILABLE:
+        brand_id = _get_brand_id(brand_slug)
+        if brand_id:
+            run_row = _db.save_agent_run(brand_id, agent_slug_key)
+            if run_row:
+                db_run_id = run_row["id"]
+
+    # Log webhook trigger in audit
+    if _DB_AVAILABLE and brand_id:
+        _db.log_audit(brand_id, "webhook_trigger", trigger_source, {
+            "agent": agent_name, "brand_slug": brand_slug
+        })
+
+    # Fire agent in background
+    thread = threading.Thread(
+        target=_run_agent_subprocess,
+        args=(str(script_path), brand_slug, agent_name, db_run_id),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({"success": True, "data": {
+        "message":        f"{agent_name} triggered via n8n",
+        "agent":          agent_name,
+        "brand_slug":     brand_slug,
+        "trigger_source": trigger_source,
+        "run_id":         db_run_id or "",
+    }})
+
+
+# ── Health + Config ───────────────────────────────────────────────────────────
+
+@bp.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({"success": True, "data": {"status": "GRID CONTROL API running", "port": 5001}})
+
+
+@bp.route("/api/config/keys", methods=["GET"])
+@require_auth
+def get_key_status():
+    """Returns which API keys are configured (never exposes the keys themselves)."""
+    return jsonify({"success": True, "data": {
+        "anthropic":  bool(os.getenv("ANTHROPIC_API_KEY", "").strip()),
+        "elevenlabs": bool(os.getenv("ELEVENLABS_API_KEY", "").strip()),
+        "notion":     bool(os.getenv("NOTION_API_KEY", "").strip()),
+        "fal":        bool(os.getenv("FAL_API_KEY", "").strip()),
+        "apify":      bool(os.getenv("APIFY_API_KEY", "").strip()),
+        "runway":     bool(os.getenv("RUNWAY_API_KEY", "").strip()),
+        "kling":      bool(os.getenv("KLING_API_KEY", "").strip()),
+        "meta":       bool(os.getenv("META_ACCESS_TOKEN", "").strip()) or bool(os.getenv("META_GRAPH_API_TOKEN", "").strip()),
+        "linkedin":   bool(os.getenv("LINKEDIN_ACCESS_TOKEN", "").strip()),
+        "ga4":        bool(os.getenv("GA4_PROPERTY_ID", "").strip()),
+    }})
+
+
+# ============================================================
+# EMAIL NOTIFICATIONS — Approval alerts
+# ============================================================
+
+@bp.route("/api/notifications/pending-summary", methods=["GET"])
+@require_auth
+def notifications_pending_summary():
+    """Get count of pending approvals per brand for email digest."""
+    brand_slug = request.args.get("brand_slug", "")
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    try:
+        rows = _db._client.table("agent_outputs").select("id, agent_slug, created_at").eq("brand_id", brand_id).eq("approval_status", "pending").execute()
+        pending_count = len(rows.data)
+        by_agent = {}
+        for r in rows.data:
+            slug = r.get("agent_slug", "unknown")
+            by_agent[slug] = by_agent.get(slug, 0) + 1
+
+        return jsonify(success=True, data={
+            "pending_count": pending_count,
+            "by_agent": by_agent,
+            "brand_id": brand_id,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@bp.route("/api/notifications/send-digest", methods=["POST"])
+@require_auth
+def notifications_send_digest():
+    """Send an email digest of pending approvals.
+    Body: { brand_slug, recipient_email }
+    Uses Gmail MCP if available, otherwise returns the email content for manual send.
+    """
+    body = request.get_json(force=True)
+    brand_slug = body.get("brand_slug", "")
+    recipient = body.get("recipient_email", "")
+
+    if not brand_slug:
+        return jsonify(success=False, error="brand_slug required"), 400
+
+    brand_id = _resolve_brand_id(brand_slug)
+    if not brand_id:
+        return jsonify(success=False, error="Brand not found"), 404
+
+    try:
+        rows = _db._client.table("agent_outputs").select("agent_slug, created_at").eq("brand_id", brand_id).eq("approval_status", "pending").execute()
+        pending_count = len(rows.data)
+
+        if pending_count == 0:
+            return jsonify(success=True, data={"status": "no_pending", "message": "No pending approvals"})
+
+        # Build email content
+        by_agent = {}
+        for r in rows.data:
+            slug = r.get("agent_slug", "unknown")
+            by_agent[slug] = by_agent.get(slug, 0) + 1
+
+        agent_lines = "\n".join([f"  • {slug}: {count} item{'s' if count > 1 else ''}" for slug, count in by_agent.items()])
+        dashboard_url = "https://v0-grid-control-dashboard.vercel.app/review"
+
+        email_subject = f"[Grid Control] {pending_count} items awaiting your approval"
+        email_body = f"""Hi,
+
+You have {pending_count} content item{'s' if pending_count > 1 else ''} waiting for approval in Grid Control:
+
+{agent_lines}
+
+Review them now: {dashboard_url}
+
+— Grid Control AI"""
+
+        return jsonify(success=True, data={
+            "status": "digest_ready",
+            "pending_count": pending_count,
+            "subject": email_subject,
+            "body": email_body,
+            "recipient": recipient,
+        })
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
