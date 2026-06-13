@@ -83,3 +83,5 @@ brands/*/outputs/pending_approval/brand-book/*_v7_DRYRUN.pdf
 
 brands/*/brand_self_v7.json
 brands/*/outputs/pending_approval/brand-book/*_RERENDER.pdf
+brands/*/channel_discovery_v7.json
+brands/*/website_intel_v7.json
