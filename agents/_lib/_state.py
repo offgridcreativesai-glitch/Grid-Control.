@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATE_TTL_SECONDS = 3600  # 1 hour
 
 

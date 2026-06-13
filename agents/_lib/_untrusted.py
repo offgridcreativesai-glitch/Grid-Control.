@@ -15,7 +15,7 @@ USAGE — two patterns:
 
 1. Embed in an f-string prompt (most agents):
 
-    from agents._untrusted import wrap, UNTRUSTED_POLICY
+    from agents._lib._untrusted import wrap, UNTRUSTED_POLICY
 
     prompt = f\"\"\"
     {UNTRUSTED_POLICY}
@@ -28,7 +28,7 @@ USAGE — two patterns:
 
 2. Standalone messages-API dict (agents using the anthropic messages format):
 
-    from agents._untrusted import untrusted_context_message
+    from agents._lib._untrusted import untrusted_context_message
 
     messages = [
         {"role": "system", "content": AGENT_SYSTEM + "\\n\\n" + UNTRUSTED_POLICY},

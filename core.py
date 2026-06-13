@@ -425,7 +425,7 @@ AGENTS = [
 # Phase D — single source of truth: override the display models from the gateway
 # so this list can never drift from agents/model_gateway.AGENT_ROUTING.
 try:
-    from agents.model_gateway import model_for as _model_for
+    from agents._lib.model_gateway import model_for as _model_for
     for _a in AGENTS:
         _resolved = _model_for(_a["name"])
         _a["model"] = _resolved or "none"
@@ -1679,7 +1679,7 @@ _SLUG_TO_AGENT_NAME = {v: k for k, v in _FOLDER_TO_SLUG.items()}
 def _skill_on_approve(brand_slug: str, agent_slug: str, filepath: str):
     """Extract approved output as a learned skill (fire-and-forget)."""
     try:
-        from agents.base_agent import BaseAgent
+        from agents._lib.base_agent import BaseAgent
         agent_name = _SLUG_TO_AGENT_NAME.get(agent_slug, agent_slug)
         agent = BaseAgent(agent_name)
         src = Path(filepath)
@@ -1699,7 +1699,7 @@ def _skill_on_approve(brand_slug: str, agent_slug: str, filepath: str):
 def _skill_on_reject(brand_slug: str, agent_slug: str, reason: str):
     """Patch agent skill with rejection lesson (fire-and-forget)."""
     try:
-        from agents.base_agent import BaseAgent
+        from agents._lib.base_agent import BaseAgent
         agent_name = _SLUG_TO_AGENT_NAME.get(agent_slug, agent_slug)
         agent = BaseAgent(agent_name)
         skills_dir = agent._skills_dir(brand_slug)
@@ -1915,7 +1915,7 @@ def _build_brain_agent_summary(brand_slug: str, agent_slug: str) -> str:
         agents_dir = str(BASE_DIR / "agents")
         if agents_dir not in _sys.path:
             _sys.path.insert(0, agents_dir)
-        from _learnings import render_recent_for_prompt  # type: ignore
+        from agents._lib._learnings import render_recent_for_prompt  # type: ignore
         learnings_block = render_recent_for_prompt(brand_slug, n=8, agent_filter=agent_slug)
         if learnings_block:
             parts.append(learnings_block)
@@ -1931,7 +1931,7 @@ def _build_brain_agent_summary(brand_slug: str, agent_slug: str) -> str:
 
 
 def _build_brain_brand_summary(brand_slug: str) -> str:
-    """Slim brand context for The Brain — uses agents._state compact summary.
+    """Slim brand context for The Brain — uses agents._lib._state compact summary.
 
     Brain has read_file tool, so full files are accessible on demand.
     """
@@ -1944,7 +1944,7 @@ def _build_brain_brand_summary(brand_slug: str) -> str:
         agents_dir = str(BASE_DIR / "agents")
         if agents_dir not in sys.path:
             sys.path.insert(0, agents_dir)
-        from _state import load_brand_state  # type: ignore
+        from agents._lib._state import load_brand_state  # type: ignore
         state = load_brand_state(brand_slug)
         # Render as readable JSON-ish block (already only ~4KB).
         return json.dumps(state, ensure_ascii=False, indent=2)[:6000]

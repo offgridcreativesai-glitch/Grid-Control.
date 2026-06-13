@@ -19,16 +19,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
+from agents._lib import cost_reporter
+
 
 load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
-    from model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 except ImportError:
-    from agents.model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 MODEL = model_for("data-analyst")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -134,9 +135,9 @@ class DataAnalyst:
         """Pull live IG/FB-Page insights (real data only — never fabricated).
         Returns the meta_insights structure; empty/with-errors if unconfigured."""
         try:
-            from agents.meta_insights import fetch_instagram_insights
+            from agents.intel.meta_insights import fetch_instagram_insights
         except ImportError:
-            from meta_insights import fetch_instagram_insights
+            from agents.intel.meta_insights import fetch_instagram_insights
         benv = {
             "META_GRAPH_API_TOKEN": os.getenv("META_GRAPH_API_TOKEN", ""),
             "IG_USER_ID":           os.getenv("IG_USER_ID", ""),

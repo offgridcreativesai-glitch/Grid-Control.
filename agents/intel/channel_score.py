@@ -28,7 +28,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # CATEGORY LEADER vs PEER split (pure-math, channel-breadth):
 # A competitor running a full multi-channel funnel (IG + YouTube + paid) while peers are

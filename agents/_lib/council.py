@@ -4,7 +4,7 @@ Council Pattern for AutoResearch (Phase 7)
 Inspired by Karpathy's LLM Council: generate variants → blind cross-review → synthesize.
 
 Usage:
-    from agents.council import Council
+    from agents._lib.council import Council
 
     council = Council(agent_name="script-writer")
     result = council.evaluate(

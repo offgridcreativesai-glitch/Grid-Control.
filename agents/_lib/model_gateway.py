@@ -197,7 +197,8 @@ def complete(
 
     if report_cost:
         try:
-            import cost_reporter
+            from agents._lib import cost_reporter
+
             cost_reporter.record(model, in_tok, out_tok)
         except Exception:
             pass

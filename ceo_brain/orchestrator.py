@@ -207,7 +207,7 @@ WINNER: {loop_header.get('winner', '')}
             import sys as __sys
             from pathlib import Path as __Path
             __sys.path.insert(0, str(__Path(__file__).resolve().parent.parent / "agents"))
-            from _record_learning import record as __record  # type: ignore
+            from agents._lib._record_learning import record as __record  # type: ignore
             winner = (loop_header or {}).get("winner") or output_type
             metric = (loop_header or {}).get("metric") or ""
             summary = f"{output_type}: {winner}"

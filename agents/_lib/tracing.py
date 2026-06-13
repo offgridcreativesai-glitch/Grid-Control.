@@ -12,7 +12,7 @@ from typing import Optional
 # ── Cost table — single source of truth in utils/pricing.py ──
 import sys
 from pathlib import Path as _Path
-sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from utils.pricing import MODEL_COSTS, estimate_cost  # noqa: E402, F401
 
 
@@ -41,7 +41,7 @@ def _get_db():
     """Lazy import to avoid circular deps."""
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "supabase"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "supabase"))
     import db as _db
     return _db._client
 
@@ -168,7 +168,7 @@ class AgentTrace:
             if self._is_dashboard_run and self.input_tokens > 0:
                 from pathlib import Path as _P
                 import importlib.util as _ilu
-                _db_path = str(_P(__file__).resolve().parent.parent / "supabase" / "db.py")
+                _db_path = str(_P(__file__).resolve().parent.parent.parent / "supabase" / "db.py")
                 _spec = _ilu.spec_from_file_location("_grid_db_t", _db_path)
                 _mod = _ilu.module_from_spec(_spec)
                 _spec.loader.exec_module(_mod)

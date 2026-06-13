@@ -28,7 +28,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 
 import requests
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 APIFY = os.getenv("APIFY_API_KEY", "").strip()
 ACTOR_IG = "apify~instagram-scraper"
 

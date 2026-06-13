@@ -19,10 +19,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
+from agents._lib import cost_reporter
+
 # Rule 10 — Source Citation Enforcement
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _provenance import (
+from agents._lib._provenance import (
     build_source_index,
     validate_citations,
     build_violation_message,
@@ -34,11 +35,11 @@ load_dotenv(override=True)
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
-    from model_gateway import model_for
-    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib.model_gateway import model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
-    from agents.model_gateway import model_for
-    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib.model_gateway import model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("content-planner")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 

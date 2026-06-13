@@ -26,15 +26,15 @@ sys.path.insert(0, _ROOT)
 sys.path.insert(0, os.path.join(_ROOT, "agents"))
 
 try:
-    from model_gateway import complete
-    from _untrusted import UNTRUSTED_POLICY
+    from agents._lib.model_gateway import complete
+    from agents._lib._untrusted import UNTRUSTED_POLICY
     from brand_book import _FILLER
-    from brand_book_v7_renderer import render_v7
+    from agents.renderers.brand_book_v7_renderer import render_v7
 except ImportError:
-    from agents.model_gateway import complete
-    from agents._untrusted import UNTRUSTED_POLICY
+    from agents._lib.model_gateway import complete
+    from agents._lib._untrusted import UNTRUSTED_POLICY
     from agents.brand_book import _FILLER
-    from agents.brand_book_v7_renderer import render_v7
+    from agents.renderers.brand_book_v7_renderer import render_v7
 
 AGENT_SLUG = "brand-book"
 VERSION = "v7"
@@ -266,7 +266,8 @@ def _eval(brand, scores, narrative) -> dict:
 
 # ───────────────────────────────────────── assembly
 def generate(slug: str, render_pdf: bool = True) -> dict:
-    import audit_signals
+    from agents.intel import audit_signals
+
     brand, intel, scores, profile = _load(slug)
     benchmark = _benchmark(brand, intel, scores)
     signals = audit_signals.build(brand, intel, scores, profile)

@@ -12,7 +12,7 @@ from datetime import datetime
 
 # Force-load the local supabase/db.py directly, bypassing the pip-installed
 # 'supabase' package which has no 'db' submodule and would shadow the local one.
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, _PROJECT_ROOT)
 
 def _load_local_db():

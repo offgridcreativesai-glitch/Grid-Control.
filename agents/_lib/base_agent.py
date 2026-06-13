@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Add project root so supabase/db.py is importable from any agent
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, _PROJECT_ROOT)
 
 
@@ -223,8 +223,8 @@ class BaseAgent:
         (formatted text block). Agents inject these into their system prompt
         instead of loading 7+ full JSON files.
         """
-        from agents._state import load_brand_state
-        from agents._learnings import render_recent_for_prompt
+        from agents._lib._state import load_brand_state
+        from agents._lib._learnings import render_recent_for_prompt
 
         state = load_brand_state(brand_slug)
         learnings = render_recent_for_prompt(
@@ -247,7 +247,7 @@ class BaseAgent:
     def session_save(self, brand_slug: str) -> None:
         """Save current brand state to disk. Call before context compression
         or any long pause to avoid re-deriving state."""
-        from agents._state import write_brand_state
+        from agents._lib._state import write_brand_state
         write_brand_state(brand_slug)
         self.log("[session] state snapshot saved")
 
@@ -266,8 +266,8 @@ class BaseAgent:
             appended to the brand narrative so the next run continues the story.
         narrative_type: 'decision' | 'action' | 'result' (default 'result').
         """
-        from agents._state import write_brand_state
-        from agents._learnings import append as append_learning
+        from agents._lib._state import write_brand_state
+        from agents._lib._learnings import append as append_learning
 
         if learnings:
             slug = self._agent_slug()

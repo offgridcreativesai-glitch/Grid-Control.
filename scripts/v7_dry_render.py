@@ -13,8 +13,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "agents"))
 
 from brand_book_v7 import _load, _benchmark, _palette  # noqa: E402
-from brand_book_v7_renderer import render_v7            # noqa: E402
-import audit_signals                                    # noqa: E402
+from agents.renderers.brand_book_v7_renderer import render_v7            # noqa: E402
+from agents.intel import audit_signals                                    # noqa: E402
 
 
 def synth(brand, benchmark, scores, signals):

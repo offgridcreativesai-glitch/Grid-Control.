@@ -23,7 +23,7 @@ from urllib.parse import urlparse
 
 import requests
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 _PRICE_RE = re.compile(r'(?:[$₹€£]\s?\d[\d,]*(?:\.\d+)?|\b\d+\s?(?:USD|INR|EUR|/mo|per month|/month)\b)', re.I)
 _CTA_WORDS = ("book a call", "book now", "get started", "start free", "sign up", "subscribe",

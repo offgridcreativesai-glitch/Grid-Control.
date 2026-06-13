@@ -8,7 +8,7 @@ Both are best-effort — failure of either does NOT block the agent run.
 
 Usage at end of an agent's run:
 
-    from _record_learning import record
+    from agents._lib._record_learning import record
     record(brand_slug, "script-writer",
            "Wrote 5 scripts for week 1; flagged 1 for human face needed",
            kind="win")
@@ -18,7 +18,7 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -31,7 +31,7 @@ def record(brand_slug: str, agent_slug: str, text: str,
 
     # 1. Local file (always works)
     try:
-        from _learnings import append as _file_append  # type: ignore
+        from agents._lib._learnings import append as _file_append  # type: ignore
         _file_append(brand_slug, agent_slug, text, kind=kind, context=context)
     except Exception:
         pass

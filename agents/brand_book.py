@@ -32,11 +32,11 @@ _HERE = Path(__file__).resolve().parent
 _ROOT = _HERE.parent
 
 try:
-    from model_gateway import complete, model_for
-    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY
+    from agents._lib.model_gateway import complete, model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY
 except ImportError:
-    from agents.model_gateway import complete, model_for
-    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY
+    from agents._lib.model_gateway import complete, model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY
 
 # ── config ────────────────────────────────────────────────────────────────────
 MODE_COLD = "cold_sellable"
@@ -155,9 +155,9 @@ class BrandBook:
         if self.mode == MODE_ONBOARDING:
             try:
                 try:
-                    from meta_insights import fetch_instagram_insights
+                    from agents.intel.meta_insights import fetch_instagram_insights
                 except ImportError:
-                    from agents.meta_insights import fetch_instagram_insights
+                    from agents.intel.meta_insights import fetch_instagram_insights
                 self.insights = fetch_instagram_insights(self.benv) or {}
             except Exception as e:
                 self.insights = {"connected": False, "errors": [f"insights load failed: {e}"]}
@@ -413,9 +413,9 @@ class BrandBook:
 
     def _render(self, report: dict) -> Path:
         try:
-            from brand_book_renderer import render_brand_book
+            from agents.renderers.brand_book_renderer import render_brand_book
         except ImportError:
-            from agents.brand_book_renderer import render_brand_book
+            from agents.renderers.brand_book_renderer import render_brand_book
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         out_pdf = (self.brand_dir / "outputs" / "pending_approval" / "brand-book"
                    / f"{ts}_brand_book_{VERSION}.pdf")

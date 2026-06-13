@@ -20,10 +20,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
+from agents._lib import cost_reporter
+
 # Rule 10 — Source citation enforcement
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _provenance import (
+from agents._lib._provenance import (
     build_source_index,
     validate_citations,
     build_violation_message,
@@ -32,9 +33,9 @@ from _provenance import (
 # Untrusted-content LAW (W3.1): competitors_db.json is scraped third-party text
 # (competitor bios/captions). It must be DATA-wrapped before any model prompt.
 try:
-    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
-    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 
 
 def _escape_literal_newlines_in_strings(json_str: str) -> str:
@@ -74,9 +75,9 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
 FAL_API_KEY        = os.getenv("FAL_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
-    from model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 except ImportError:
-    from agents.model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 MODEL = model_for("creative-director")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 

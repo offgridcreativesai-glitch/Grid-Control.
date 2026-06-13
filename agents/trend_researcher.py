@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
+from agents._lib import cost_reporter
+
 
 load_dotenv(override=True)
 
@@ -29,11 +30,11 @@ APIFY_API_KEY = os.getenv("APIFY_API_KEY", "").strip()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
-    from model_gateway import model_for
-    from _untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib.model_gateway import model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 except ImportError:
-    from agents.model_gateway import model_for
-    from agents._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib.model_gateway import model_for
+    from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
 MODEL = model_for("trend-researcher")
 WHISPER_CANDIDATES_CAP = 5
 
@@ -385,7 +386,7 @@ class TrendResearcher:
         try:
             from agents import ig_hashtag_search as _ighs
         except ImportError:
-            import ig_hashtag_search as _ighs  # script-context
+            import agents.intel.ig_hashtag_search as _ighs  # script-context
         if _ighs.enabled():
             api_res = _ighs.scrape_hashtags(tags)
             if api_res.get("status") == "OK":
@@ -1567,11 +1568,11 @@ OUTPUT: Return valid JSON only. No markdown fences. No commentary outside the JS
         # Note: trend_researcher's "source" is the live Apify scrapes (in scraped_data dict).
         # We pass it as a virtual source so the validator can check Claude's claims against it.
         try:
-            from _provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
+            from agents._lib._provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
         except ImportError:
             import sys as _sys
             _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            from _provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
+            from agents._lib._provenance import build_source_index, validate_citations, build_violation_message, MAX_RERUN_ATTEMPTS as _MAX
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         source_files = [
             os.path.join(project_root, "brands", self.brand_slug, "brand_profile.json"),

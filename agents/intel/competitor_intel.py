@@ -34,7 +34,7 @@ from datetime import datetime, timezone
 import requests
 
 APIFY_API_KEY = os.getenv("APIFY_API_KEY", "").strip()
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Apify actor ids (REST form uses ~ instead of /)
 ACTOR_IG       = "apify~instagram-scraper"

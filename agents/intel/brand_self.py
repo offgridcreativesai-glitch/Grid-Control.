@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _HOST = "https://graph.instagram.com/v21.0"
 
 try:

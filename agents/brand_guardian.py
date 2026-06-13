@@ -36,10 +36,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
-import cost_reporter
+from agents._lib import cost_reporter
+
 # Rule 10 — Source citation enforcement
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _provenance import (
+from agents._lib._provenance import (
     build_source_index,
     validate_citations,
     build_violation_message,
@@ -51,9 +52,9 @@ load_dotenv(override=True)
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # Phase D — model sourced from the single-source-of-truth gateway
 try:
-    from model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 except ImportError:
-    from agents.model_gateway import model_for
+    from agents._lib.model_gateway import model_for
 MODEL = model_for("brand-guardian")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -191,7 +192,7 @@ class BrandGuardian:
         # Specific deep fields can be referenced by key but the SOUL audit only
         # needs the core voice + audience + positioning summary.
         try:
-            from _state import load_brand_state  # type: ignore
+            from agents._lib._state import load_brand_state  # type: ignore
             _state = load_brand_state(self.brand_slug)
             state_block = json.dumps(_state, indent=2)
         except Exception:

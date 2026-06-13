@@ -20,7 +20,7 @@ Demographics (follower_demographics) require 100+ followers; below that Meta
 returns an error which we capture gracefully (empty, with a note).
 
 Usage:
-    from agents.meta_insights import fetch_instagram_insights
+    from agents.intel.meta_insights import fetch_instagram_insights
     data = fetch_instagram_insights(brand_env_dict)
 """
 from __future__ import annotations
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     slug = os.getenv("ACTIVE_BRAND", "askgauravai")
-    env_path = Path(__file__).resolve().parent.parent / "brands" / slug / ".env"
+    env_path = Path(__file__).resolve().parent.parent.parent / "brands" / slug / ".env"
     benv: dict[str, str] = {}
     if env_path.exists():
         for line in env_path.read_text().splitlines():
