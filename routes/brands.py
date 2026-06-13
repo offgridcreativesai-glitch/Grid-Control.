@@ -1302,7 +1302,8 @@ def approve_brand_book(brand_slug: str):
         report = json.loads(body_text)
     except Exception as e:
         return jsonify(success=False, error=f"Could not parse Brand-Book report: {e}"), 500
-    foundation = report.get("parts", {}).get("part1_foundation", {})
+    # v7 places the prescriptive sign-off Foundation inside narrative.foundation.
+    foundation = report.get("narrative", {}).get("foundation", {})
     _write_foundation(brand_slug, foundation)
     ts = datetime.utcnow().isoformat() + "Z"
     _update_brand_profile_fields(brand_slug, {
@@ -1311,7 +1312,7 @@ def approve_brand_book(brand_slug: str):
     })
     # Append narrative entry (Phase A)
     ps = (foundation or {}).get("positioning_statement", "")
-    summary_text = f"Brand Foundation approved (brand-book v6). Positioning: {ps[:120]}"
+    summary_text = f"Brand Foundation approved (brand-book v7). Positioning: {ps[:120]}"
     if _DB_AVAILABLE and brand_id:
         try:
             _db.append_narrative(brand_id, "brand-book", "decision", summary_text, refs={"path": lp})

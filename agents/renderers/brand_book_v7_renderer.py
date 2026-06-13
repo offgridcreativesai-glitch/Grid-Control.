@@ -299,6 +299,27 @@ def _route(narrative):
     return f"<div class='roadmap'>{''.join(out)}</div>"
 
 
+def _foundation(narrative):
+    """Phase H sign-off payload — the prescriptive Foundation. Empty string if absent."""
+    f = narrative.get("foundation") or {}
+    if not f:
+        return ""
+    voice = f.get("voice") or {}
+    chips = lambda items: "".join(f"<span class='fchip'>{_esc(x)}</span>" for x in (items or []))
+    pillars = "".join(f"<li>{_esc(p)}</li>" for p in (f.get("pillars") or []))
+    do = "".join(f"<li>{_esc(x)}</li>" for x in (voice.get("do") or []))
+    dont = "".join(f"<li>{_esc(x)}</li>" for x in (voice.get("dont") or []))
+    return (f"<div class='callout'><b>Positioning.</b> {_esc(f.get('positioning_statement'))}</div>"
+            f"<p class='lead'><b>Value proposition.</b> {_esc(f.get('value_prop'))}</p>"
+            f"<h3>Content pillars to own</h3><ol class='playbook'>{pillars}</ol>"
+            f"<h3>Ideal audience</h3><p class='lead'>{_esc(f.get('icp'))}</p>"
+            f"<h3>90-day north star</h3><p class='lead'>{_esc(f.get('north_star'))}</p>"
+            f"<h3>Voice</h3><p class='lead'>{_esc(voice.get('personality'))}</p>"
+            f"<div class='vgrid'><div><div class='vh'>Do</div><ul>{do}</ul></div>"
+            f"<div><div class='vh'>Don't</div><ul>{dont}</ul></div></div>"
+            f"<div class='vvocab'><b>Use:</b> {chips(voice.get('vocab_use'))}<br><b>Avoid:</b> {chips(voice.get('vocab_avoid'))}</div>")
+
+
 def _provenance(report):
     rows = [("Brand IG account", "REAL", "Instagram Login API (connected account)",
              f"@{report['brand']['instagram'].get('username')} · {_num(report['brand']['instagram'].get('followers'))} followers, "
@@ -376,6 +397,14 @@ def _css(palette):
     .sw{width:11px;height:11px;border-radius:3px;display:inline-block;}
     .callout{background:#fbeae8;border-left:4px solid %(ACCENT)s;padding:11px 13px;border-radius:7px;
         font-size:12.5px;color:#39342c;margin:9px 0;line-height:1.5;}
+    /* foundation (sign-off) */
+    .vgrid{display:flex;gap:18px;margin:6px 0;}
+    .vgrid>div{flex:1;}
+    .vh{font-family:'IBM Plus Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+        color:%(ACCENT)s;font-weight:600;margin-bottom:4px;}
+    .vvocab{font-size:11.5px;color:#39342c;margin-top:10px;line-height:2;}
+    .fchip{display:inline-block;font-family:'IBM Plus Mono',monospace;font-size:10px;background:#f1ede5;
+        color:#4a463f;padding:2px 8px;border-radius:6px;margin:2px 4px 2px 0;}
     /* ad + post cards */
     .adcards{display:flex;flex-wrap:wrap;gap:9px;margin:9px 0;}
     .adcard{flex:1 1 30%%;min-width:130px;border:1px solid #e7e0d3;border-radius:8px;overflow:hidden;background:#fff;}
@@ -490,9 +519,13 @@ def _build_html(report, intel, palette):
 
     roadmap = _sec("09", "The plan", "Your 90-day roadmap", _roadmap(n), brk=False)
 
-    appendix = _sec("10", "Receipts", "Provenance & methodology", _provenance(report), brk=True)
+    found_inner = _foundation(n)
+    foundation = _sec("10", "Sign-off", "Your brand foundation", found_inner, brk=True) if found_inner else ""
 
-    body = (cover + summary + where + identity + chan + aud + how + money + rolemodel + playbook + roadmap + appendix
+    appendix = _sec("11", "Receipts", "Provenance & methodology", _provenance(report), brk=True)
+
+    body = (cover + summary + where + identity + chan + aud + how + money + rolemodel + playbook + roadmap
+            + foundation + appendix
             + f"<div class='foot'>GRID CONTROL · real-data brand audit · prepared for @{_esc(bi.get('username'))}</div>")
     return ("<!doctype html><html><head><meta charset='utf-8'><style>"
             + _css(palette) + "</style></head><body>" + body + "</body></html>")

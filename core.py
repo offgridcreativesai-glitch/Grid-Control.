@@ -2318,24 +2318,22 @@ def _write_foundation(brand_slug: str, foundation: dict) -> None:
             "dont":        voice.get("dont", existing_vp.get("dont", [])),
             "vocab_use":   voice.get("vocab_use", existing_vp.get("vocab_use", [])),
             "vocab_avoid": voice.get("vocab_avoid", existing_vp.get("vocab_avoid", [])),
-            "source":      "brand_book_v6_approved",
+            "source":      "brand_book_v7_approved",
         })
         with open(vp_path, "w") as f:
             json.dump(existing_vp, f, indent=2)
 
 
-def _run_brand_book_generate(brand_slug: str, mode: str) -> None:
-    """Background thread: run BrandBook.generate(), update brand_profile status when done."""
+def _run_brand_book_generate(brand_slug: str, mode: str = "onboarding") -> None:
+    """Background thread: run brand-book v7 generate(), update brand_profile status when done.
+    `mode` is kept for caller compatibility; v7 is a single brand-centered onboarding audit."""
     try:
         import sys
         if str(BASE_DIR) not in sys.path:
             sys.path.insert(0, str(BASE_DIR))
-        from agents.brand_book import BrandBook
-        bb = BrandBook(brand_slug, mode=mode)
-        result = bb.generate(render_pdf=True)
+        from agents.brand_book_v7 import generate as _generate_brand_book
+        result = _generate_brand_book(brand_slug, render_pdf=True)
         # generate() returns the report DICT; the written-file path is in _output_path.
-        # (Bug fix: str(result) stringified the whole dict → approve() always 404'd
-        #  on Path(lp).exists() and the sign-off gate never opened.)
         latest_path = result.get("_output_path") if isinstance(result, dict) else None
         _update_brand_profile_fields(brand_slug, {
             "brand_book_status":      "pending_review",

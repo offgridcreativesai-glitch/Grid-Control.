@@ -25,19 +25,19 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 sys.path.insert(0, os.path.join(_ROOT, "agents"))
 
-try:
-    from agents._lib.model_gateway import complete
-    from agents._lib._untrusted import UNTRUSTED_POLICY
-    from brand_book import _FILLER
-    from agents.renderers.brand_book_v7_renderer import render_v7
-except ImportError:
-    from agents._lib.model_gateway import complete
-    from agents._lib._untrusted import UNTRUSTED_POLICY
-    from agents.brand_book import _FILLER
-    from agents.renderers.brand_book_v7_renderer import render_v7
+from agents._lib.model_gateway import complete
+from agents._lib._untrusted import UNTRUSTED_POLICY
+from agents.renderers.brand_book_v7_renderer import render_v7
 
 AGENT_SLUG = "brand-book"
 VERSION = "v7"
+
+# AI-filler phrases — report auto-rejected if any appear (inlined from former v6).
+_FILLER = (
+    "in today's fast-paced", "in the ever-evolving", "navigating the landscape",
+    "in conclusion", "it is important to note", "as an ai", "leverage synerg",
+    "unlock the power", "in the realm of", "game-changer", "dive deep into",
+)
 
 
 def _palette(slug: str) -> dict:
@@ -183,9 +183,28 @@ come from FACTS. Keys:
      "month_3": {"title":"<=8 words","moves":["<=24 words each — suggested content types"]}
   },
   "route_steps": [ {"verdict":"...","channel":"...","action":"<=10 words imperative","why":"<=34 words. cite a real number"} ],
-  "intros": {"channel_map":"<=26w","how":"<=26w"}
+  "intros": {"channel_map":"<=26w","how":"<=26w"},
+  "foundation": {
+     "positioning_statement": "<=30 words. the ONE prescriptive sentence: what this brand IS and for whom. sign-off-ready, grounded in positioning_wedge",
+     "value_prop": "<=25 words. the core promise to the audience — concrete, no hype",
+     "pillars": [ "3-4 content pillars this brand should OWN — <=6 words each, drawn from your_playbook + category signals" ],
+     "icp": "<=30 words. the ideal follower/customer in one precise line (use audience + demographics)",
+     "north_star": "<=20 words. the single 90-day goal that matters most (tie to roadmap month_3)",
+     "voice": {
+        "personality": "<=20 words. the brand's voice in a phrase (use tone_of_voice)",
+        "do": [ "2-4 voice do's — <=8 words each" ],
+        "dont": [ "2-4 voice don'ts — <=8 words each" ],
+        "vocab_use": [ "3-6 words/phrases this brand uses" ],
+        "vocab_avoid": [ "3-6 words/phrases this brand avoids" ]
+     }
+  }
 }
 One snapshot + one route_step per channel in `channels`, same order.
+FOUNDATION is the SIGN-OFF PAYLOAD — the prescriptive "WHAT" the founder approves to seed their
+brand_profile + voice_profile. It is the audit's conclusion: positioning, value prop, the 3-4
+pillars they should own, ICP, the 90-day north star, and voice DNA. Synthesize it from the
+identity (positioning_wedge, tone_of_voice), the playbook, and audience — prescriptive, not
+diagnostic, and concrete enough to brief a content team.
 ROADMAP IS THE GUIDE'S CONTENT PLAN — each `moves` entry SUGGESTS a TYPE of content the brand
 could publish (e.g. "A weekly carousel breaking down one automation you built", "Short Reels
 demoing a tool with a comment-trigger", "Build-in-public clips showing the system working"),
@@ -217,7 +236,9 @@ def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
         "Write the full brand-audit narrative per the schema. Arc: exec summary → where they stand → who they "
         "ARE (identity + the external-image gap) → who their audience is → how the COMPETITORS win (the "
         "comment-keyword→DM funnel, reverse-engineered with real examples) → what the ROLE MODEL proves about "
-        "the destination → the brand's own concrete playbook → a 90-day roadmap. Make every line actionable.",
+        "the destination → the brand's own concrete playbook → a 90-day roadmap → and CLOSE with the FOUNDATION "
+        "(the prescriptive sign-off WHAT: positioning, value prop, pillars, ICP, north star, voice DNA). "
+        "Make every line actionable.",
         "HARD STYLE RULE — never use these phrases or close variants (auto-rejected if any appear): "
         + "; ".join(_FILLER) + ".",
         _SCHEMA,
@@ -253,6 +274,10 @@ def _eval(brand, scores, narrative) -> dict:
         "how_playbook_present": bool(narrative.get("how_winners_win")) and bool(narrative.get("your_playbook")),
         "role_model_framed": bool(narrative.get("role_model")),
         "roadmap_present": all(k in (narrative.get("roadmap") or {}) for k in ("month_1", "month_2", "month_3")),
+        # Phase H sign-off payload: the prescriptive Foundation the founder approves
+        "foundation_present": all((narrative.get("foundation") or {}).get(k) for k in
+                                  ("positioning_statement", "value_prop", "pillars", "icp", "north_star"))
+                              and bool((narrative.get("foundation") or {}).get("voice", {}).get("personality")),
         # data integrity
         "brand_is_centered": bool(narrative.get("starting_line")) and bool(narrative.get("where_you_stand")),
         "has_real_brand_data": bi.get("status") == "ok" and bi.get("followers") is not None,
@@ -287,8 +312,10 @@ def generate(slug: str, render_pdf: bool = True) -> dict:
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     header = (f"LOOP: [brand-book] — report {VERSION} / GOAL onboarding-audit sign-off / "
               f"METRIC eval-v7-pass / EVAL {'PASS' if ev['passed'] else 'FAIL'}")
-    (out_dir / f"{ts}_brand_book_{VERSION}.json").write_text(
+    json_path = out_dir / f"{ts}_brand_book_{VERSION}.json"
+    json_path.write_text(
         header + "\n---\n" + json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    report["_output_path"] = str(json_path)  # consumed by the Phase-H gate plumbing
 
     if render_pdf:
         pdf = out_dir / f"{ts}_brand_book_{VERSION}.pdf"
