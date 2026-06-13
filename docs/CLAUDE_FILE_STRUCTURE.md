@@ -3,9 +3,17 @@
 ```
 /Users/gauravoffgrid/offgrid-marketing-os/
 ├── core.py                       Backend foundation: imports, constants, Flask `app`, infra
-│                                 hooks/errorhandlers + ALL ~209 helpers. Exports via __all__.
-├── dashboard_api.py              Route catalog — every @app.route endpoint (113), `from core import *`.
-│                                 gunicorn entrypoint `dashboard_api:app` unchanged. (S2a split)
+│                                 hooks/errorhandlers + ALL ~209 helpers. Dynamic __all__ re-export.
+├── dashboard_api.py              Thin entrypoint (24 lines): `from core import *`, register
+│                                 route blueprints, launch. gunicorn `dashboard_api:app`. (S2a+S2b)
+├── routes/                       113 endpoints as 7 domain blueprints (full paths, no url_prefix):
+│   ├── brands.py (44)  /api/brands /brand /team /admin /auth
+│   ├── agents.py (21)  /api/agents /agent-config /learning /contradictions /performance
+│   ├── content.py (17) /api/outputs /carousel /publish /published /pipeline /dashboard-output
+│   ├── brain.py (7)    /api/brain /ceo /jarvis /operator-mode /standup /digest
+│   ├── billing.py (8)  /api/billing
+│   ├── connections.py (8)  /api/connections /voice /notion
+│   └── system.py (7)   /api/health /config /scheduler /events /notifications /webhooks
 ├── agents/                       Runnable agents at root (launched by path string); support in subpkgs.
 │   ├── trend_researcher.py       Reads ACTIVE_BRAND env. Apify + Whisper + clustering.
 │   ├── strategy_agent.py         Rule 10 wired. Opus.
