@@ -1001,6 +1001,9 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
         agent_env = os.environ.copy()
         agent_env["GRID_RUN_ID"]     = db_run_id or ""
         agent_env["GRID_BRAND_SLUG"] = brand_slug
+        # Phase B: cost_reporter writes usage_logs.agent_slug from this so the
+        # billing/admin cost breakdown attributes spend to the right agent.
+        agent_env["GRID_AGENT_SLUG"] = agent_slug_key
         # ACTIVE_BRAND is the env var all agent scripts read — must match GRID_BRAND_SLUG
         agent_env["ACTIVE_BRAND"]    = brand_slug
         # Overlay this brand's private secrets (platform tokens) on top of global env

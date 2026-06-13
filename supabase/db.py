@@ -551,6 +551,40 @@ def update_agent_run_costs(
         return None
 
 
+def record_usage_log(
+    brand_id: str,
+    agent_slug: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    estimated_cost_usd: float,
+    agent_run_id: str | None = None,
+) -> dict | None:
+    """Insert one row into usage_logs (the table the billing/admin cost widgets read).
+
+    Phase B (₹0 bug): the generation agents record cost into agent_runs via
+    cost_reporter, but the billing + admin-overview widgets read usage_logs.
+    Nothing was writing usage_logs in practice (AgentTrace is unused), so those
+    widgets always showed ₹0. cost_reporter now dual-writes through this helper.
+    """
+    try:
+        payload: dict = {
+            "brand_id":           brand_id,
+            "agent_slug":         agent_slug or "unknown",
+            "model_used":         model,
+            "input_tokens":       input_tokens,
+            "output_tokens":      output_tokens,
+            "estimated_cost_usd": round(estimated_cost_usd, 6),
+        }
+        if agent_run_id:
+            payload["agent_run_id"] = agent_run_id
+        res = _svc().table("usage_logs").insert(payload).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        print(f"[db] record_usage_log error: {e}")
+        return None
+
+
 def get_brand_monthly_costs(brand_id: str, year: int, month: int) -> dict:
     try:
         from_dt = f"{year:04d}-{month:02d}-01T00:00:00+00:00"

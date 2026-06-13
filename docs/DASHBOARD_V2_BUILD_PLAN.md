@@ -123,10 +123,14 @@ Legend: 🟢 exists · 🟡 wire · 🔴 new
 - **A4** Layer 2: `embedding vector` column + pgvector similarity recall. Ship A1–A3 first.
 - *Note:* this replaces Monday's `_record_learning` loop — growth agents append here.
 
-### Phase B — Cost wiring (kills ₹0 bug)  🟡
-- **B1** Fix `GRID_RUN_ID` propagation in `dashboard_api._run_agent_subprocess`.
-- **B2** `cost_tracker`/`tracing` → write per-run cost into `agent_runs` / `usage_logs`.
-- **B3** Verify each run STORES cost; widgets stop reading ₹0.
+### Phase B — Cost wiring (kills ₹0 bug)  ✅ (Jun 14 2026)
+- **B1** ✅ `GRID_RUN_ID` propagation in `core._run_agent_subprocess` (also sets `GRID_AGENT_SLUG`).
+- **B2** ✅ Root cause: the 8 generation agents recorded cost into `agent_runs` via `cost_reporter`,
+  but the billing + admin-overview widgets read `usage_logs` — which had **no live writer**
+  (`AgentTrace` is unused). `cost_reporter.record` now **dual-writes**: `agent_runs` cost columns +
+  a `usage_logs` row (via new `db.record_usage_log`), `estimated_cost_usd` = full run spend.
+- **B3** ✅ Verified end-to-end against live Supabase ($0 Anthropic): both stores populate with
+  correct per-agent attribution; test rows cleaned up. Widgets no longer read ₹0.
 
 ### Phase C — Expose real data via API (backend layer for the future cockpit)  🟡
 - **C1** Endpoints return real run/narrative/cost/metric data (the data the cockpit will bind to).

@@ -38,6 +38,7 @@ def record(
     """
     run_id     = os.getenv("GRID_RUN_ID", "").strip()
     brand_slug = os.getenv("GRID_BRAND_SLUG", "").strip()
+    agent_slug = os.getenv("GRID_AGENT_SLUG", "").strip()
     ts         = datetime.now().strftime("%H:%M:%S")
 
     try:
@@ -59,12 +60,29 @@ def record(
         )
 
         if run_id:
+            # 1) agent_runs cost columns (read by /api/brands/<slug>/costs)
             _db.update_agent_run_costs(
                 run_id, model,
                 total_input_tokens, total_output_tokens,
                 fal_generations, apify_runs,
             )
-            print(f"[{ts}] [COST] ✅ Recorded to Supabase run_id={run_id[:8]}...")
+            # 2) usage_logs row (read by billing + admin business-overview widgets).
+            #    Without this, those widgets showed ₹0 — nothing else writes usage_logs.
+            #    estimated_cost_usd carries the FULL run spend (API + FAL + Apify).
+            brand_id = None
+            if brand_slug:
+                brand_row = _db.get_brand(brand_slug)
+                brand_id = (brand_row or {}).get("id")
+            if brand_id:
+                _db.record_usage_log(
+                    brand_id, agent_slug, model,
+                    total_input_tokens, total_output_tokens,
+                    total_cost, agent_run_id=run_id,
+                )
+                print(f"[{ts}] [COST] ✅ Recorded to agent_runs + usage_logs run_id={run_id[:8]}...")
+            else:
+                print(f"[{ts}] [COST] ✅ Recorded to agent_runs run_id={run_id[:8]}... "
+                      f"(usage_logs skipped — brand_id unresolved for slug='{brand_slug}')")
         else:
             print(f"[{ts}] [COST] ℹ️  GRID_RUN_ID not set — cost logged but not stored in Supabase")
 
