@@ -2,13 +2,16 @@
 
 ```
 /Users/gauravoffgrid/offgrid-marketing-os/
-├── dashboard_api.py              Flask REST API (multi-brand, all endpoints, port 5001)
-├── agents/
+├── core.py                       Backend foundation: imports, constants, Flask `app`, infra
+│                                 hooks/errorhandlers + ALL ~209 helpers. Exports via __all__.
+├── dashboard_api.py              Route catalog — every @app.route endpoint (113), `from core import *`.
+│                                 gunicorn entrypoint `dashboard_api:app` unchanged. (S2a split)
+├── agents/                       Runnable agents at root (launched by path string); support in subpkgs.
 │   ├── trend_researcher.py       Reads ACTIVE_BRAND env. Apify + Whisper + clustering.
 │   ├── strategy_agent.py         Rule 10 wired. Opus.
 │   ├── content_planner.py        Rule 10 wired. Sonnet.
 │   ├── script_writer.py          Rule 10 wired. Voice DNA. Performance feedback injection.
-│   ├── creative_director.py     Rule 10 wired. FAL.ai (flux/dev + ideogram/v2 + recraft-v3).
+│   ├── creative_director.py      Rule 10 wired. FAL.ai (flux/dev + ideogram/v2 + recraft-v3).
 │   ├── data_analyst.py
 │   ├── funnel_specialist.py
 │   ├── website_agent.py
@@ -16,12 +19,17 @@
 │   ├── trend_sentinel.py         Pure math (Rule 10 Class-1).
 │   ├── performance_tracker.py    Pure math (Rule 10 Class-1).
 │   ├── carousel_designer.py      Sonnet content + Pillow OR Playwright HTML render. Multi-brand.
-│   ├── carousel_html_renderer.py 5 editorial templates: HERO/INSIGHT/LIST/DATA_CALLOUT/PRINCIPLE_CTA.
-│   ├── _provenance.py            Rule 10 helpers (build_source_index, validate_citations).
-│   ├── _token_optimization.py    Token-saving utilities (planned: model selector, prompt slimmer).
-│   ├── references/
-│   │   └── meta_ads_framework.json   10-pillar Meta Ads framework — read by Ad Strategist.
-│   └── cost_reporter.py          Uses importlib.util to load local supabase/db.py.
+│   ├── cost_tracker.py · brand_book.py · brand_book_v7.py · reel_editor.py
+│   ├── _lib/                     Framework + shared helpers (imported, never launched):
+│   │   ├── base_agent.py · model_gateway.py · council.py · cost_reporter.py · tracing.py
+│   │   └── _provenance.py · _learnings.py · _record_learning.py · _state.py · _untrusted.py
+│   ├── intel/                    Research/scrapers: competitor_intel · channel_discovery ·
+│   │                             channel_score · website_intel · audit_signals · brand_self ·
+│   │                             meta_insights · ig_hashtag_search
+│   ├── renderers/                brand_book_renderer · brand_book_v7_renderer ·
+│   │                             carousel_editorial_renderer · carousel_html_renderer
+│   └── references/
+│       └── meta_ads_framework.json   10-pillar Meta Ads framework — read by Ad Strategist.
 ├── ceo_brain/
 │   ├── orchestrator.py           CEOBrain class. save_agent_output runs contradiction check + scoped auto-block.
 │   └── contradiction_detector.py 6-rule pure-math cross-agent contradiction detector.
