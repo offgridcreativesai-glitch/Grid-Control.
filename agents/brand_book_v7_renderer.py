@@ -140,14 +140,23 @@ def _hero_stats(bi):
 
 
 def _you_vs_category(benchmark, accent):
-    rows = [(r["handle"], r["engagement"], r["is_brand"]) for r in benchmark["rows"]]
+    # label the role model distinctly from competitors in the bar list
+    rm = benchmark.get("role_model") or {}
+    rm_handle = rm.get("handle")
+    rows = []
+    for r in benchmark["rows"]:
+        label = r["handle"]
+        if r["handle"] == rm_handle:
+            label = f"{r['handle']} (role model)"
+        rows.append((label, r["engagement"], r["is_brand"]))
     bars = _hbars(rows, accent=accent, highlight_brand=True)
     med = benchmark.get("category_median")
-    rm = benchmark.get("role_model") or {}
-    note = (f"<div class='callout'>Category median engagement is <b>{_num(med)}</b>. "
-            f"Your nearest realistic ceiling is <b>{_esc(rm.get('handle'))}</b> at "
-            f"<b>{_num(rm.get('engagement'))}</b>. The gap is the runway — the rest of this audit is the route.</div>"
-            if rm else "")
+    cc = benchmark.get("competitor_ceiling") or {}
+    note = (f"<div class='callout'>Category median is <b>{_num(med)}</b>. Your near-term target is your top "
+            f"competitor <b>{_esc(cc.get('handle'))}</b> at <b>{_num(cc.get('engagement'))}</b>; your long-term "
+            f"role model <b>{_esc(rm_handle)}</b> at <b>{_num(rm.get('engagement'))}</b> shows the destination. "
+            f"The gap is the runway — the rest of this audit is the route.</div>"
+            if cc else "")
     return bars + note
 
 
@@ -179,12 +188,33 @@ def _snapshot(narrative):
     return f"<div class='statgrid'>{''.join(cards)}</div>"
 
 
-def _how_section(report, intel, accent):
-    scores = report["scores"]
-    bench = report["benchmark"]
-    cs = scores.get("content_signals", {})
+def _exec_summary(narrative):
+    items = narrative.get("exec_summary") or []
+    cards = "".join(f"<div class='execitem'><div class='execn'>{i}</div>"
+                    f"<div class='exectext'>{_esc(t)}</div></div>" for i, t in enumerate(items, 1))
+    return f"<div class='execlist'>{cards}</div>"
+
+
+def _identity(report):
+    n = report["narrative"].get("identity") or {}
+    gaps = (report.get("signals", {}).get("identity", {}) or {}).get("identity_gaps", [])
+    gap_list = "".join(f"<li class='gapitem'>{_esc(g)}</li>" for g in gaps)
+    return (f"<p class='lead'>{_esc(n.get('summary'))}</p>"
+            f"<h3>The gap — who you say you are vs what your account shows</h3>"
+            f"<div class='callout'>{_esc(n.get('external_image_gap'))}</div>"
+            + (f"<ul class='gaps'>{gap_list}</ul>" if gap_list else ""))
+
+
+def _audience(report):
+    return f"<p class='lead'>{_esc(report['narrative'].get('audience'))}</p>"
+
+
+def _how_winners(report, intel, accent):
+    pb = report.get("signals", {}).get("playbook", {})
     bi = report["brand"]["instagram"]
-    # comment funnel: peers' comments vs likes + the brand's own row (the gap)
+    n = report["narrative"]
+    # the comment funnel chart: competitors' comments vs likes + the brand row (the gap)
+    cs = report["scores"].get("content_signals", {})
     cf = []
     for r in cs.get("rows", []):
         cf.append((f"{r['handle']} · comments", r["avg_comments"], False))
@@ -192,20 +222,53 @@ def _how_section(report, intel, accent):
     cf.append((f"@{bi.get('username')} · comments", bi.get("avg_comments") or 0, True))
     cf.append((f"@{bi.get('username')} · likes", bi.get("avg_likes") or 0, True))
     funnel = _hbars(cf, accent=accent, highlight_brand=True)
-    gap = bench["comment_funnel_gap"]
-    gap_note = (f"<div class='callout'><b>Your gap:</b> you average <b>{_num(gap['brand_avg_comments'])}</b> "
-                f"comments a post. The funnel-runners pull up to <b>{_num(gap['peer_best_avg_comments'])}</b> — "
-                f"because every post ends in “comment a word, I'll DM you.” You're not running it yet.</div>")
-    # format mix: brand vs category
-    cat = {}
-    for h in scores.get("tiers", {}).get("peers", []):
-        for k, v in ((intel["competitors"].get(h, {}).get("instagram", {}) or {}).get("format_mix") or {}).items():
-            cat[k] = cat.get(k, 0) + v
-    seq = [accent, "#d98a1f", "#1f7a3f", "#6f675a"]
-    cat_donut = _donut([(k, v, seq[i % 4]) for i, (k, v) in enumerate(cat.items())], accent=accent) if cat else ""
-    return (f"<div class='intro2'>{_esc(report['narrative'].get('the_how'))}</div>"
-            f"<h3>The comment-to-DM funnel — and where you sit</h3>{gap_note}{funnel}"
-            f"<h3>What the category posts</h3>{cat_donut}")
+    # real keyword-CTA examples (the exact mechanic)
+    kw = "".join(f"<tr><td class='mv'>{_esc(k['handle'])}</td>"
+                 f"<td><span class='kw'>comment “{_esc(k['keyword'])}”</span></td>"
+                 f"<td class='ml'>{_num(k['comments'])} comments</td></tr>"
+                 for k in pb.get("keyword_cta_examples", [])[:5])
+    kw_table = (f"<h3>The mechanic, with receipts — “comment a word → I DM you”</h3>"
+                f"<table>{kw}</table>") if kw else ""
+    # real winning hooks
+    hooks = "".join(f"<li class='hookitem'><span class='hookc'>{_num(h['comments'])}c</span> "
+                    f"“{_esc(h['hook'])}”</li>" for h in pb.get("top_category_hooks", [])[:4])
+    hook_list = f"<h3>The hooks that pulled those comments</h3><ul class='hooks'>{hooks}</ul>" if hooks else ""
+    return (f"<div class='intro2'>{_esc(n.get('how_winners_win'))}</div>"
+            f"<h3>Comments beat likes — and you're not in the game yet</h3>{funnel}"
+            f"{kw_table}{hook_list}")
+
+
+def _role_model(report):
+    rm = report["benchmark"].get("role_model") or {}
+    bi_rows = []
+    rm_handle = rm.get("handle", "").lstrip("@")
+    comp = report.get("_intel", {}).get("competitors", {}).get(rm_handle, {})
+    yt = (comp.get("youtube") or {})
+    if yt.get("status") == "ok":
+        bi_rows.append(("YouTube", f"{_num(yt.get('subscribers'))} subs · {_num(yt.get('avg_views'))} avg views"))
+    ma = (comp.get("meta_ads") or {})
+    if ma.get("status") == "advertising":
+        bi_rows.append(("Meta Ads", f"{_num(ma.get('active_ads'))} live · up to {_num(ma.get('max_days_running'))}d"))
+    stats = "".join(f"<div class='rmstat'><div class='rml'>{_esc(l)}</div><div class='rmv'>{_esc(v)}</div></div>"
+                    for l, v in bi_rows)
+    return (f"<p class='lead'>{_esc(report['narrative'].get('role_model'))}</p>"
+            + (f"<div class='rmstats'>{stats}</div>" if stats else ""))
+
+
+def _your_playbook(narrative):
+    items = narrative.get("your_playbook") or []
+    return "<ol class='playbook'>" + "".join(f"<li>{_esc(t)}</li>" for t in items) + "</ol>"
+
+
+def _roadmap(narrative):
+    rm = narrative.get("roadmap") or {}
+    cols = []
+    for i, key in enumerate(("month_1", "month_2", "month_3"), 1):
+        m = rm.get(key) or {}
+        moves = "".join(f"<li>{_esc(x)}</li>" for x in (m.get("moves") or []))
+        cols.append(f"<div class='rmcol'><div class='rmmonth'>Month {i}</div>"
+                    f"<div class='rmtitle'>{_esc(m.get('title'))}</div><ul>{moves}</ul></div>")
+    return f"<div class='roadmapgrid'>{''.join(cols)}</div>"
 
 
 def _money_section(report, intel, accent):
@@ -329,11 +392,47 @@ def _css(palette):
     .step-h{font-size:13px;color:%(INK)s;}.step-h b{font-family:'Fraunces',serif;}
     .step-why{font-size:12px;color:#5a554c;margin-top:3px;line-height:1.45;}
     /* table */
-    table{width:100%%;border-collapse:collapse;margin:8px 0 12px;}
+    table{width:100%%;border-collapse:collapse;margin:8px 0 12px;page-break-inside:avoid;}
     td{padding:6px 8px;border-bottom:1px solid #ece6da;vertical-align:top;font-size:11px;}
     .ml{color:#6f675a;}.mv{font-weight:600;}
     .chip{display:inline-block;font-family:'IBM Plus Mono',monospace;font-size:9px;font-weight:500;padding:2px 6px;border-radius:6px;}
     .chip.real{background:#e8f3eb;color:#1f7a3f;}
+    /* exec summary */
+    .execlist{margin:10px 0;}
+    .execitem{display:flex;gap:12px;align-items:flex-start;margin:9px 0;page-break-inside:avoid;}
+    .execn{flex:0 0 24px;width:24px;height:24px;border-radius:6px;background:%(ACCENT)s;color:#fff;
+        font-family:'Fraunces',serif;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;}
+    .exectext{font-size:13px;color:#2c2820;line-height:1.5;padding-top:2px;}
+    /* identity gaps */
+    .gaps{margin:8px 0;padding-left:0;list-style:none;}
+    .gapitem{font-size:12px;color:#3a362f;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid #f1ede5;}
+    .gapitem:before{content:"✕";position:absolute;left:0;color:%(ACCENT)s;font-weight:700;}
+    /* how-winners */
+    .kw{font-family:'IBM Plus Mono',monospace;font-size:11px;background:#fbeae8;color:%(ACCENT)s;
+        padding:2px 7px;border-radius:6px;font-weight:500;}
+    .hooks{margin:6px 0;padding-left:0;list-style:none;}
+    .hookitem{font-size:12px;color:#3a362f;padding:5px 0;line-height:1.45;font-style:italic;}
+    .hookc{font-family:'IBM Plus Mono',monospace;font-style:normal;font-size:10px;font-weight:600;
+        color:#fff;background:%(ACCENT)s;padding:1px 6px;border-radius:5px;margin-right:6px;}
+    /* role model */
+    .rmstats{display:flex;gap:11px;margin:10px 0;}
+    .rmstat{flex:1;border:1px solid #e7e0d3;border-radius:9px;padding:11px 13px;background:#fcfaf6;}
+    .rml{font-family:'IBM Plus Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8a8270;}
+    .rmv{font-family:'Fraunces',serif;font-weight:700;font-size:15px;color:%(INK)s;margin-top:3px;}
+    /* playbook */
+    .playbook{margin:8px 0;padding-left:0;counter-reset:pb;list-style:none;}
+    .playbook li{position:relative;padding:8px 0 8px 30px;font-size:12.5px;color:#2c2820;line-height:1.5;
+        border-bottom:1px solid #f1ede5;page-break-inside:avoid;}
+    .playbook li:before{counter-increment:pb;content:counter(pb);position:absolute;left:0;top:7px;width:20px;height:20px;
+        background:%(ACCENT)s;color:#fff;border-radius:50%%;font-family:'Fraunces',serif;font-weight:700;font-size:11px;
+        display:flex;align-items:center;justify-content:center;}
+    /* roadmap */
+    .roadmapgrid{display:flex;gap:11px;margin:12px 0;}
+    .rmcol{flex:1;border:1px solid #e7e0d3;border-radius:10px;padding:13px;background:#fff;page-break-inside:avoid;}
+    .rmmonth{font-family:'IBM Plus Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:%(ACCENT)s;}
+    .rmtitle{font-family:'Fraunces',serif;font-weight:700;font-size:14px;margin:4px 0 7px;color:%(INK)s;}
+    .rmcol ul{margin:0;padding-left:15px;}
+    .rmcol li{font-size:11px;color:#3a362f;line-height:1.4;margin:4px 0;}
     .foot{margin-top:9mm;padding-top:5mm;border-top:1px solid #ece6da;text-align:center;
         font-family:'IBM Plus Mono',monospace;font-size:9px;color:#bcb4a4;letter-spacing:.06em;
         page-break-before:avoid;}
@@ -347,6 +446,7 @@ def _sec(num, eyebrow, title, inner, brk=True):
 
 
 def _build_html(report, intel, palette):
+    report["_intel"] = intel                       # for _role_model lookups
     n = report["narrative"]
     bi = report["brand"]["instagram"]
     accent = palette.get("accent", "#b23a2e")
@@ -360,28 +460,39 @@ def _build_html(report, intel, palette):
              f"<p class='sub'>{_esc(n.get('subhead',''))}</p>"
              f"<div class='bioline'>{_esc(name)} · “{_esc((bi.get('biography') or '').splitlines()[0] if bi.get('biography') else '')}” · {_esc(report['meta'].get('date'))}</div>"
              f"{_hero_stats(bi)}"
-             f"<p class='lead'>{_esc(n.get('starting_line'))}</p>"
-             f"<div class='verdictstrip-label'>The verdict, in one screen</div>{_snapshot(n)}</section>")
+             f"<p class='lead'>{_esc(n.get('starting_line'))}</p></section>")
+
+    summary = _sec("00", "Executive summary", "What this audit found",
+                   _exec_summary(n) + f"<div class='verdictstrip-label'>The channel verdict, in one screen</div>{_snapshot(n)}",
+                   brk=False)
 
     where = _sec("01", "Where you stand", "You vs the category",
                  f"<p class='lead'>{_esc(n.get('where_you_stand'))}</p>"
                  f"<h3>Engagement per post — you against your category</h3>{_you_vs_category(report['benchmark'], accent)}")
 
-    snap = _sec("02", "The map", "The channel map",
+    identity = _sec("02", "Brand identity", "Who you are — and the gap", _identity(report), brk=False)
+
+    chan = _sec("03", "The map", "The channel map",
                 f"<div class='intro2'>{_esc(intros.get('channel_map'))}</div>"
-                f"{_channel_grid(report['scores'])}", brk=False)
+                f"{_channel_grid(report['scores'])}")
 
-    how = _sec("03", "The mechanic", "What's working — and your gap",
-               _how_section(report, intel, accent), brk=False)
+    aud = _sec("04", "Audience", "Who you're for", _audience(report), brk=False)
 
-    money = _sec("04", "The money signal", "Who's paying to win", _money_section(report, intel, accent), brk=False)
+    how = _sec("05", "The mechanic", "How the competitors win",
+               _how_winners(report, intel, accent))
 
-    route = _sec("05", "The payoff", "Your route forward",
-                 f"<div class='intro2'>{_esc(intros.get('route'))}</div>{_route(n)}", brk=False)
+    money = _sec("06", "The money signal", "Who's paying to win", _money_section(report, intel, accent), brk=False)
 
-    appendix = _sec("06", "Receipts", "Provenance & methodology", _provenance(report), brk=False)
+    rolemodel = _sec("07", "The destination", "Your role model", _role_model(report), brk=False)
 
-    body = (cover + where + snap + how + money + route + appendix
+    playbook = _sec("08", "Your move", "Your playbook",
+                    f"<div class='intro2'>{_esc(intros.get('how'))}</div>{_your_playbook(n)}")
+
+    roadmap = _sec("09", "The plan", "Your 90-day roadmap", _roadmap(n), brk=False)
+
+    appendix = _sec("10", "Receipts", "Provenance & methodology", _provenance(report), brk=True)
+
+    body = (cover + summary + where + identity + chan + aud + how + money + rolemodel + playbook + roadmap + appendix
             + f"<div class='foot'>GRID CONTROL · real-data brand audit · prepared for @{_esc(bi.get('username'))}</div>")
     return ("<!doctype html><html><head><meta charset='utf-8'><style>"
             + _css(palette) + "</style></head><body>" + body + "</body></html>")

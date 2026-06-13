@@ -88,10 +88,11 @@ def _benchmark(brand: dict, intel: dict, scores: dict) -> dict:
     rows.sort(key=lambda r: r["engagement"], reverse=True)
 
     median = round(_median(peer_eng), 1)
-    ceiling_row = max((r for r in rows if not r["is_brand"]), key=lambda r: r["engagement"], default=None)
-    # the role model = highest-engagement PEER (the realistic next ceiling, not the giant leader)
+    # ROLE MODEL = the full-funnel leader to climb toward (Gary Vee), NOT a competitor.
+    role_model = next((r for r in rows if not r["is_brand"] and r.get("tier") == "leader"), None)
+    # COMPETITOR CEILING = the top single-channel peer to beat now (Manthan) — the near-term target.
     peer_rows = [r for r in rows if not r["is_brand"] and r.get("tier") == "peer"]
-    role_model = max(peer_rows, key=lambda r: r["engagement"], default=None)
+    competitor_ceiling = max(peer_rows, key=lambda r: r["engagement"], default=None)
 
     # the comment-funnel gap: brand's own comments vs the best peer's comment-driven posts
     cs = scores.get("content_signals", {})
@@ -102,8 +103,8 @@ def _benchmark(brand: dict, intel: dict, scores: dict) -> dict:
         "brand_engagement": brand_eng,
         "rows": rows,
         "category_median": median,
-        "ceiling": ceiling_row,
-        "role_model": role_model,
+        "role_model": role_model,                 # Gary Vee — the aspiration
+        "competitor_ceiling": competitor_ceiling,  # top peer — the near-term target
         "gap_to_median_x": round(median / brand_eng, 1) if brand_eng else None,
         "comment_funnel_gap": {
             "brand_avg_comments": brand_comments,
@@ -113,79 +114,107 @@ def _benchmark(brand: dict, intel: dict, scores: dict) -> dict:
     }
 
 
-# ───────────────────────────────────────── the one Opus call (brand-centered)
-def _facts(brand, benchmark, scores, profile) -> str:
+# ───────────────────────────────────────── the one Opus call (full brand audit)
+def _facts(brand, benchmark, scores, profile, signals) -> str:
     bi = brand["instagram"]
     return json.dumps({
         "brand": {
-            "username": bi.get("username"), "name": bi.get("name"),
-            "bio": bi.get("biography"),
+            "username": bi.get("username"), "name": bi.get("name"), "bio": bi.get("biography"),
             "followers": bi.get("followers"), "posts": bi.get("media_count"),
             "avg_likes": bi.get("avg_likes"), "avg_comments": bi.get("avg_comments"),
             "avg_reach": bi.get("avg_reach"), "total_saves": bi.get("total_saves"),
-            "format_mix": bi.get("format_mix"),
-            "account_insights_28d": bi.get("account_insights_28d"),
-            "demographics_status": bi.get("demographics_status"),
+            "format_mix": bi.get("format_mix"), "demographics_status": bi.get("demographics_status"),
             "on_channels": ["Instagram"],
-            "positioning_wedge": profile.get("positioning_wedge"),
-            "brand_architecture": profile.get("brand_architecture"),
         },
+        "framing": {"role_model": signals["framing"]["role_model"],
+                    "competitors": signals["framing"]["competitors"],
+                    "note": "role_model = the full-funnel operator to climb toward (aspiration); "
+                            "competitors = the single-channel peers to beat now."},
         "benchmark": {
             "brand_engagement": benchmark["brand_engagement"],
             "category_median": benchmark["category_median"],
-            "ceiling": benchmark["ceiling"],
-            "role_model": benchmark["role_model"],
+            "competitor_ceiling": benchmark["competitor_ceiling"],   # top peer = near-term target
+            "role_model": benchmark["role_model"],                   # Gary Vee = aspiration
             "gap_to_median_x": benchmark["gap_to_median_x"],
-            "comment_funnel_gap": benchmark["comment_funnel_gap"],
         },
-        "channels": [{"channel": c["channel"], "verdict": c["verdict"],
-                      "is_gap": c.get("is_gap"), "headline": c["headline"],
-                      "money_signal_days": c.get("money_signal_days", 0)}
+        "brand_identity": {
+            "positioning_wedge": signals["identity"]["positioning_wedge"],
+            "brand_architecture": signals["identity"]["brand_architecture"],
+            "tone_of_voice": signals["identity"]["tone_of_voice"],
+            "external_signal": signals["identity"]["external_signal"],
+            "identity_gaps": signals["identity"]["identity_gaps"],
+        },
+        "audience": signals["audience"],
+        "the_how_playbook": {
+            "the_mechanic": signals["playbook"]["the_mechanic"],
+            "funnel_adoption": signals["playbook"]["funnel_adoption"],
+            "keyword_cta_examples": signals["playbook"]["keyword_cta_examples"],
+            "top_category_hooks": signals["playbook"]["top_category_hooks"],
+            "per_competitor": signals["playbook"]["competitors"],
+        },
+        "channels": [{"channel": c["channel"], "verdict": c["verdict"], "is_gap": c.get("is_gap"),
+                      "headline": c["headline"], "money_signal_days": c.get("money_signal_days", 0)}
                      for c in scores["channels"]],
-        "content_signal": scores.get("content_signals", {}).get("headline"),
-        "route_order": scores.get("route_order", []),
+        "triage": signals["triage"],
         "channels_absent": [c["channel"] for c in scores.get("channels_absent", [])],
     }, ensure_ascii=False, indent=2)
 
 
-_SCHEMA = """Return STRICT JSON only (no code fences, no prose around it):
+_SCHEMA = """Return STRICT JSON only (no code fences, no prose around it). Every figure you cite must
+come from FACTS. Keys:
 {
-  "headline": "<=10 words. THIS BRAND's path, not the competitors'. punchy, no hype clichés>",
-  "subhead": "<=20 words. what this audit decides for them>",
-  "starting_line": "<=45 words. honest read of where the brand is TODAY (cite its real numbers). framed as a runway, not a verdict>",
-  "where_you_stand": "<=55 words. the brand vs the category ceiling — honest gap + what it means. cite the real benchmark numbers>",
+  "headline": "<=10 words. THIS BRAND's path. punchy, no hype clichés",
+  "subhead": "<=20 words. what this audit decides for them",
+  "exec_summary": [ "<=24 words each. 3-5 critical findings/opportunities for the founder, each tied to a real number" ],
+  "starting_line": "<=45 words. honest read of where the brand is TODAY (cite real numbers). runway, not verdict",
+  "where_you_stand": "<=55 words. brand vs competitor_ceiling vs category median — honest gap. cite numbers",
   "snapshot": [ {"verdict":"RIDE|GAP|TEST|SKIP","channel":"...","line":"<=22 words"} ],
-  "intros": {"channel_map":"<=26w","how":"<=26w","money":"<=26w","route":"<=26w"},
-  "the_how": "<=50 words. the ONE mechanic the category wins on (comment-to-DM funnel) and the brand's specific gap on it. cite the real comment numbers>",
-  "route_steps": [ {"verdict":"...","channel":"...","action":"<=10 words imperative","why":"<=34 words. cite a real number, tie to THIS brand's start"} ]
+  "identity": {
+     "summary": "<=40 words. who the brand IS per its positioning",
+     "external_image_gap": "<=45 words. the internal-identity-vs-external-image gap — cite the concrete identity_gaps"
+  },
+  "audience": "<=45 words. who the target follower is + the honest perception read (cite demographics_status, 0 comments)",
+  "how_winners_win": "<=70 words. reverse-engineer the COMPETITORS' mechanic: the comment-keyword→DM funnel + the hook style. cite a real keyword example and a real hook",
+  "role_model": "<=45 words. what the ROLE MODEL (full-funnel) proves about the destination — IG+YouTube+paid. cite real numbers",
+  "your_playbook": [ "<=30 words each. 3-5 concrete moves THIS brand makes to copy the winners — specific, post-level, no vagueness" ],
+  "roadmap": {
+     "month_1": {"title":"<=8 words","moves":["<=20 words each"]},
+     "month_2": {"title":"<=8 words","moves":["<=20 words each"]},
+     "month_3": {"title":"<=8 words","moves":["<=20 words each"]}
+  },
+  "route_steps": [ {"verdict":"...","channel":"...","action":"<=10 words imperative","why":"<=34 words. cite a real number"} ],
+  "intros": {"channel_map":"<=26w","how":"<=26w"}
 }
-One snapshot + one route_step per channel in `channels` / `route_order`, same order."""
+One snapshot + one route_step per channel in `channels`, same order. Roadmap follows the impact/effort triage:
+month_1 = quick_wins (fix the funnel + format), month_2 = build/retain, month_3 = strategic_shifts (paid/expansion)."""
 
 
-def _generate(brand, benchmark, scores, profile) -> tuple[dict, dict]:
+def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
     name = brand["instagram"].get("name") or profile.get("name")
     system = (
-        f"You are the lead strategist writing an onboarding brand audit for {name} — a real client "
-        "who just signed with OffGrid. This is their FIRST impression of us, so it must be sharp, "
-        "honest, and specific. Voice: founder-to-founder, blunt, zero hype. The BRAND is the hero of "
-        "every section — competitors are only the lens that shows the route. You write PROSE around "
-        "facts already proven by a deterministic engine; you NEVER invent a number, channel, or verdict. "
-        "Only use figures in the FACTS block. The brand is tiny and new — never condescend; frame the "
-        "gap as runway and give them the exact moves to close it."
+        f"You are the lead brand strategist writing an onboarding BRAND AUDIT for {name} — a real client "
+        "who just signed with OffGrid. This is their first impression of us. It must read like a real brand "
+        "audit (identity + perception + competitive benchmark + a concrete how-to playbook + a 90-day plan), "
+        "not a metrics dump. Voice: founder-to-founder, blunt, specific, zero hype. RULES: the BRAND is the "
+        "hero of every section. ROLE MODEL = the full-funnel operator to climb toward; COMPETITORS = the peers "
+        "to beat now — never confuse them. You write PROSE around facts already proven by a deterministic "
+        "engine; NEVER invent a number, keyword, channel, or verdict — only use what's in FACTS. No vague "
+        "advice like 'be more authentic' — every recommendation must be concrete and tied to a real number "
+        "or a real competitor example. The brand is tiny and new — frame gaps as runway, never condescend."
     )
     prompt = "\n\n".join([
         UNTRUSTED_POLICY,
-        "FACTS (REAL, pre-computed — the only numbers/verdicts that exist; do not add or alter any):\n"
-        + _facts(brand, benchmark, scores, profile),
-        "Write the audit narrative. Story arc: (1) where THIS brand stands today, honestly; (2) what the "
-        "category proves works — the comment-to-DM funnel is the HOW; (3) where the openings are (channels "
-        "peers ignore but the leader proves convert); (4) the exact sequenced route for a brand starting "
-        "from here. Make every section about the brand's next move.",
+        "FACTS (REAL, pre-computed — the only numbers/verdicts/keywords that exist; do not add or alter):\n"
+        + _facts(brand, benchmark, scores, profile, signals),
+        "Write the full brand-audit narrative per the schema. Arc: exec summary → where they stand → who they "
+        "ARE (identity + the external-image gap) → who their audience is → how the COMPETITORS win (the "
+        "comment-keyword→DM funnel, reverse-engineered with real examples) → what the ROLE MODEL proves about "
+        "the destination → the brand's own concrete playbook → a 90-day roadmap. Make every line actionable.",
         "HARD STYLE RULE — never use these phrases or close variants (auto-rejected if any appear): "
         + "; ".join(_FILLER) + ".",
         _SCHEMA,
     ])
-    res = complete(AGENT_SLUG, [{"role": "user", "content": prompt}], system=system, max_tokens=2200)
+    res = complete(AGENT_SLUG, [{"role": "user", "content": prompt}], system=system, max_tokens=3200)
     return _parse_json((res.get("text") or "").strip()), res
 
 
@@ -209,31 +238,38 @@ def _has_filler(n: dict) -> bool:
 def _eval(brand, scores, narrative) -> dict:
     bi = brand["instagram"]
     checks = {
+        # brand-audit completeness (Frontify + BrandAuditors)
+        "exec_summary_present": isinstance(narrative.get("exec_summary"), list) and len(narrative["exec_summary"]) >= 3,
+        "brand_identity_audited": bool((narrative.get("identity") or {}).get("external_image_gap")),
+        "audience_assessed": bool(narrative.get("audience")),
+        "how_playbook_present": bool(narrative.get("how_winners_win")) and bool(narrative.get("your_playbook")),
+        "role_model_framed": bool(narrative.get("role_model")),
+        "roadmap_present": all(k in (narrative.get("roadmap") or {}) for k in ("month_1", "month_2", "month_3")),
+        # data integrity
         "brand_is_centered": bool(narrative.get("starting_line")) and bool(narrative.get("where_you_stand")),
         "has_real_brand_data": bi.get("status") == "ok" and bi.get("followers") is not None,
         "has_real_evidence": any(c.get("provenance", {}).get("tag") == "REAL" for c in scores["channels"]),
-        "channel_recommendation_present": bool(narrative.get("route_steps")) and bool(narrative.get("snapshot")),
         "ad_signal_assessed": any(c["channel"].startswith("Meta Ads") for c in scores["channels"]),
         "honest_absence": bool(scores.get("channels_absent")) or bi.get("demographics_status") == "locked_under_100_followers",
         "no_ai_filler": not _has_filler(narrative),
-        "all_sections_present": all([narrative.get("headline"), narrative.get("snapshot"),
-                                     narrative.get("the_how"), narrative.get("route_steps")]),
     }
     return {"passed": all(checks.values()), "checks": checks}
 
 
 # ───────────────────────────────────────── assembly
 def generate(slug: str, render_pdf: bool = True) -> dict:
+    import audit_signals
     brand, intel, scores, profile = _load(slug)
     benchmark = _benchmark(brand, intel, scores)
-    narrative, res = _generate(brand, benchmark, scores, profile)
+    signals = audit_signals.build(brand, intel, scores, profile)
+    narrative, res = _generate(brand, benchmark, scores, profile, signals)
     ev = _eval(brand, scores, narrative)
 
     report = {
         "meta": {"brand": brand["instagram"].get("name") or slug, "slug": slug, "version": VERSION,
                  "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "model": res.get("model"),
-                 "engine": "brand_self + channel_score (Class-1) + Opus narrative (Class-2)"},
-        "brand": brand, "benchmark": benchmark, "scores": scores,
+                 "engine": "brand_self + channel_score + audit_signals (Class-1) + Opus narrative (Class-2)"},
+        "brand": brand, "benchmark": benchmark, "scores": scores, "signals": signals,
         "narrative": narrative, "eval": ev,
     }
 
