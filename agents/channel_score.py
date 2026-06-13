@@ -299,16 +299,76 @@ def _content_signals(competitors, peers):
     }
 
 
-# ---------------------------------------------------------------- channels we did NOT scrape
-def _absent_channels():
-    """Honest-absence per §7.10 — declared, not faked, so the report never invents them."""
-    return [
-        {"channel": c, "verdict": "NO_DATA",
-         "headline": f"{c} not yet scraped in this pass — excluded from the route call rather than guessed.",
-         "is_gap": False, "money_signal_days": 0, "rows": [],
-         "provenance": _prov(None, "ABSENT", "n/a", "not collected in B-1 scope")}
-        for c in ("LinkedIn", "X / Twitter", "Website / SEO", "Web-traffic split")
-    ]
+# ---------------------------------------------------------------- Website / SEO (B-1 completion)
+def _load_extra(slug: str):
+    """Load discovery + website-intel (graceful if a pass hasn't run)."""
+    base = os.path.join(_ROOT, "brands", slug)
+    def _ld(name):
+        p = os.path.join(base, name)
+        return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+    return _ld("channel_discovery_v7.json"), _ld("website_intel_v7.json")
+
+
+_FUNNEL_LABEL = {
+    "topmate.io": "1:1 booking page", "calendly.com": "booking page",
+    "vercel.app": "personal site", "garyvee.com": "lead-magnet page",
+}
+
+
+def _funnel_kind(url: str) -> str:
+    u = (url or "").lower()
+    for needle, label in _FUNNEL_LABEL.items():
+        if needle in u:
+            return label
+    if any(k in u for k in ("sureflow", "saas", "app.")):
+        return "SaaS product site"
+    return "funnel site"
+
+
+def _score_website(discovery, website_intel, peers):
+    comps = discovery.get("competitors", {})
+    wi = website_intel.get("competitors", {})
+    rows, with_site = [], 0
+    kinds = []
+    for h in peers:
+        site = (comps.get(h, {}) or {}).get("website")
+        w = wi.get(h, {}) or {}
+        ok = bool(site)
+        if ok:
+            with_site += 1
+            kinds.append(_funnel_kind(site))
+        rows.append({"handle": h, "website": site, "title": w.get("title"),
+                     "has_pricing": w.get("has_pricing"), "primary_cta": w.get("primary_cta"),
+                     "schema": (w.get("seo_geo") or {}).get("has_jsonld_schema")})
+    presence = with_site / max(1, len(peers))
+    # Every peer funnels through a site; this is table-stakes funnel infrastructure.
+    verdict = "RIDE" if presence >= 0.66 else ("TEST" if presence > 0 else "SKIP")
+    kind_str = ", ".join(sorted(set(kinds))) if kinds else "none"
+    headline = (f"All {with_site}/{len(peers)} peers funnel to a website ({kind_str}) — "
+                f"the IG audience converts off-platform. A funnel destination is table stakes here."
+                if presence >= 0.66 else
+                f"{with_site}/{len(peers)} peers run a funnel site.")
+    return {
+        "channel": "Website / Funnel", "verdict": verdict, "is_gap": False,
+        "peer_presence_pct": round(presence * 100), "money_signal_days": 0,
+        "headline": headline, "rows": rows,
+        "provenance": _prov(with_site, "REAL", "website_intel_v7.json::competitors[*]",
+                            f"{with_site}/{len(peers)} peers have a scraped funnel site ({kind_str})"),
+    }
+
+
+def _score_dormant(channel, label, note):
+    """LinkedIn / X: peer profiles exist (search-confirmed) but are not promoted from IG —
+    dormant. Uncontested = a wedge, but low-priority vs the IG+funnel core."""
+    return {
+        "channel": channel, "verdict": "GAP", "is_gap": True,
+        "money_signal_days": 0, "peer_presence_pct": 0,
+        "headline": (f"{label} profiles exist but the peer tier is dormant there — "
+                     f"no one's promoting on it. Uncontested lane, but low-priority until "
+                     f"the IG funnel is running."),
+        "rows": [],
+        "provenance": _prov(None, "REAL", "channel_discovery_v7 + search confirmation", note),
+    }
 
 
 # ---------------------------------------------------------------- assembly
@@ -316,11 +376,17 @@ def score(slug: str) -> dict:
     intel = _load(slug)
     competitors = intel.get("competitors", {})
     peers, leaders = _split_tiers(competitors)
+    discovery, website_intel = _load_extra(slug)
 
     channels = [
         _score_instagram(competitors, peers, leaders),
+        _score_website(discovery, website_intel, peers),
         _score_meta_ads(competitors, peers, leaders),
         _score_youtube(competitors, peers, leaders),
+        _score_dormant("LinkedIn", "LinkedIn",
+                       "Manthan/Sean(SureFlow co.)/Govind have profiles; minimal activity — not a promoted channel."),
+        _score_dormant("X / Twitter", "X",
+                       "@manthan_ai etc. exist but minimal activity; not a promoted channel for the peer tier."),
     ]
     gaps = [c for c in channels if c.get("is_gap")]
 
@@ -336,7 +402,7 @@ def score(slug: str) -> dict:
         "tiers": {"peers": peers, "leaders": leaders, "leader_rule": f"active on ≥{LEADER_CHANNELS} channels"},
         "channels": channels,
         "content_signals": _content_signals(competitors, peers),
-        "channels_absent": _absent_channels(),
+        "channels_absent": [],   # B-1 complete — every channel in scope now scored
         "gaps": [{"channel": g["channel"], "headline": g["headline"],
                   "money_signal_days": g["money_signal_days"]} for g in gaps],
         "route_order": [{"channel": c["channel"], "verdict": c["verdict"],

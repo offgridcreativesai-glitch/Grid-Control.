@@ -178,24 +178,32 @@ come from FACTS. Keys:
   "role_model": "<=45 words. what the ROLE MODEL (full-funnel) proves about the destination — IG+YouTube+paid. cite real numbers",
   "your_playbook": [ "<=30 words each. 3-5 concrete moves THIS brand makes to copy the winners — specific, post-level, no vagueness" ],
   "roadmap": {
-     "month_1": {"title":"<=8 words","moves":["<=20 words each"]},
-     "month_2": {"title":"<=8 words","moves":["<=20 words each"]},
-     "month_3": {"title":"<=8 words","moves":["<=20 words each"]}
+     "month_1": {"title":"<=8 words","moves":["<=24 words each — a SUGGESTED type of content to publish, framed as guidance"]},
+     "month_2": {"title":"<=8 words","moves":["<=24 words each — suggested content types"]},
+     "month_3": {"title":"<=8 words","moves":["<=24 words each — suggested content types"]}
   },
   "route_steps": [ {"verdict":"...","channel":"...","action":"<=10 words imperative","why":"<=34 words. cite a real number"} ],
   "intros": {"channel_map":"<=26w","how":"<=26w"}
 }
-One snapshot + one route_step per channel in `channels`, same order. Roadmap follows the impact/effort triage:
-month_1 = quick_wins (fix the funnel + format), month_2 = build/retain, month_3 = strategic_shifts (paid/expansion)."""
+One snapshot + one route_step per channel in `channels`, same order.
+ROADMAP IS THE GUIDE'S CONTENT PLAN — each `moves` entry SUGGESTS a TYPE of content the brand
+could publish (e.g. "A weekly carousel breaking down one automation you built", "Short Reels
+demoing a tool with a comment-trigger", "Build-in-public clips showing the system working"),
+phrased as recommendations a trusted guide gives — "consider…", "content like…", "a format worth
+testing…" — NEVER blunt orders ("do X", "post Y"). Still ground each suggestion in a real
+category signal. month_1 = quick wins, month_2 = build, month_3 = expand."""
 
 
 def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
     name = brand["instagram"].get("name") or profile.get("name")
     system = (
         f"You are the lead brand strategist writing an onboarding BRAND AUDIT for {name} — a real client "
-        "who just signed with OffGrid. This is their first impression of us. It must read like a real brand "
-        "audit (identity + perception + competitive benchmark + a concrete how-to playbook + a 90-day plan), "
-        "not a metrics dump. Voice: founder-to-founder, blunt, specific, zero hype. RULES: the BRAND is the "
+        "who just signed with OffGrid. You are their TRUSTED GROWTH GUIDE — they're relying on you to help "
+        "them grow, so be generous, specific, and encouraging. It must read like a real brand audit (identity "
+        "+ perception + competitive benchmark + a concrete how-to playbook + a 90-day plan), not a metrics "
+        "dump. Voice: founder-to-founder and specific. The DIAGNOSIS is honest and direct; the RECOMMENDATIONS "
+        "(especially the roadmap) are framed as a guide's SUGGESTIONS — 'consider…', 'a format worth testing…', "
+        "'content like…' — not blunt orders. RULES: the BRAND is the "
         "hero of every section. ROLE MODEL = the full-funnel operator to climb toward; COMPETITORS = the peers "
         "to beat now — never confuse them. You write PROSE around facts already proven by a deterministic "
         "engine; NEVER invent a number, keyword, channel, or verdict — only use what's in FACTS. No vague "
