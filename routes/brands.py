@@ -148,6 +148,24 @@ def brand_costs(brand_slug: str):
     return jsonify({"success": True, "data": data})
 
 
+@bp.route("/api/brands/<brand_slug>/narrative", methods=["GET"])
+@require_auth
+def brand_narrative(brand_slug: str):
+    """Phase C1 — return the brand's story-so-far (the persistent brain narrative).
+    Read-only, brand-scoped. Query params: n (int, default 20), agent (optional slug)."""
+    if not _DB_AVAILABLE:
+        return jsonify({"success": False, "error": "Database not available"}), 503
+
+    brand_id, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+
+    n     = max(1, min(int(request.args.get("n", 20)), 100))
+    agent = request.args.get("agent") or None
+    entries = _db.get_narrative(brand_id, n=n, agent=agent)
+    return jsonify({"success": True, "data": {"entries": entries, "count": len(entries)}})
+
+
 @bp.route("/api/brands/<brand_slug>/costs/record", methods=["POST"])
 @require_auth
 def record_agent_cost(brand_slug: str):

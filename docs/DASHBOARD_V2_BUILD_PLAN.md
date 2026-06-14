@@ -136,9 +136,11 @@ Legend: 🟢 exists · 🟡 wire · 🔴 new
 - **B3** ✅ Verified end-to-end against live Supabase ($0 Anthropic): both stores populate with
   correct per-agent attribution; test rows cleaned up. Widgets no longer read ₹0.
 
-### Phase C — Expose real data via API (backend layer for the future cockpit)  🟡
-- **C1** Endpoints return real run/narrative/cost/metric data (the data the cockpit will bind to).
-- **C2** Approve/Change/Publish + Allocate/Queue endpoints wired to the existing approval gate + publishers.
+### Phase C — Expose real data via API (backend layer for the future cockpit)  🟡 C1 mostly done · C2 SG1-gated
+- **C1** ◐ Run/cost/metric endpoints already real; added read-only `GET /api/brands/<slug>/narrative`
+  (Jun 14, brand-scoped, mirrors `/costs`) so the persistent-brain story is bindable.
+- **C2** ⛔ **Held for the SG1 security session** — Approve/Change/**Publish** + Allocate/Queue are an
+  outward-facing surface; the plan mandates SG1 (Opus·max + `/security-review`) right here. Not landed silently.
 - **C3** *(Front-end deferred)* the new cockpit UI is rebuilt later via Emergent/Lovable
   (`docs/DASHBOARD_DESIGN_EXPLORATION.md`); Wave 1 only guarantees the API/data is real and ready.
 
@@ -161,18 +163,22 @@ Legend: 🟢 exists · 🟡 wire · 🔴 new
 - *Cost note:* Sonnet floor means high-volume grunt (dm-hunter scoring, community categorization, trend
   clustering) runs ~3× a Haiku tier. Accepted for quality consistency; revisit only if it bites.
 
-### Phase E — Scheduler + scrape-cache  🔴
-- **E1** APScheduler running as a **dedicated 24×7 Railway worker service** (separate from the web API) that
-  triggers scheduled agent runs server-side (daily/twice-daily cadence). **Replaces the old Mac-awake + local
-  crontab** (GRIDLOCK-AUTOPOST-04JUN) — no Mac dependency. Needs Railway hobby (~$5/mo, always-on; not a
-  sleeping free tier). Feeds the morning brief.
-- **E2** Scrapling fetcher (anti-bot, MCP) as Apify alternative for owned scrapes; **cache** → many posts per scrape (~80% less re-scrape bleed). Apify for hardest targets only.
-- **E3** Trend hashtags → official **IG Hashtag Search API** (saves Apify cost + no ban risk). DM-Hunter prospecting stays on Apify (Hashtag Search strips post-owner identity). Wire each to the right source.
+### Phase E — Scheduler + scrape-cache  🟢 code-complete · deploy pending (paid)
+- **E1** ✅ Code done: `scheduler/worker.py` (APScheduler `BlockingScheduler`, IST cron) +
+  `scheduler/schedule_config.json` (askgauravai 06:30, offgrid 07:00) + Procfile `worker:` entry +
+  token-authed `POST /api/scheduler/trigger` (fail-closed `GRID_SCHEDULER_TOKEN`, slug regex /
+  path-traversal guard, runs `run_daily_pipeline` in background). **Remaining = ops, not code:** add the
+  ~$5/mo always-on Railway worker service + set `GRID_SCHEDULER_TOKEN` on both services.
+- **E2** ◐ `utils/scrape_cache.py` + `agents/intel/website_intel.py` exist (cache + fetch path).
+- **E3** ◐ `agents/intel/ig_hashtag_search.py` exists (official IG Hashtag Search path).
 
-### Cross-cutting LAW (fold in now) — Untrusted-content boundary  🔴  *(Monday M7#1)*
-- `agents/_untrusted.py`: `untrusted_context_message(label, content)` + policy preamble. Every external datum
-  (comments, scraped profiles, emails, DMs) wrapped **DATA-not-instruction** before hitting the model. Critical for
-  Wave 2 agents + hosted/client safety. Effort S.
+### Cross-cutting LAW (fold in now) — Untrusted-content boundary  🟢 Wave-1 coverage complete · SG2 review pending
+- ✅ `agents/_lib/_untrusted.py` (`wrap`, `untrusted_context_message`, `UNTRUSTED_POLICY`) applied to every
+  Wave-1 agent that ingests **third-party** text: trend-researcher (scraped posts/trends/competitors),
+  strategy, content-planner, script-writer, creative-director, brand_book_v7. data-analyst/funnel/website
+  ingest no untrusted text (metrics + own-account fields only) → correctly exempt.
+- ⚠️ **Wave-2 agents MUST adopt it when built** (community-manager comments, dm-hunter DMs/emails = the real
+  injection vectors). **SG2** (Opus·max + `/security-review`) is the proper closure — not claimed closed here.
 
 **Wave-1 sequencing:** A→B→C make it real for a client; D→E built behind a working app; the law lands with C/Wave 2.
 
