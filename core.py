@@ -410,11 +410,11 @@ def _write_brand_env_token(slug: str, env_key: str, value: str) -> None:
 # Locked roster — exactly 9 agents in pipeline order
 AGENTS = [
     {"id": 0, "name": "Trend Researcher",  "role": "Weekly trends",    "model": "claude-sonnet-4-6", "agentFile": "trend-researcher.md"},
-    {"id": 1, "name": "Strategy Agent",    "role": "90-day roadmap",   "model": "claude-opus-4-6",   "agentFile": "strategy-agent.md"},
+    {"id": 1, "name": "Strategy Agent",    "role": "90-day roadmap",   "model": "claude-opus-4-8",   "agentFile": "strategy-agent.md"},
     {"id": 2, "name": "Content Planner",   "role": "30-day calendar",  "model": "claude-sonnet-4-6", "agentFile": "content-planner.md"},
     {"id": 3, "name": "Script Writer",     "role": "Scripts/captions", "model": "claude-sonnet-4-6", "agentFile": "script-writer.md"},
-    {"id": 4, "name": "Creative Director", "role": "AI video/image",   "model": "claude-opus-4-6",   "agentFile": "creative-director.md"},
-    {"id": 5, "name": "Ad Strategist",     "role": "Paid ads",         "model": "claude-opus-4-6",   "agentFile": "ad-strategist.md"},
+    {"id": 4, "name": "Creative Director", "role": "AI video/image",   "model": "claude-opus-4-8",   "agentFile": "creative-director.md"},
+    {"id": 5, "name": "Ad Strategist",     "role": "Paid ads",         "model": "claude-opus-4-8",   "agentFile": "ad-strategist.md"},
     {"id": 6, "name": "Data Analyst",      "role": "Metrics",          "model": "claude-sonnet-4-6", "agentFile": "data-analyst.md"},
     {"id": 7, "name": "Funnel Specialist", "role": "Conversion",       "model": "claude-sonnet-4-6", "agentFile": "funnel-specialist.md"},
     {"id": 8, "name": "Website Agent",     "role": "Site/Railway",     "model": "claude-sonnet-4-6", "agentFile": "website-agent.md"},

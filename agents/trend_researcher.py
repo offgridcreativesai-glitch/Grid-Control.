@@ -1603,7 +1603,7 @@ Add a top-level "data_provenance" array to your output with entries:
 Aim for 8–12 provenance entries. Validation will reject claims that don't trace.
 """
 
-        messages = [{"role": "user", "content": prompt}]
+        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
         result = None
         validation_report = None
         attempt = 0

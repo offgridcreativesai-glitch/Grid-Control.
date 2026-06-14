@@ -115,12 +115,16 @@ rate-limit public endpoints · cloud-link fetches SSRF-guarded · fail-closed on
 ## 3. WAVE 1 — FOUNDATIONS (the 10-day UC1 core)
 Legend: 🟢 exists · 🟡 wire · 🔴 new
 
-### Phase A — Persistent Brain (narrative memory)  🟡
-- **A1** Audit `brand_memory` schema; reuse if it fits, else add `brand_narrative`:
-  `(id, brand_slug, ts, agent, entry_type[decision|action|result], summary, refs jsonb)`. Inherits RLS.
-- **A2** `base_agent.py`: `narrative_read(brand,n)` at session_start + `narrative_append(brand,entry)` at session_end.
-- **A3** `orchestrator.py`: pass story-so-far into agent context so runs **continue**, not cold-start.
-- **A4** Layer 2: `embedding vector` column + pgvector similarity recall. Ship A1–A3 first.
+### Phase A — Persistent Brain (narrative memory)  ✅ A1–A3 (Jun 14 2026) · A4 deferred
+- **A1** ✅ `brand_narrative` table exists (`db.append_narrative` / `db.get_narrative`), inherits RLS.
+- **A2** ✅ Narrative read/append present (`base_agent` + `ceo_brain/orchestrator`).
+- **A3** ✅ The missing link: the orchestrator loaded the story at boot and appended on every
+  `save_agent_output`, but agents never **injected** it into the model prompt → still cold-started.
+  Added `orchestrator.story_so_far_block()` (empty-safe) and prepended it to the main generation
+  prompt of all 8 LLM agents (strategy, content-planner, script-writer, creative-director,
+  trend-researcher, data-analyst, funnel, website). Cold brand → identical to before; warm brand →
+  continues. Verified parse + empty/warm behavior.
+- **A4** ⏳ Deferred (plan: ship A1–A3 first): `embedding vector` column + pgvector similarity recall.
 - *Note:* this replaces Monday's `_record_learning` loop — growth agents append here.
 
 ### Phase B — Cost wiring (kills ₹0 bug)  ✅ (Jun 14 2026)
@@ -138,10 +142,14 @@ Legend: 🟢 exists · 🟡 wire · 🔴 new
 - **C3** *(Front-end deferred)* the new cockpit UI is rebuilt later via Emergent/Lovable
   (`docs/DASHBOARD_DESIGN_EXPLORATION.md`); Wave 1 only guarantees the API/data is real and ready.
 
-### Phase D — Model gateway (LiteLLM)  🔴  *(= today's D ∪ Monday M7#4)*
-- **D1** `agents/model_gateway.py` wrapping LiteLLM; config `agent → model + effort`. Single source of truth
-  (kills the current drift between `agents/*.py` MODEL constants and `managed_agents/registry.json`).
-- **D2** Route `base_agent` LLM calls through it; per-call cost feeds Phase B.
+### Phase D — Model gateway (LiteLLM)  🟢 D1 + opus-4-8 migration done · D2 partial
+- **D1** ✅ `agents/_lib/model_gateway.py` is the single source of truth (`AGENT_ROUTING`, `model_for`,
+  `complete()`); `core.AGENTS` display models are overridden from it so they can't drift.
+- **opus-4-6 → opus-4-8 migration** ✅ (Jun 14): no live `claude-opus-4-6` left in code (gateway already
+  emitted 4-8; updated the 3 stale `core.AGENTS` literals). `utils/pricing.py` keeps the 4-6 key so any
+  legacy `agent_runs` rows still price correctly.
+- **D2** ◐ Agents source MODEL from `model_for()` and cost flows via `cost_reporter` (Phase B). Full
+  routing of every call through `complete()` is reserved for new Wave-2 code per D1's note.
 - **D3** Two Claude tiers + pure-math. **NO Haiku, NO Ollama** (decided Jun 9 — Sonnet 4.6 is the floor):
   - **Opus 4.8** (creative/decisions): ceo-brain (xhigh), strategy (high), script-writer (high),
     **creative-director (medium)**, ad-strategist (high), brand-guardian (high).

@@ -337,7 +337,7 @@ Return ONLY valid JSON in this structure:
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys")
 
         # ── Rule 10: Claude call with retry loop ──
-        messages = [{"role": "user", "content": prompt}]
+        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
         result = None
         validation_report = None
         attempt = 0

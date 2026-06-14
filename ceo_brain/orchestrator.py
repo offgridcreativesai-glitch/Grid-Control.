@@ -84,6 +84,18 @@ class CEOBrain:
                 pass
         return self.narrative_text
 
+    def story_so_far_block(self, n: int = 20) -> str:
+        """A3: empty-safe story-so-far block to PREPEND to an agent's main prompt.
+
+        Returns '' for a cold brand with no narrative yet (so a fresh onboard
+        reads identically to before). When history exists, the agent's main
+        generation sees prior decisions/actions/results and CONTINUES rather
+        than cold-starting."""
+        txt = self.narrative_context(n=n).strip()
+        if not txt:
+            return ""
+        return txt + "\n\n---\n\n"
+
     def narrative_append(self, agent: str, entry_type: str, summary: str, refs: dict | None = None):
         """Append one entry to the brand narrative. Best-effort (no-op if DB offline)."""
         if not self._db or not self._brand_id:

@@ -256,7 +256,7 @@ Return ONLY valid JSON:
         response = self.client.messages.create(
             model=MODEL,
             max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
         )
         self._total_input_tokens += response.usage.input_tokens
         self._total_output_tokens += response.usage.output_tokens
