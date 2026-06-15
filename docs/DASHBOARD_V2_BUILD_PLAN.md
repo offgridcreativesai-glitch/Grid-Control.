@@ -137,8 +137,9 @@ Legend: 🟢 exists · 🟡 wire · 🔴 new
   correct per-agent attribution; test rows cleaned up. Widgets no longer read ₹0.
 
 ### Phase C — Expose real data via API (backend layer for the future cockpit)  🟡 C1 mostly done · C2 SG1-gated
-- **C1** ◐ Run/cost/metric endpoints already real; added read-only `GET /api/brands/<slug>/narrative`
-  (Jun 14, brand-scoped, mirrors `/costs`) so the persistent-brain story is bindable.
+- **C1** ◐ Run/cost/metric endpoints already real; `GET /api/brands/<slug>/narrative` (+POST) already
+  exists (brand-scoped) so the persistent-brain story is bindable. (A C1 duplicate route was added then
+  removed — the boot-check caught the endpoint-name collision before the prod merge.)
 - **C2** ⛔ **Held for the SG1 security session** — Approve/Change/**Publish** + Allocate/Queue are an
   outward-facing surface; the plan mandates SG1 (Opus·max + `/security-review`) right here. Not landed silently.
 - **C3** *(Front-end deferred)* the new cockpit UI is rebuilt later via Emergent/Lovable
