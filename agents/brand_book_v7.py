@@ -243,19 +243,55 @@ def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
         + "; ".join(_FILLER) + ".",
         _SCHEMA,
     ])
-    res = complete(AGENT_SLUG, [{"role": "user", "content": prompt}], system=system, max_tokens=3200)
+    res = complete(AGENT_SLUG, [{"role": "user", "content": prompt}], system=system, max_tokens=4096)
     return _parse_json((res.get("text") or "").strip()), res
+
+
+def _escape_literal_newlines_in_strings(json_str: str) -> str:
+    """Escape literal newline/CR/tab inside JSON string values (Claude API quirk
+    that surfaces as 'Expecting , delimiter' / 'Invalid control character')."""
+    result = []
+    in_string = False
+    i = 0
+    while i < len(json_str):
+        c = json_str[i]
+        if in_string:
+            if c == '\\':
+                result.append(c); i += 1
+                if i < len(json_str): result.append(json_str[i])
+            elif c == '"':
+                in_string = False; result.append(c)
+            elif c == '\n': result.append('\\n')
+            elif c == '\r': result.append('\\r')
+            elif c == '\t': result.append('\\t')
+            else: result.append(c)
+        else:
+            if c == '"': in_string = True
+            result.append(c)
+        i += 1
+    return ''.join(result)
 
 
 def _parse_json(text: str) -> dict:
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE)
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    candidate = m.group(0) if m else text
+    # 1) direct  2) literal-newline repair (the common LLM glitch)
+    for attempt in (candidate, _escape_literal_newlines_in_strings(candidate)):
+        try:
+            return json.loads(attempt)
+        except json.JSONDecodeError:
+            continue
+    # Hard failure: persist the raw text so it can be diagnosed WITHOUT re-spending
+    # an API call, then raise with a pointer to it.
+    hint = ""
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
-        raise
+        dbg = Path("/tmp/brand_book_v7_parse_fail.json")
+        dbg.write_text(text, encoding="utf-8")
+        hint = f" — raw model output saved to {dbg} for diagnosis"
+    except Exception:
+        pass
+    raise ValueError(f"brand_book_v7: could not parse model JSON after repair{hint}")
 
 
 # ───────────────────────────────────────── eval v7
