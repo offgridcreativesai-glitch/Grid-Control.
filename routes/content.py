@@ -658,20 +658,57 @@ def get_dashboard_output():
 
 # ============================================================
 # REVISION LOOP — Client feedback → agent re-run with constraint
+# K3 (Phase K): change discipline — revision cap + scope-creep flag.
 # ============================================================
+
+# How many auto-revisions a single output gets before a change must be
+# human-confirmed (likely a Phase-2 upsell, not a tweak). Override via env.
+REVISION_CAP = int(os.getenv("GRID_REVISION_CAP", "2"))
+
+# Deterministic, no-LLM scope-creep heuristic ($0). A "change" containing any of
+# these reads as NEW scope (a different deliverable), not a tweak.
+_SCOPE_CREEP_SIGNALS = (
+    "also add", "can you also", "instead make", "instead of", "completely different",
+    "new angle", "another one", "redo from scratch", "different product",
+    "different platform", "add a section", "make it about", "now do", "as well",
+    "on top of that", "brand new", "whole new", "start over",
+)
+
+
+def _count_prior_revisions(brand_id: str, output_id: str) -> int:
+    """Count revision_requested audit rows for one output (client-side filter on JSON details)."""
+    if not output_id:
+        return 0
+    try:
+        res = (_db._client.table("audit_log").select("details")
+               .eq("brand_id", brand_id).eq("action", "revision_requested").execute())
+        return sum(1 for r in (res.data or [])
+                   if (r.get("details") or {}).get("output_id") == output_id)
+    except Exception:
+        return 0
+
+
+def _scope_creep_suspected(feedback: str) -> bool:
+    f = (feedback or "").lower()
+    return any(sig in f for sig in _SCOPE_CREEP_SIGNALS)
+
 
 @bp.route("/api/outputs/revise", methods=["POST"])
 @require_auth
 def output_revise():
     """Request a revision on a rejected/approved output.
-    Body: { brand_slug, output_id, feedback, agent_slug }
-    Creates a revision record and queues a re-run with the feedback as constraint.
+    Body: { brand_slug, output_id, feedback, agent_slug, confirm_new_scope? }
+    K3 discipline: enforces a revision cap and flags scope-creep. When the cap is
+    hit OR the feedback reads as new scope, the re-run is NOT auto-queued — it's
+    recorded as `revision_flagged` and returned as `needs_review` so a human
+    decides (tweak vs. new-scope upsell). Pass confirm_new_scope=true to override.
     """
     body = request.get_json(force=True)
     brand_slug = body.get("brand_slug", "")
     output_id = body.get("output_id", "")
     feedback = body.get("feedback", "")
     agent_slug = body.get("agent_slug", "")
+    confirm_new_scope = bool(body.get("confirm_new_scope", False))
 
     if not brand_slug or not feedback or not agent_slug:
         return jsonify(success=False, error="brand_slug, agent_slug, and feedback required"), 400
@@ -680,7 +717,43 @@ def output_revise():
     if not brand_id:
         return jsonify(success=False, error="Brand not found"), 404
 
+    prior = _count_prior_revisions(brand_id, output_id)
+    scope_creep = _scope_creep_suspected(feedback)
+    cap_hit = prior >= REVISION_CAP
+
     try:
+        # K3 gate: hold the re-run for human review unless explicitly overridden.
+        if (cap_hit or scope_creep) and not confirm_new_scope:
+            _db._client.table("audit_log").insert({
+                "brand_id": brand_id,
+                "action": "revision_flagged",
+                "details": {
+                    "output_id": output_id,
+                    "agent_slug": agent_slug,
+                    "feedback": feedback,
+                    "prior_revisions": prior,
+                    "revision_cap": REVISION_CAP,
+                    "cap_hit": cap_hit,
+                    "scope_creep_suspected": scope_creep,
+                    "flagged_at": datetime.now(timezone.utc).isoformat(),
+                },
+            }).execute()
+            reasons = []
+            if cap_hit:
+                reasons.append(f"revision cap reached ({prior}/{REVISION_CAP})")
+            if scope_creep:
+                reasons.append("reads as new scope (possible upsell)")
+            return jsonify(success=True, data={
+                "status": "needs_review",
+                "flagged": True,
+                "cap_hit": cap_hit,
+                "scope_creep_suspected": scope_creep,
+                "prior_revisions": prior,
+                "revision_cap": REVISION_CAP,
+                "message": "Revision not auto-queued — " + " + ".join(reasons) +
+                           ". Confirm to proceed (confirm_new_scope=true) or treat as new scope.",
+            })
+
         # Store revision request in audit_log
         _db._client.table("audit_log").insert({
             "brand_id": brand_id,
@@ -689,6 +762,9 @@ def output_revise():
                 "output_id": output_id,
                 "agent_slug": agent_slug,
                 "feedback": feedback,
+                "revision_number": prior + 1,
+                "scope_creep_suspected": scope_creep,
+                "confirmed_new_scope": confirm_new_scope,
                 "requested_at": datetime.now(timezone.utc).isoformat(),
             },
         }).execute()
@@ -702,10 +778,16 @@ def output_revise():
                 "revision": True,
                 "original_output_id": output_id,
                 "constraint": feedback,
+                "revision_number": prior + 1,
             },
         }).execute()
 
-        return jsonify(success=True, data={"status": "revision_queued", "agent_slug": agent_slug})
+        return jsonify(success=True, data={
+            "status": "revision_queued",
+            "agent_slug": agent_slug,
+            "revision_number": prior + 1,
+            "revision_cap": REVISION_CAP,
+        })
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
 

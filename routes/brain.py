@@ -248,6 +248,72 @@ def brain_execute_proposal():
     return jsonify({"success": False, "error": f"Unknown kind: {kind}"}), 400
 
 
+# ── CONCIERGE (Chief of Staff) — tiered router ────────────────────────────────
+# Phase J: the client talks to ONE agent. Trivial/deterministic asks are answered
+# here with NO LLM spin-up; substantive asks are forwarded to the Brain LLM, which
+# dispatches the right specialist → result lands in the approval dashboard.
+@bp.route("/api/concierge", methods=["POST"])
+@require_auth
+@rate_limit(max_requests=20, window_seconds=60)
+def concierge():
+    from agents._lib.concierge_router import classify
+
+    body = request.get_json(silent=True) or {}
+    message = (body.get("message") or "").strip()
+    brand_slug = (body.get("brand_slug") or "").strip()
+    if not message:
+        return jsonify({"success": False, "error": "message required"}), 400
+
+    route = classify(message)
+    tier = route["tier"]
+    intent = route["intent"]
+
+    # ── Trivial tier — no LLM, no token cost ──────────────────────────────────
+    if tier == "trivial":
+        # READ-ONLY: safe to answer / point at a data source with zero side effects.
+        if route["safe_execute"]:
+            if intent == "list_pending":
+                items = _needs_you_items(brand_slug) if brand_slug else []
+                n = len(items)
+                if n == 0:
+                    answer = "Nothing's waiting on you — the queue is clear."
+                else:
+                    head = "\n".join(
+                        f"  • [{it['agent']}] {it['filename']} ({(it.get('created_at') or '')[:10]})"
+                        for it in items[:10]
+                    )
+                    more = f"\n  … and {n - 10} more" if n > 10 else ""
+                    answer = f"{n} item{'s' if n != 1 else ''} need your approval:\n{head}{more}"
+                return jsonify({"success": True, "data": {
+                    "tier": "trivial", "intent": intent, "llm_used": False,
+                    "answer": answer, "items": items,
+                }})
+            # team_status / cost_status: hand back the live data source to GET.
+            return jsonify({"success": True, "data": {
+                "tier": "trivial", "intent": intent, "llm_used": False,
+                "data_endpoint": route["endpoint"],
+                "answer": f"Pull live {intent.replace('_', ' ')} from {route['endpoint']}"
+                          + (f"?brand_slug={brand_slug}" if brand_slug else ""),
+            }})
+
+        # STATE-CHANGING: recognised but never executed here (approval law, K1).
+        # Route the user to the dedicated, already-gated endpoint.
+        return jsonify({"success": True, "data": {
+            "tier": "trivial", "intent": intent, "llm_used": False,
+            "action_required": True, "endpoint": route["endpoint"],
+            "answer": f"That's a `{intent}` action — confirm it on the work card "
+                      f"(POST {route['endpoint']}). I won't run it without your explicit approval.",
+        }})
+
+    # ── Substantive tier — needs reasoning → the Brain LLM + a specialist ──────
+    return jsonify({"success": True, "data": {
+        "tier": "substantive", "intent": None, "llm_used": False,
+        "forward_to": "/api/brain/chat",
+        "answer": "This needs the team to think — sending it to the Brain to plan + "
+                  "dispatch the right specialist. The result will land in your approval queue.",
+    }})
+
+
 @bp.route("/api/brain/chat", methods=["POST"])
 @require_auth
 @rate_limit(max_requests=10, window_seconds=60)

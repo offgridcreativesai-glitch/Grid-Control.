@@ -354,7 +354,8 @@ between areas. The `/code-review` ultra tier runs in the cloud (separate from th
 ---
 
 ## 5. PARKED — PHASE 2 SHELF (good, not on the 10-day path)
-- **Postiz** (self-host social scheduling, AGPL, separate Hetzner service) — Phase-2 publish layer; `publishing/*` stays fallback. Postiz MCP available if needed.
+- **Postiz** (self-host social scheduling, AGPL, separate VPS service) — Phase-2 publish layer; `publishing/*` stays fallback. Postiz MCP available if needed.
+  - **Host = Hetzner CX22 (confirmed Jun 16 over Hostinger).** Re-checked Hostinger per Gaurav: its KVM VPS *can* run Postiz (the old "PHP/static, wrong tool" note was about shared hosting — void), and its hPanel/1-click Docker is friendlier. BUT "cheaper/more reliable" doesn't hold: Hostinger's low price is a 24-mo promo that **renews 140–232% higher (~$17–24/mo)**, while **Hetzner CX22 is flat ~$5/mo, no lock-in, hourly billing**, and benchmarks better. Verdict: Hetzner unless we later want the easier panel. **TODO: dig deeper before adopting Postiz (Phase 2)** — also decide whether Postiz absorbs publish scheduling end-to-end vs. `publishing/*`.
 - **listmonk** — Mailchimp-alt for email (replaces Gmail nurture later).
 - **Coolify** — own hosting (Vercel+Railway replacement) at scale.
 - **Plausible CE** — privacy analytics for client dashboards (needs ClickHouse).
