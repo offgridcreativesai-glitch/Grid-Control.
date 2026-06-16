@@ -178,9 +178,8 @@ def ceo_next_agent():
     }})
 
 
-@require_auth
-@rate_limit(max_requests=5, window_seconds=60)
 @bp.route("/api/brain/execute", methods=["POST"])
+@rate_limit(max_requests=5, window_seconds=60)
 @require_auth
 def brain_execute_proposal():
     """

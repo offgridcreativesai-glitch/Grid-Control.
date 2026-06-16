@@ -47,8 +47,8 @@ def get_agents_list():
     return jsonify({"success": True, "data": AGENTS_ENRICHED})
 
 
-@rate_limit(max_requests=5, window_seconds=60)
 @bp.route("/api/agents/run", methods=["POST"])
+@rate_limit(max_requests=5, window_seconds=60)
 @require_auth
 def run_agent():
     body = request.get_json() or {}

@@ -787,9 +787,8 @@ def team_members():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
-@rate_limit(max_requests=10, window_seconds=60)
 @bp.route("/api/team/invite", methods=["POST"])
+@rate_limit(max_requests=10, window_seconds=60)
 @require_auth
 def team_invite():
     """Invite a user to a brand team.

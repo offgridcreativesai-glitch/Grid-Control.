@@ -8,8 +8,8 @@ bp = Blueprint("content", __name__)
 
 # ── CAROUSEL DESIGNER ──────────────────────────────────────────────────────────
 
-@rate_limit(max_requests=3, window_seconds=60)
 @bp.route("/api/carousel/generate", methods=["POST"])
+@rate_limit(max_requests=3, window_seconds=60)
 @require_auth
 def carousel_generate():
     """
@@ -165,8 +165,8 @@ def publish_generic():
     return jsonify({"success": False, "error": f"No publish route wired for '{platform}'"}), 501
 
 
-@rate_limit(max_requests=2, window_seconds=60)
 @bp.route("/api/pipeline/daily-run", methods=["POST"])
+@rate_limit(max_requests=2, window_seconds=60)
 @require_auth
 def daily_pipeline_run():
     """

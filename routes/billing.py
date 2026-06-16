@@ -31,9 +31,8 @@ def billing_get_subscription():
         return jsonify(success=False, error=str(e)), 500
 
 
-@require_auth
-@rate_limit(max_requests=3, window_seconds=60)
 @bp.route("/api/billing/subscribe", methods=["POST"])
+@rate_limit(max_requests=3, window_seconds=60)
 @require_auth
 def billing_subscribe():
     """Create a Razorpay subscription for a brand."""
