@@ -13,8 +13,9 @@ from routes.brain import bp as brain_bp
 from routes.billing import bp as billing_bp
 from routes.connections import bp as connections_bp
 from routes.system import bp as system_bp
+from routes.leads import bp as leads_bp
 
-for _bp in (brands_bp, agents_bp, content_bp, brain_bp, billing_bp, connections_bp, system_bp):
+for _bp in (brands_bp, agents_bp, content_bp, brain_bp, billing_bp, connections_bp, system_bp, leads_bp):
     app.register_blueprint(_bp)
 
 

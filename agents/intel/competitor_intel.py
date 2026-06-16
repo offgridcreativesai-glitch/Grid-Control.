@@ -72,6 +72,14 @@ class Apify:
         """Start an actor run, poll to completion, return dataset items ([] on fail)."""
         if not self.token:
             print("  [apify] APIFY_API_KEY missing"); return []
+        # Cost circuit-breaker: block paid Apify spend when kill-switch off / cap hit.
+        try:
+            from agents._lib import paid_ops
+            _ok, _reason = paid_ops.check(f"apify:{actor}")
+        except Exception as _e:
+            _ok, _reason = False, f"paid_ops unavailable ({_e})"
+        if not _ok:
+            print(f"  [apify] ⛔ paid-ops blocked {actor} — {_reason}"); return []
         try:
             r = requests.post(
                 f"https://api.apify.com/v2/acts/{actor}/runs?token={self.token}",

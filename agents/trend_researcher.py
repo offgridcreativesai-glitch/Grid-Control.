@@ -324,6 +324,16 @@ class TrendResearcher:
 
     def apify_start_run(self, actor_id: str, input_body: dict) -> str | None:
         """Start an Apify actor run. Returns run ID or None on failure."""
+        # Cost circuit-breaker: refuse paid Apify spend when the kill-switch is off
+        # or the daily cap is hit. Fail-closed (block) if the breaker can't load.
+        try:
+            from agents._lib import paid_ops
+            _ok, _reason = paid_ops.check(f"apify:{actor_id}")
+        except Exception as _e:
+            _ok, _reason = False, f"paid_ops unavailable ({_e})"
+        if not _ok:
+            self.log(f"⛔ paid-ops: Apify run blocked [{actor_id}] — {_reason}")
+            return None
         url = f"https://api.apify.com/v2/acts/{actor_id}/runs?token={APIFY_API_KEY}"
         try:
             response = requests.post(url, json=input_body, timeout=30)

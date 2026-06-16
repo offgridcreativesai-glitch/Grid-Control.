@@ -420,6 +420,9 @@ AGENTS = [
     {"id": 8, "name": "Website Agent",     "role": "Site/Railway",     "model": "claude-sonnet-4-6", "agentFile": "website-agent.md"},
     {"id": 9, "name": "Cost Tracker",      "role": "Monthly spend",    "model": "none", "agentFile": ""},
     {"id": 10, "name": "Carousel Designer", "role": "Carousel slides + PNG render", "model": "claude-sonnet-4-6", "agentFile": ""},
+    {"id": 13, "name": "Community Manager", "role": "Replies/mentions",   "model": "claude-sonnet-4-6", "agentFile": ""},
+    {"id": 14, "name": "DM Customer Hunter",    "role": "Inbound + warm DMs", "model": "claude-sonnet-4-6", "agentFile": ""},
+    {"id": 12, "name": "Email Marketing Agent", "role": "Nurture sequences", "model": "claude-sonnet-4-6", "agentFile": ""},
 ]
 
 # Phase D — single source of truth: override the display models from the gateway
@@ -436,7 +439,8 @@ except Exception as _mg_err:
 _ACTIVE_SLUGS = {
     "trend-researcher", "strategy-agent", "content-planner", "script-writer",
     "creative-director", "ad-strategist", "data-analyst", "funnel-specialist", "website-agent",
-    "cost-tracker", "carousel-designer",
+    "cost-tracker", "carousel-designer", "community-manager", "dm-customer-hunter",
+    "email-marketing-agent",
 }
 
 
@@ -470,6 +474,9 @@ AGENT_SCRIPTS: dict[str, Any] = {
     "Website Agent":       "agents/website_agent.py",
     "Cost Tracker":        "agents/cost_tracker.py",
     "Carousel Designer":   "agents/carousel_designer.py",
+    "Community Manager":   "agents/community_manager.py",
+    "DM Customer Hunter":      "agents/dm_customer_hunter.py",
+    "Email Marketing Agent":   "agents/email_marketing_agent.py",
 }
 
 # Agents enriched with coming_soon flag for the frontend
@@ -502,6 +509,9 @@ _FOLDER_TO_SLUG: dict[str, str] = {
     "Website Agent":       "website-agent",
     "Cost Tracker":        "cost-tracker",
     "Carousel Designer":   "carousel-designer",
+    "Community Manager":   "community-manager",
+    "DM Customer Hunter":      "dm-customer-hunter",
+    "Email Marketing Agent":   "email-marketing-agent",
     "CEO Brain":           "ceo-brain",
 }
 
@@ -996,6 +1006,30 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
     """Background thread: run agent script, update session state + Supabase on finish."""
     # DB-WIRED Step 5 + Phase 1 Step 2
     agent_slug_key = _agent_name_to_slug(agent_name)
+
+    # ── Cost circuit-breaker (paid_ops) ──────────────────────────────────────────
+    # Refuse to LAUNCH a paid agent when the kill-switch is off or the daily cap is
+    # hit. Pure-math agents ($0, no LLM) are exempt. Fail-CLOSED: if the breaker
+    # itself can't be evaluated, block (money safety > convenience).
+    try:
+        from agents._lib import paid_ops
+        from agents._lib.model_gateway import is_pure_math
+        _is_free = is_pure_math(agent_slug_key)
+    except Exception as _po_imp:
+        _is_free, paid_ops = False, None
+        print(f"[GRID CONTROL] ⛔ paid-ops unavailable ({_po_imp}) — blocking paid launch (fail-closed)")
+    if not _is_free:
+        _ok, _reason = (paid_ops.check(f"agent:{agent_slug_key}") if paid_ops else (False, "paid_ops import failed"))
+        if not _ok:
+            print(f"[GRID CONTROL] ⛔ paid-ops: {agent_name} NOT launched — {_reason}")
+            _update_session_agent_status(brand_slug, agent_name, "blocked", f"paid-ops: {_reason}")
+            if _DB_AVAILABLE and db_run_id:
+                try:
+                    _db.update_agent_run_status(db_run_id, "blocked")
+                except Exception:
+                    pass
+            return
+
     try:
         # Pass run context to agent via env so it can record costs + use memory
         agent_env = os.environ.copy()
@@ -1635,6 +1669,9 @@ _AGENT_FOLDER: dict[str, str] = {
     "data-analyst":      "Data Analyst",
     "funnel-specialist": "Funnel Specialist",
     "website-agent":     "Website Agent",
+    "community-manager": "Community Manager",
+    "dm-customer-hunter": "DM Customer Hunter",
+    "email-marketing-agent": "Email Marketing Agent",
     "ceo-brain":         "CEO Brain",
 }
 
@@ -2216,8 +2253,18 @@ def _auto_refresh_intelligence() -> None:
                 print(f"[GRID CONTROL] ⚠️  Trend Researcher script not found — skipping auto-refresh for {slug}")
 
 
-# Start intelligence auto-refresh on boot (non-blocking)
-threading.Thread(target=_auto_refresh_intelligence, daemon=True).start()
+# Intelligence auto-refresh — OPT-IN ONLY (default OFF).
+# WHY: this used to fire on every module import. Because boot-checks, tooling, and
+# every Railway redeploy `import dashboard_api`, each import spawned Trend Researcher
+# for ALL brands → paid apify/instagram-scraper runs + Claude analysis. With no
+# in-flight lock and a ~2-min run, rapid imports stacked and burned Apify + Claude
+# credits (diagnosed Jun 15 2026). Periodic refresh now belongs to the scheduler
+# (Phase E), which respects a real schedule. Set GRID_AUTO_REFRESH=1 to re-enable
+# boot-time refresh deliberately (e.g. on the prod web service only).
+if os.getenv("GRID_AUTO_REFRESH", "").strip() == "1":
+    threading.Thread(target=_auto_refresh_intelligence, daemon=True).start()
+else:
+    print("[GRID CONTROL] ℹ️  Boot auto-refresh OFF (set GRID_AUTO_REFRESH=1 to enable; scheduler handles periodic refresh)")
 
 
 # ============================================================

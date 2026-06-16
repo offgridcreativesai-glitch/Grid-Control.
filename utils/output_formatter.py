@@ -307,6 +307,82 @@ def format_for_notion(agent_name: str, data: Any) -> str:
                     for item in v:
                         lines.append(f"  - {item}")
 
+    # ── Community Manager (Wave 2) ───────────────────────────────────────────────
+    elif "community" in agent_lower:
+        drafts = data.get("drafts", []) or []
+        summ = data.get("summary", {}) or {}
+        lines.append(f"## {agent_name} — {len(drafts)} reply draft(s)\n")
+        if summ:
+            cats = summ.get("categories", {})
+            cat_str = ", ".join(f"{k}: {v}" for k, v in cats.items()) if isinstance(cats, dict) else ""
+            lines.append(f"*Ingested {summ.get('ingested', '?')} · drafted {summ.get('replies_drafted', '?')} · "
+                         f"ignored spam {summ.get('ignored_spam', 0)}*" + (f"\n*Categories:* {cat_str}" if cat_str else ""))
+            lines.append("")
+        for d in drafts:
+            rt = d.get("responds_to", {}) or {}
+            lines.append(f"### @{rt.get('author') or 'unknown'} · {rt.get('platform') or '?'} — {d.get('category', '?')}")
+            if rt.get("text"):
+                lines.append(f"> {rt['text']}")
+            if d.get("action") == "ignore":
+                lines.append("*Action: ignore (spam) — no reply.*")
+            else:
+                if d.get("winner"):
+                    lines.append(f"**Reply:** {d['winner']}")
+                if d.get("winner_reason"):
+                    lines.append(f"*Why:* {d['winner_reason']}")
+            lines.append("")
+        lines.append("_Drafts only — never auto-posted._")
+
+    # ── DM Customer Hunter (Wave 2) ──────────────────────────────────────────────
+    elif "hunter" in agent_lower:
+        drafts = data.get("drafts", []) or []
+        summ = data.get("summary", {}) or {}
+        lines.append(f"## {agent_name} — {len(drafts)} DM draft(s)\n")
+        if summ:
+            lines.append(f"*Discovered {summ.get('discovered', '?')} ({summ.get('discovery_source', '?')}) · "
+                         f"qualified {summ.get('qualified_6plus', '?')} · drafted {summ.get('drafted_today', '?')} "
+                         f"(cap {summ.get('daily_cap', '?')}, held {summ.get('held_over', 0)})*")
+            lines.append("")
+        for d in drafts:
+            _tier = {"tier1_engaged": "T1·DM-ok", "tier2_hashtag": "T2·comment-first",
+                     "tier3_engage_only": "T3·engage-only"}.get(d.get("tier", ""), "")
+            lines.append(f"### @{d.get('handle', '?')} — ICP {d.get('icp_score', '?')}/10"
+                         + (f" · {_tier}" if _tier else ""))
+            if d.get("action") == "engage_only":
+                lines.append("*Tier 3 — engage/comment only, no DM.*")
+            if d.get("research_summary"):
+                lines.append(f"*{d['research_summary']}*")
+            sig = d.get("intent_signals") or []
+            if sig:
+                lines.append("Signals: " + ", ".join(str(s) for s in sig))
+            if d.get("winner"):
+                lines.append(f"**DM:** {d['winner']}")
+            if d.get("winner_reason"):
+                lines.append(f"*Why:* {d['winner_reason']}")
+            lines.append("")
+        lines.append("_Drafts only — first DM is value/question, never auto-sent._")
+
+    # ── Email Marketing Agent (Wave 2) ───────────────────────────────────────────
+    elif "email" in agent_lower:
+        seqs = data.get("sequences", []) or []
+        summ = data.get("summary", {}) or {}
+        lines.append(f"## {agent_name} — {len(seqs)} nurture sequence(s)\n")
+        if summ:
+            lines.append(f"*Ingested {summ.get('ingested', '?')} · drafted {summ.get('drafted', '?')}*")
+            lines.append("")
+        for s in seqs:
+            fs = s.get("for_subscriber", {}) or {}
+            who = fs.get("name") or s.get("email") or "subscriber"
+            interest = fs.get("product_interest")
+            lines.append(f"### {who}" + (f" — interested in {interest}" if interest else ""))
+            for em in s.get("emails", []):
+                subj = em.get("subject_winner") or (em.get("subject_variants") or [""])[0]
+                lines.append(f"**Day {em.get('day', '?')} — {subj}**")
+                if em.get("body"):
+                    lines.append(em["body"])
+                lines.append("")
+        lines.append("_Drafts only — never auto-sent; send via Gmail after approval._")
+
     # ── Generic fallback ───────────────────────────────────────────────────────
     else:
         lines.append(f"## {agent_name} Output\n")

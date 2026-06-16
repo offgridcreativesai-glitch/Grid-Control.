@@ -254,15 +254,16 @@ K3 with H · K2 + M + WhatsApp after the pilot proves the core.
 > All real-time data only, zero assumptions, `data_provenance` + `validate_citations`, drafts → `pending_approval` → Notion,
 > never auto-send, append to `brand_narrative`. Mirror `agents/data_analyst.py` pattern + AutoResearch + LOOP header.
 
-- **F1 Community Manager (#13)** → `agents/community_manager.py`. Reads REAL inbound (IG Graph comments, YouTube Data API
+- ✅ **F1 Community Manager (#13)** — BUILT Jun 15 → `agents/community_manager.py` + `agents/intel/inbound_comments.py` (live IG comments via Instagram Login API + paste-in `inbound/{platform}.json` fallback; untrusted-LAW wrapped; categorize→2-variant voice drafts→winner; provenance `responds_to` real comment; approval-gated, never auto-posts; wired into `core.py` registries; validated end-to-end). Reads REAL inbound (IG Graph comments, YouTube Data API
   via `youtube_oauth.py`, LinkedIn/X via `brands/{slug}/inbound/{platform}.json` paste-in/Chrome-MCP). Categorize
   (purchase_intent/question/positive/negative/spam/prospect) → draft in Gaurav voice → `pending_approval/community-manager/`.
-- **F2 Warm DM Hunter (#14)** → `agents/dm_customer_hunter.py`. 3-tier risk ladder (engaged→DM-eligible / hashtag-participants /
+- ✅ **F2 Warm DM Hunter (#14)** — BUILT Jun 15 → `agents/dm_customer_hunter.py` + `agents/intel/prospect_discovery.py` (paste-in `prospects/*.json` default + gated Apify hashtag discovery; untrusted-wrapped; ICP-score 1–10 keep ≥6; 2–3 value-first FIRST-DM variants, no-pitch/no-price enforced; warm-up `GRID_DM_DAILY_CAP` default 5; provenance `prospect`; NEVER auto-sends; wired into core.py; validated — score 9 ad-pain prospect drafted, off-ICP skipped). 3-tier risk ladder (engaged→DM-eligible / hashtag-participants /
   niche→engage-only). prospect-researcher (ICP 1–10, LinkedIn-weighted) + outreach-writer (value-first, 2–3 variants,
   real-detail). Warm-up caps. Every prospect has real Apify/Graph `data_provenance`. → `pending_approval/dm-customer-hunter/`.
 - **F3 AI Setter (ManyChat + Claude)** *(Monday M8.1; `docs/AI_SETTER_SYSTEM.md`)* — IG DM sales automation. Keyword comment →
   ManyChat public reply + private DM → Claude runs qualify/objections/book-call. Setter=inbound; complements F2 (outbound).
   Gaurav homework: ManyChat account. Build Claude prompt + 4 reply variations.
+- ◑ **F4 Lead-magnet funnel (Engine B)** — code-complete Jun 16 (untested, $0). BUILT: `agents/email_marketing_agent.py` (#12, drafts-only nurture) + `supabase/migrations/006_subscribers.sql` (UNAPPLIED) + `db.add_subscriber`/`list_subscribers` + `routes/leads.py` (`POST /api/leads/capture` public+rate-limited + `GET /lead-magnet/<slug>` opt-in form). REMAINING: **apply 006 to prod DB (Gaurav)** + magnet *copy* via funnel_specialist (gated paid run). **Also Jun 16:** cost circuit-breaker `agents/_lib/paid_ops.py` (GRID_PAID_OPS default-off + daily cap, gated at `_run_agent_subprocess`+Apify+cost_reporter); M5 cross-cutting gaps closed — `format_for_notion` handlers for CM/DM/Email (Rule 8), DM 3-tier risk ladder, CM 3-variant. `_record_learning` confirmed non-gap (A3 narrative append covers it). Original plan below:
 - **F4 Lead-magnet funnel (Engine B)** → magnet from live 3-mistakes pillar + `funnel_specialist.py` CTA;
   `website_agent.py` opt-in page → `POST /api/leads/capture` → Supabase `subscribers` table
   `(id, brand_id→brands(id), email, name, product_interest, source, captured_at, UNIQUE(brand_id,email))`;

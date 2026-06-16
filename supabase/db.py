@@ -249,6 +249,41 @@ def get_brand(slug: str) -> dict | None:
         return None
 
 
+# ── Subscribers (Phase F4 lead-magnet funnel) ───────────────────────────────────
+
+def add_subscriber(brand_id: str, email: str, name: str | None = None,
+                   product_interest: str | None = None, source: str | None = None) -> dict | None:
+    """Upsert a subscriber (idempotent on brand_id+email). Service-role insert.
+    Returns the row, or None on failure (e.g. table not yet migrated)."""
+    try:
+        res = _svc().table("subscribers").upsert(
+            {
+                "brand_id": brand_id,
+                "email": email.strip().lower(),
+                "name": name,
+                "product_interest": product_interest,
+                "source": source,
+            },
+            on_conflict="brand_id,email",
+        ).execute()
+        return (res.data or [None])[0]
+    except Exception as e:
+        print(f"[db] add_subscriber error: {e}")
+        return None
+
+
+def list_subscribers(brand_id: str, limit: int = 500) -> list:
+    """Read a brand's subscribers (newest first). [] on failure / no table yet."""
+    try:
+        res = (_svc().table("subscribers").select("*")
+               .eq("brand_id", brand_id).order("captured_at", desc=True)
+               .limit(limit).execute())
+        return res.data or []
+    except Exception as e:
+        print(f"[db] list_subscribers error: {e}")
+        return []
+
+
 # ── Agent Runs ────────────────────────────────────────────────────────────────
 
 def get_agent_run(run_id: str) -> dict | None:

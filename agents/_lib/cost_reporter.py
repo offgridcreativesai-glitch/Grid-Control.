@@ -48,6 +48,14 @@ def record(
         apify_cost = apify_runs      * _db.APIFY_COST_PER_RUN
         total_cost = api_cost + fal_cost + apify_cost
 
+        # Feed the cost circuit-breaker's daily-spend ledger from REAL spend, so the
+        # daily cap self-updates from actual cost (best-effort; never raises).
+        try:
+            from agents._lib import paid_ops
+            paid_ops.record_spend(total_cost)
+        except Exception:
+            pass
+
         # Convert to INR for logging (1 USD ≈ 85 INR)
         inr = total_cost * 85
 
