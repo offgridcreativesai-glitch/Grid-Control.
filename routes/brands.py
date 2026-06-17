@@ -205,7 +205,6 @@ def get_brand_memory_db(brand_slug: str):
 
 @bp.route("/api/brands", methods=["GET"])
 @require_auth
-@require_auth
 def get_brands():
     """Return brands the current user has access to.
     Super admins see all brands. Regular users see only their brand_members brands."""
@@ -1646,69 +1645,6 @@ def post_card_upload(brand_slug: str, card_id: str):
         "updates": updates,
         "message": "Upload saved. Routed to Creative Director queue for editing.",
     }), 201
-
-
-@bp.route("/api/brands/<brand_slug>/concierge", methods=["POST"])
-@require_auth
-@rate_limit(max_requests=20, window_seconds=60)
-def concierge_chat(brand_slug: str):
-    """J: Chief of Staff router.
-
-    Trivial/deterministic (pause, reschedule, caption edit, slide swap) →
-    execute instantly, no LLM.  Substantive (re-plan, new angle, inject trend,
-    strategy) → dispatch specialist → result in approval dashboard.
-
-    Body:
-      { message: str,
-        context?: { card_id?, new_date?, new_caption?, new_slides? } }
-
-    Returns:
-      { tier: "trivial" | "dispatch" | "unrecognized",
-        action?, agent?, result?, message, ... }
-    """
-    _g = _guard_asset_brand(brand_slug)
-    if _g:
-        return _g
-
-    body = request.get_json(silent=True) or {}
-    message = (body.get("message") or "").strip()
-    if not message:
-        return jsonify(success=False, error="'message' is required."), 400
-    if len(message) > MAX_CONCIERGE_MSG:
-        return jsonify(
-            success=False,
-            error=f"Message too long (max {MAX_CONCIERGE_MSG} characters)."
-        ), 413
-
-    context = body.get("context") or {}
-    if not isinstance(context, dict):
-        context = {}
-
-    tier, action_key = _concierge_classify(message)
-
-    if tier == "trivial":
-        result = _concierge_trivial(brand_slug, action_key, message, context)
-        return jsonify(success=True, data={"tier": "trivial", **result})
-
-    if tier == "dispatch":
-        # SG4: throttle the paid path (each dispatch spawns a real agent run).
-        ok, reason = _concierge_dispatch_allowed(brand_slug, action_key)
-        if not ok:
-            return jsonify(success=True, data={
-                "tier": "dispatch", "throttled": True, "message": reason,
-            })
-        dispatch = _concierge_dispatch(brand_slug, action_key, message)
-        _concierge_dispatch_record(brand_slug, action_key)
-        return jsonify(success=True, data={"tier": "dispatch", **dispatch})
-
-    return jsonify(success=True, data={
-        "tier":    "unrecognized",
-        "message": (
-            "I can handle: pause / resume / reschedule a post, edit a caption, "
-            "swap slides, re-plan the calendar, inject a trend, rewrite a script, "
-            "or change strategy. What would you like to do?"
-        ),
-    })
 
 
 @bp.route("/api/brands/<brand_slug>/needs-you", methods=["GET"])
