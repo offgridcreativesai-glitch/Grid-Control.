@@ -26,7 +26,27 @@ from typing import Optional
 MODELS = {
     "opus":   "claude-opus-4-8",
     "sonnet": "claude-sonnet-4-6",
+    # Haiku is the GRUNT tier (Phase 4a, Jun 19 2026). It is NOT a routable
+    # agent tier — Sonnet stays the floor for any text a human/brand sees
+    # (Jun-9-2026 lock). Haiku is reserved for invisible internal triage:
+    # classification, ICP scoring, comment categorization — never for the
+    # founder-voice replies/DMs themselves. Use grunt_model() to reach it.
+    "haiku":  "claude-haiku-4-5-20251001",
 }
+
+# Internal-grunt model: classification/triage only, never brand-voice output.
+GRUNT_MODEL = MODELS["haiku"]
+
+
+def grunt_model() -> str:
+    """Haiku model id for invisible internal triage (categorize / score / route).
+
+    HARD RULE (honors the Jun-9 Sonnet-floor lock): only call this for work a
+    human never reads verbatim — classification, ICP scoring, comment bucketing.
+    Brand-voice text (replies, DMs, captions) MUST stay on the agent's routed
+    Sonnet/Opus tier via model_for().
+    """
+    return GRUNT_MODEL
 
 # ── Single source of truth: agent_slug → (tier, effort) ───────────────────────
 # effort is the intended reasoning level (xhigh|high|medium). It is recorded
