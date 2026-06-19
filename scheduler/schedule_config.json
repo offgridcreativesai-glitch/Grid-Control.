@@ -3,17 +3,17 @@
   "jobs": [
     {
       "brand_slug": "askgauravai",
-      "enabled": true,
+      "enabled": false,
       "cron": { "hour": 6, "minute": 30 },
       "pipeline": "daily",
-      "note": "Trend Researcher + Data Analyst -> Trend Sentinel, every morning 06:30 IST"
+      "note": "PAUSED Jun 19 2026 per Gaurav — no automation until green signal. Trend Researcher + Data Analyst -> Trend Sentinel, every morning 06:30 IST"
     },
     {
       "brand_slug": "offgrid-creatives-ai",
-      "enabled": true,
+      "enabled": false,
       "cron": { "hour": 7, "minute": 0 },
       "pipeline": "daily",
-      "note": "Staggered 30m after askgauravai to avoid overlap"
+      "note": "PAUSED Jun 19 2026 per Gaurav — no automation until green signal. Staggered 30m after askgauravai to avoid overlap"
     }
   ]
 }
