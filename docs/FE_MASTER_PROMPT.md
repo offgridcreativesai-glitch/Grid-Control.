@@ -55,6 +55,29 @@ seizure-y; respect `prefers-reduced-motion`; keep it **performant** (a founder o
 never jank the data). Premium = restraint with a few wow moments, not a constant light show.
 
 ## 6. The screens (their INTENT — design them however you like)
+
+0. **Onboarding (THE ENTRY FLOW — first thing a new user sees).** A **chat-driven, guided
+   setup** that feels like talking to a chief of staff, not filling a form. ~6 steps that
+   progressively *build the brand profile, run the first task, and provision the first agent*,
+   then drop the user into the Command Center. Use guided buttons + a few free-text fields
+   (assistant asks, user clicks/answers). Suggested arc:
+   1. **Use case** — Personal Brand vs Company Brand.
+   2. **Goals** — pick what to help with (e.g. content & social, SEO/AI-search, competitors,
+      sales/CVR, growth roadmap). Multi-select.
+   3. **About you / the brand** — website URL + a "what you do" free-text.
+   4. **Connect your accounts** — the curated set below (skippable). Each is an OAuth **Connect**.
+   5. **Build Brand Profile** — assistant synthesizes a profile from the above + any connected
+      data; user confirms/edits.
+   6. **First task + agent** — assistant runs a first real task and shows it provisioning an
+      agent, so the user *sees the team start working* before they ever hit the dashboard.
+   Make this feel alive and premium (3D "Brain" present, the team coming online) — it's the
+   first impression and the moment the product earns trust.
+   **Connections shown here (ONLY these — do not list more):**
+   **X, Facebook, Instagram, LinkedIn, YouTube,** and **Google (one connection = "full
+   package")** which grants **Gmail + Google Calendar + Search Console + Analytics** together.
+   Note: **Google Calendar is also our post-scheduling engine** — scheduled posts create calendar
+   events that drive phone reminders, so frame Google as core, not optional.
+
 1. **Command Center (home)** — *"Here's what your team did overnight, and the one thing that needs
    you."* The daily decision moment and hero of the app. The **"Needs You" approval queue** is the
    emotional center.
@@ -95,13 +118,14 @@ If a screen wants data we don't expose yet, flag it — we'll add the endpoint.
 **Key endpoints per screen (full list in `docs/SCREEN_ENDPOINT_MAP.md`):**
 | Screen | Primary endpoints |
 |---|---|
+| Onboarding (entry flow) | `POST /api/auth/create-brand` · `POST /api/brand/profile` · `GET/POST connect-token` per platform · `POST /api/agents/run` (first task) |
 | Command Center | `GET /api/brand/summary` · `GET /api/brands/<slug>/needs-you` |
 | Approve / Change / Reject | `POST /api/outputs/approve` · `/reject` · `/revise` |
 | The Team | `GET /api/agents/list` · `GET /api/agents/status` · `POST /api/agents/run` |
 | Content (calendar) | `GET /api/dashboard-output` → `data.calendar_formatted` |
 | Insights (cost) | `GET /api/brands/<slug>/costs` |
 | Memory & Brain | `GET /api/brands/<slug>/narrative` |
-| Connections | `GET /api/brands/<slug>/connections` (never returns tokens) |
+| Connections | `GET /api/brands/<slug>/connections` (never returns tokens). Curated set only: X, Facebook, Instagram, LinkedIn, YouTube, Google ("full package" = Gmail + Calendar + Search Console + Analytics in one connect) |
 | Concierge (the "Brain") | `POST /api/concierge` — returns intent + points to the gated button; never auto-executes |
 
 ## 9. Build approach we'd like

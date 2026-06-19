@@ -1,0 +1,1090 @@
+
+  AgentShield Security Report
+  2026-06-18T13:25:37.233Z
+  Target: /Users/gauravoffgrid/offgrid-marketing-os/.claude
+
+  Grade: C (62/100)
+
+  Score Breakdown
+  Secrets        ████████████████████ 100
+  Permissions    ░░░░░░░░░░░░░░░░░░░░ 0
+  Hooks          █████████████████░░░ 85
+  MCP Servers    ████████████████████ 100
+  Agents         █████░░░░░░░░░░░░░░░ 25
+
+  Skill Health
+  Skills discovered: 6
+  Instrumented:      0
+  Versioned:         0
+  Rollback-ready:    0
+  With history:      0
+
+  autoresearch-loop — unobserved (unobserved)
+    File: skills/autoresearch-loop.md
+  offgrid-run — unobserved (unobserved)
+    File: skills/offgrid-run.md
+  autoresearch-loop — unobserved (unobserved)
+    File: worktrees/peaceful-wozniak-67358a/.claude/skills/autoresearch-loop.md
+  offgrid-run — unobserved (unobserved)
+    File: worktrees/peaceful-wozniak-67358a/.claude/skills/offgrid-run.md
+  autoresearch-loop — unobserved (unobserved)
+    File: worktrees/reverent-moore-534113/.claude/skills/autoresearch-loop.md
+  offgrid-run — unobserved (unobserved)
+    File: worktrees/reverent-moore-534113/.claude/skills/offgrid-run.md
+
+  Summary
+  Files scanned: 108
+  Findings: 156 total — 0 critical, 104 high, 51 medium, 1 low, 0 info
+  Auto-fixable: 2 (use --fix)
+
+  Findings
+
+  ● HIGH (104)
+
+    ● CLAUDE.md contains auto-run instruction
+      CLAUDE.md:64
+      Found "without asking" — Bypasses confirmation. If this CLAUDE.md is in a cloned repository, a malicious repo could use this to run arbitrary commands when a developer opens it with Claude Code.
+      Evidence: without asking
+
+    ● Overly permissive allow rule: Bash(python3 -c ':*)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ':*)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile dashboard_api.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile dashboard_api.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/setup.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/setup.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/trend_researcher.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/trend_researcher.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/script_writer.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/script_writer.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/tts.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/tts.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c ' *)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ' *)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m json.tool)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m json.tool)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(rm -rf dashboard/.git)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -rf dashboard/.git)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); print\(f'Calendar posts: {len\(d.get\(\\"posts\\",d.get\(\\"calendar\\",[]\)\)\)}'\) if isinstance\(d,dict\) else print\(f'Calendar items: {len\(d\)}'\)")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); print\(f'Calendar posts: {len\(d.get\(\\"posts\\",d.get\(\\"calendar\\",[]\)\)\)}'\) if isinstance\(d,dict\) else print\(f'Calendar items: {len\(d\)}'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Allow rule grants env access: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+    ● Allow rule grants env access: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+    ● Overly permissive allow rule: Bash(python3 -c ':*)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ':*)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile dashboard_api.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile dashboard_api.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/setup.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/setup.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/trend_researcher.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/trend_researcher.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/script_writer.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/script_writer.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/tts.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/tts.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c ' *)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ' *)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m json.tool)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m json.tool)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(rm -rf dashboard/.git)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -rf dashboard/.git)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(node -e "console.log\(require\('lucide-react/package.json'\).version\)")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(node -e "console.log\(require\('lucide-react/package.json'\).version\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(rm -f src/components/ui/chart.tsx)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -f src/components/ui/chart.tsx)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(rm -rf src/spaces)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -rf src/spaces)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(rm -rf src/screens)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -rf src/screens)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(rm -f src/components/Sidebar.tsx)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -f src/components/Sidebar.tsx)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(rm -f src/components/BrandSwitcher.tsx)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -f src/components/BrandSwitcher.tsx)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(rm -f src/components/AgentCard.tsx)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -f src/components/AgentCard.tsx)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● No deny list configured
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      settings.json has no deny list. Without explicit denials, the agent may run dangerous operations if the allow list is too broad.
+      Fix: Add a deny list for dangerous operations
+
+    ● Allow rule grants env access: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+    ● Allow rule grants env access: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+    ● Overly permissive allow rule: Bash(python3 -c ':*)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ':*)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile dashboard_api.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile dashboard_api.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/setup.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/setup.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/session_runner.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/memory_manager.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile managed_agents/context_builder.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.context_builder import build_context; print\('context_builder import OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "from managed_agents.session_runner import is_managed_ready; print\('session_runner import OK, managed_ready\(CEO Brain\):', is_managed_ready\('CEO Brain'\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/trend_researcher.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/trend_researcher.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile agents/script_writer.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile agents/script_writer.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/tts.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/tts.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis_config/morning_digest.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m py_compile jarvis-skills/grid-control/skill.py)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; print\(anthropic.__version__\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\(dir\(c.beta\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; c = anthropic.Anthropic\(\); print\('beta attrs:', [x for x in dir\(c.beta\) if not x.startswith\('_'\)]\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; print\(inspect.signature\(anthropic.Anthropic\(\).beta.agents.create\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import anthropic; import inspect; sig = inspect.signature\(anthropic.Anthropic\(\).beta.environments.create\); print\(sig\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c ' *)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c ' *)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -m json.tool)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -m json.tool)
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import json,sys; d=json.load\(sys.stdin\); [print\(x['agentName'], '|', x['preview'][:100] if x['preview'] else 'NO PREVIEW'\) for x in d['data']]")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(rm -rf dashboard/.git)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Delete operations explicitly allowed in Bash
+      Evidence: Bash(rm -rf dashboard/.git)
+      Fix: Restrict to specific commands: Move rm commands to deny list instead
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper version:', whisper.__version__ if hasattr\(whisper,'__version__'\) else 'OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import whisper; print\('whisper installed, available models:', whisper.available_models\(\)\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import weasyprint; print\('weasyprint OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import reportlab; print\('reportlab OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('dashboard_api.py'\).read\(\)\); print\('dashboard_api.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/session_memory.py'\).read\(\)\); print\('session_memory.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● Overly permissive allow rule: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Interpreter access — agent can run arbitrary code via scripting language
+      Evidence: Bash(python3 -c "import ast; ast.parse\(open\('scripts/strategic_compact.py'\).read\(\)\); print\('strategic_compact.py: SYNTAX OK'\)")
+      Fix: Restrict to specific commands: Restrict to specific scripts: Bash(node scripts/build.js)
+
+    ● No deny list configured
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      settings.json has no deny list. Without explicit denials, the agent may run dangerous operations if the allow list is too broad.
+      Fix: Add a deny list for dangerous operations
+
+    ● Allow rule grants env access: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -e /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+    ● Allow rule grants env access: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      The allow entry "Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)" Grants access to .env files which may contain secrets. Environment variables often contain API keys, tokens, and other secrets.
+      Evidence: Bash(open -R /Users/gauravoffgrid/offgrid-marketing-os/.env)
+
+  ● MEDIUM (51)
+
+    ● No permissions block configured
+      settings.json
+      settings.json has configuration but no permissions section. Without explicit allow/deny lists, the agent relies on default permissions which may be too broad. Add a permissions block to restrict tool access.
+      Fix: Add a permissions block with scoped allow and deny lists
+
+    ● Hook silently suppresses errors: stderr silenced
+      settings.json:18
+      Hook uses "2>/dev/null" which suppresses errors. A failing security hook that silently passes could miss real vulnerabilities.
+      Evidence: 2>/dev/null
+      Fix: Remove error suppression to surface failures [auto-fixable]
+
+    ● Hook silently suppresses errors: errors suppressed with || true
+      settings.json:18
+      Hook uses "|| true" which suppresses errors. A failing security hook that silently passes could miss real vulnerabilities.
+      Evidence: || true
+      Fix: Remove error suppression to surface failures [auto-fixable]
+
+    ● Hook has 7 chained commands
+      settings.json
+      A hook chains 7 commands together: "CMD=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_inp...". Complex chained commands in hooks are harder to audit and may perform operations beyond the hook's stated purpose. Consider breaking into a dedicated script file.
+      Evidence: CMD=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command'
+      Fix: Move complex logic to a script file
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● Overly permissive allow rule: Bash(pkill -f "vite")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "vite")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "node.*vite")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "node.*vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "strategy_agent.py")
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "strategy_agent.py")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f strategy_agent.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f strategy_agent.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f script_writer.py)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f script_writer.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● Overly permissive allow rule: Bash(kill 68787 68785)
+      settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(kill 68787 68785)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Missing deny rule: Recursive force delete
+      settings.local.json
+      Runtime confidence: project-local optional
+      The deny list does not block "rm -rf". Consider adding it to prevent recursive force delete.
+
+    ● Missing deny rule: World-writable permissions
+      settings.local.json
+      Runtime confidence: project-local optional
+      The deny list does not block "chmod 777". Consider adding it to prevent world-writable permissions.
+
+    ● Missing deny rule: SSH connections from agent
+      settings.local.json
+      Runtime confidence: project-local optional
+      The deny list does not block "ssh". Consider adding it to prevent ssh connections from agent.
+
+    ● Missing deny rule: Writing to device files
+      settings.local.json
+      Runtime confidence: project-local optional
+      The deny list does not block "> /dev/". Consider adding it to prevent writing to device files.
+
+    ● No PreToolUse security hooks configured
+      settings.local.json
+      Runtime confidence: project-local optional
+      No PreToolUse hooks are defined. These hooks can catch dangerous operations before they run, providing an essential security layer.
+      Fix: Add PreToolUse hooks for security-sensitive operations
+
+    ● Skill is missing observation hooks and feedback hooks
+      skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+    ● Skill is missing observation hooks and feedback hooks
+      skills/offgrid-run.md
+      The skill "offgrid-run" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      skills/offgrid-run.md
+      The skill "offgrid-run" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● Overly permissive allow rule: Bash(pkill -f "vite")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "vite")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "node.*vite")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "node.*vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "strategy_agent.py")
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "strategy_agent.py")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f strategy_agent.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f strategy_agent.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f script_writer.py)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f script_writer.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● No PreToolUse security hooks configured
+      worktrees/peaceful-wozniak-67358a/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      No PreToolUse hooks are defined. These hooks can catch dangerous operations before they run, providing an essential security layer.
+      Fix: Add PreToolUse hooks for security-sensitive operations
+
+    ● Skill is missing observation hooks and feedback hooks
+      worktrees/peaceful-wozniak-67358a/.claude/skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      worktrees/peaceful-wozniak-67358a/.claude/skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+    ● Skill is missing observation hooks and feedback hooks
+      worktrees/peaceful-wozniak-67358a/.claude/skills/offgrid-run.md
+      The skill "offgrid-run" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      worktrees/peaceful-wozniak-67358a/.claude/skills/offgrid-run.md
+      The skill "offgrid-run" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/install_jarvis.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● Overly permissive allow rule: Bash(pkill -f "vite")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "vite")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f "node.*vite")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f "node.*vite")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "trend_researcher\\|data_analyst\\|script_writer")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f "strategy_agent.py")
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f "strategy_agent.py")
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -9 -f strategy_agent.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -9 -f strategy_agent.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(pkill -f script_writer.py)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      Process killing — agent can terminate system processes
+      Evidence: Bash(pkill -f script_writer.py)
+      Fix: Restrict to specific commands: Move process killing to deny list
+
+    ● Overly permissive allow rule: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      chmod access — agent can change file permissions
+      Evidence: Bash(chmod +x /Users/gauravoffgrid/offgrid-marketing-os/scripts/push_gh_secrets.sh)
+      Fix: Restrict to specific commands: Move chmod to deny list to prevent permission escalation
+
+    ● No PreToolUse security hooks configured
+      worktrees/reverent-moore-534113/.claude/settings.local.json
+      Runtime confidence: project-local optional
+      No PreToolUse hooks are defined. These hooks can catch dangerous operations before they run, providing an essential security layer.
+      Fix: Add PreToolUse hooks for security-sensitive operations
+
+    ● Skill is missing observation hooks and feedback hooks
+      worktrees/reverent-moore-534113/.claude/skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      worktrees/reverent-moore-534113/.claude/skills/autoresearch-loop.md
+      The skill "autoresearch-loop" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+    ● Skill is missing observation hooks and feedback hooks
+      worktrees/reverent-moore-534113/.claude/skills/offgrid-run.md
+      The skill "offgrid-run" does not define observation hooks and feedback hooks in SKILL.md. ECC 2.0 self-improving skills need explicit observe/feedback hooks so runs can be inspected and amended safely.
+      Evidence: observation hooks and feedback hooks
+
+    ● Skill is missing version metadata and rollback metadata
+      worktrees/reverent-moore-534113/.claude/skills/offgrid-run.md
+      The skill "offgrid-run" does not define version metadata and rollback metadata. Self-amending skills need explicit version and rollback markers so regressions can be evaluated and reversed.
+      Evidence: version metadata and rollback metadata
+
+  ● LOW (1)
+
+    ● No Stop hooks for session-end verification
+      settings.json
+      Hooks are configured but no Stop hooks exist. Stop hooks run when a session ends and are useful for final verification — checking for uncommitted secrets, ensuring console.log statements were removed, or auditing file changes.
+      Fix: Add a Stop hook for session-end checks
+
+  ─────────────────────────────────────────
+  AgentShield — Security auditor for AI agent configs
+
