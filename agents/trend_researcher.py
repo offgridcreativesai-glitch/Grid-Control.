@@ -745,6 +745,46 @@ class TrendResearcher:
         }
 
     # -------------------------------------------------------------------------
+    # DATA SOURCE: Competitor websites (Scrapling — Phase 2a · Jun 18 2026)
+    # -------------------------------------------------------------------------
+    # Pulls positioning signal Apify can't see — title, meta, H1/H2 hierarchy,
+    # nav taxonomy, body snippet. Source: brand_profile.competitor_websites.
+    # Silent skip when Scrapling not installed or list is empty.
+
+    def scrape_competitor_websites(self) -> dict:
+        sites = self.brand_profile.get("competitor_websites") or []
+        if not sites:
+            self.log("No competitor_websites in brand_profile — skipping Scrapling")
+            return {"status": "SKIPPED", "reason": "no urls in brand_profile.competitor_websites", "websites": []}
+
+        try:
+            from agents._lib._scrapling_client import get_scrapling
+        except Exception as e:
+            return {"status": "FAILED", "error": f"scrapling client import failed: {e}", "websites": []}
+
+        sc = get_scrapling()
+        if not sc.enabled:
+            return {"status": "FAILED", "error": "scrapling not installed", "websites": []}
+
+        self.log(f"Scraping {len(sites)} competitor websites via Scrapling...")
+        results = []
+        for entry in sites:
+            url = entry.get("url") if isinstance(entry, dict) else entry
+            handle = entry.get("handle") if isinstance(entry, dict) else ""
+            if not url:
+                continue
+            page = sc.scrape_homepage(url)
+            page["handle"] = handle
+            results.append(page)
+            self.log(f"  [{handle or url}] ok={page.get('ok')} title='{(page.get('title') or '')[:50]}'")
+
+        return {
+            "status": "OK",
+            "websites": results,
+            "scraped_at": self.scraped_at,
+        }
+
+    # -------------------------------------------------------------------------
     # DATA SOURCE: Google Trends (PyTrends — no API key needed)
     # -------------------------------------------------------------------------
 
@@ -921,18 +961,42 @@ class TrendResearcher:
 
     def _extract_whisper_transcripts(self) -> None:
         """
-        Extract audio transcripts from top video posts using Whisper.
-        Requires: pip install openai-whisper yt-dlp
-        Fully graceful skip if not installed or any post fails.
+        Extract audio transcripts from top video posts.
+        Phase 2b (Jun 18 2026): Supadata.ai is the primary path (hosted, free
+        tier 100 req, works on Railway). Whisper + yt_dlp = local fallback.
+        Fully graceful skip if neither path is available.
         Mutates self._whisper_candidates in-place — adds 'whisper_transcript' field.
         """
         if not self._whisper_candidates:
             return
 
+        # Phase 2b — Try Supadata first (hosted, no local deps)
+        try:
+            from agents._lib._supadata_client import get_supadata
+            sd = get_supadata()
+        except Exception as _e:
+            sd = None
+
+        if sd and sd.enabled:
+            self.log(f"Supadata: transcribing {len(self._whisper_candidates)} video post(s)...")
+            for i, post in enumerate(self._whisper_candidates):
+                url = post.get("url", "")
+                if not url:
+                    continue
+                out = sd.transcript(url)
+                if out.get("ok"):
+                    post["whisper_transcript"] = out.get("content", "")[:4000]
+                    post["transcript_source"] = "supadata"
+                    self.log(f"Supadata [{i+1}/{len(self._whisper_candidates)}]: OK ({len(post['whisper_transcript'])} chars)")
+                else:
+                    self.log(f"Supadata [{i+1}/{len(self._whisper_candidates)}]: SKIP — {out.get('error','?')}")
+            return
+
+        # Fallback — local Whisper (only if openai-whisper + yt-dlp present)
         try:
             import whisper  # type: ignore
         except ImportError:
-            self.log("Whisper: SKIPPED — openai-whisper not installed (pip install openai-whisper)")
+            self.log("Transcripts: SKIPPED — set SUPADATA_API_KEY or install openai-whisper")
             return
 
         try:
@@ -1725,6 +1789,11 @@ Aim for 8–12 provenance entries. Validation will reject claims that don't trac
         ig_competitors = self.scrape_competitor_profiles()
         scraped_data["instagram_competitor_profiles"] = ig_competitors
         scraped_data["scrape_status_per_source"]["instagram_competitors"] = ig_competitors.get("status")
+
+        # Phase 2a — Competitor websites (Scrapling, free, synchronous, no Apify cost)
+        comp_sites = self.scrape_competitor_websites()
+        scraped_data["competitor_websites"] = comp_sites
+        scraped_data["scrape_status_per_source"]["competitor_websites"] = comp_sites.get("status")
 
         # Google Trends (no wait — synchronous)
         google = self.scrape_google_trends()
