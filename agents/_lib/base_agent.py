@@ -43,6 +43,14 @@ class BaseAgent:
         # Resolved at first call to _get_brand_id()
         self._brand_id_cache: str | None = None
 
+        # Langfuse observability (Phase 1b · Jun 18 2026) — singleton, silent
+        # no-op when keys absent. Agents call self.lf_* helpers below.
+        try:
+            from agents._lib._langfuse_client import get_langfuse
+            self.lf = get_langfuse()
+        except Exception:
+            self.lf = None
+
     # ── brand helpers ─────────────────────────────────────────────────────────
 
     def _get_brand_id(self, brand_slug: str) -> str | None:
@@ -120,6 +128,62 @@ class BaseAgent:
         lines = [f"- {e['memory_key']}: {e['content']}" for e in entries]
         return "\n## Agent Memory (from previous runs)\n" + "\n".join(lines) + "\n"
 
+    # ── semantic memory (Mem0 layer · Phase 1a · Jun 18 2026) ─────────────────
+    # Additive overlay on top of the KV remember/recall above.
+    # Two scopes only (no mixing):
+    #   • "grid_control"  → account-wide, cross-brand
+    #   • "brand"         → per-brand, isolated (auto-routed via brand_slug)
+    # All methods silent no-op if Voyage key or Supabase missing.
+
+    def semantic_remember(
+        self,
+        scope: str,
+        content: str,
+        brand_slug: str = "",
+        metadata: dict | None = None,
+    ) -> str | None:
+        """Store one fact in semantic memory. Returns row id (or None)."""
+        from agents._lib._mem0_client import get_semantic_memory
+        return get_semantic_memory().remember(
+            scope=scope,
+            agent=self._agent_slug(),
+            content=content,
+            brand_slug=brand_slug or None,
+            metadata=metadata or {},
+        )
+
+    def semantic_recall(
+        self,
+        scope: str,
+        query: str,
+        brand_slug: str = "",
+        k: int = 5,
+    ) -> list[dict]:
+        """Semantic search over this agent's prior facts in the given scope."""
+        from agents._lib._mem0_client import get_semantic_memory
+        return get_semantic_memory().recall(
+            scope=scope,
+            agent=self._agent_slug(),
+            query=query,
+            brand_slug=brand_slug or None,
+            k=k,
+        )
+
+    def semantic_recall_as_text(
+        self,
+        scope: str,
+        query: str,
+        brand_slug: str = "",
+        k: int = 5,
+    ) -> str:
+        """Same as semantic_recall but returns a prompt-ready markdown block."""
+        hits = self.semantic_recall(scope=scope, query=query, brand_slug=brand_slug, k=k)
+        if not hits:
+            return ""
+        lines = [f"- {h['content']}" for h in hits]
+        title = "Account-wide context" if scope == "grid_control" else f"Brand context ({brand_slug})"
+        return f"\n## Semantic Memory — {title}\n" + "\n".join(lines) + "\n"
+
     # ── narrative memory (story-so-far) ───────────────────────────────────────
     # Append-only timeline of decisions/actions/results across ALL agents, so a
     # run CONTINUES the brand's story instead of cold-starting (Phase A).
@@ -176,6 +240,65 @@ class BaseAgent:
             self.log(f"[narrative] appended {entry_type}: {summary[:60]}")
         except Exception as e:
             self.log(f"[narrative] append failed: {e}")
+
+    # ── Langfuse pass-throughs (Phase 1b) ────────────────────────────────────
+    # Agents wrap their main run() with @self.lf_observe() and then call
+    # lf_trace_meta / lf_record_llm / lf_set_output / lf_flush inside.
+    # All silent no-op when keys missing.
+
+    def lf_observe(self, name: str | None = None):
+        """Decorator: wraps an agent method in a Langfuse trace span.
+        Usage:  @self.lf_observe(name="strategy-agent.run")"""
+        if not self.lf:
+            return lambda fn: fn
+        return self.lf.observe(name=name or f"{self._agent_slug()}.run")
+
+    def lf_trace_meta(self, brand_slug: str = "", run_id: str = "",
+                      tags: list | None = None, input: dict | None = None) -> None:
+        """Stamp agent/brand/run metadata on the current Langfuse span."""
+        if not self.lf:
+            return
+        self.lf.set_trace_meta(
+            agent=self._agent_slug(),
+            brand_slug=brand_slug or None,
+            run_id=run_id or None,
+            tags=tags,
+            input=input,
+        )
+
+    def lf_generation(self, name: str, model: str | None = None, input=None):
+        """Context manager: open a Langfuse GENERATION around the actual LLM call.
+        lf_record_llm must be called INSIDE this block, else usage/cost attaches to
+        the span root and Langfuse shows $0.00. No-op when keys missing.
+        Usage:
+            with self.lf_generation(name="x.claude", model=MODEL):
+                ... messages.stream(...) ...
+                self.lf_record_llm(model=MODEL, in_tokens=.., out_tokens=..)"""
+        if not self.lf:
+            from contextlib import nullcontext
+            return nullcontext()
+        return self.lf.start_generation(name=name, model=model, input=input)
+
+    def lf_record_llm(self, model: str, in_tokens: int, out_tokens: int,
+                      cached_tokens: int = 0) -> None:
+        """Call right after the LLM response, INSIDE an lf_generation() block —
+        Langfuse auto-computes cost."""
+        if not self.lf:
+            return
+        self.lf.record_llm(model=model, in_tokens=in_tokens,
+                           out_tokens=out_tokens, cached_tokens=cached_tokens)
+
+    def lf_set_output(self, output) -> None:
+        """Stamp the final result onto the trace (e.g. winning variant)."""
+        if not self.lf:
+            return
+        self.lf.set_output(output)
+
+    def lf_flush(self) -> None:
+        """ALWAYS call before agent exit — the Langfuse skill's #1 mistake."""
+        if not self.lf:
+            return
+        self.lf.flush()
 
     # ── cost reporting ────────────────────────────────────────────────────────
 

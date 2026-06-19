@@ -20,6 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
 from agents._lib import cost_reporter
+from agents._lib._langfuse_client import get_langfuse
+_LF = get_langfuse()  # Phase 1b · singleton; silent no-op when keys missing
 
 # Rule 10 — Source Citation Enforcement (Apr 26)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -392,8 +394,31 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
   }}
 }}"""
 
+        # ── Phase 1a: Semantic memory recall (Voyage + pgvector) ─────────────
+        # Pull prior strategy facts on both scopes. Silent no-op if Voyage/DB missing.
+        try:
+            from agents._lib._mem0_client import get_semantic_memory
+            _sem = get_semantic_memory()
+            _q = f"90-day growth strategy for {self.brand_slug}"
+            _brand_facts = _sem.recall(scope="brand", agent="strategy-agent",
+                                       query=_q, brand_slug=self.brand_slug, k=5)
+            _gc_facts = _sem.recall(scope="grid_control", agent="strategy-agent",
+                                    query=_q, k=3)
+            _mem_block = ""
+            if _brand_facts:
+                _mem_block += "\n## Semantic Memory — prior strategy decisions for this brand\n"
+                _mem_block += "\n".join(f"- {h['content']}" for h in _brand_facts) + "\n"
+            if _gc_facts:
+                _mem_block += "\n## Semantic Memory — account-wide strategy patterns\n"
+                _mem_block += "\n".join(f"- {h['content']}" for h in _gc_facts) + "\n"
+            if _mem_block:
+                self.log(f"Semantic recall: {len(_brand_facts)} brand + {len(_gc_facts)} account facts injected")
+        except Exception as _e:
+            _mem_block = ""
+            self.log(f"Semantic recall skipped: {_e}")
+
         # ── Rule 10: Claude call + validation-retry loop ────────────────────
-        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
+        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + _mem_block + prompt}]
         result = None
         validation_report = None
         attempt = 0
@@ -406,17 +431,26 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
             # Accumulate the streamed text, then read final usage + stop_reason from the
             # completed message object — preserves the existing token-counting + truncation-warn behaviour.
             raw_text = ""
-            with self.client.messages.stream(
-                model=MODEL,
-                max_tokens=24000,  # 90-day strategy + provenance entries + retry headroom
-                messages=messages,
-            ) as stream:
-                for text_chunk in stream.text_stream:
-                    raw_text += text_chunk
-                final_message = stream.get_final_message()
+            # Phase 1b: open a Langfuse GENERATION around the LLM call so usage/cost
+            # attaches to a generation (not the span root) — fixes $0.00 / None tokens.
+            with _LF.start_generation(name=f"strategy-agent.claude (attempt {attempt})", model=MODEL):
+                with self.client.messages.stream(
+                    model=MODEL,
+                    max_tokens=24000,  # 90-day strategy + provenance entries + retry headroom
+                    messages=messages,
+                ) as stream:
+                    for text_chunk in stream.text_stream:
+                        raw_text += text_chunk
+                    final_message = stream.get_final_message()
 
-            self._total_input_tokens += final_message.usage.input_tokens
-            self._total_output_tokens += final_message.usage.output_tokens
+                self._total_input_tokens += final_message.usage.input_tokens
+                self._total_output_tokens += final_message.usage.output_tokens
+                # feed Langfuse so it auto-computes cost from model registry
+                _LF.record_llm(
+                    model=MODEL,
+                    in_tokens=final_message.usage.input_tokens,
+                    out_tokens=final_message.usage.output_tokens,
+                )
 
             if final_message.stop_reason == "max_tokens":
                 self.log(f"WARNING: Claude hit max_tokens cap ({final_message.usage.output_tokens} out)")
@@ -464,12 +498,40 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
             result["provenance_validation"] = validation_report
 
         self.log(f"AutoResearch Loop complete. Winner: {result['loop_header']['winner']}")
+
+        # ── Phase 1a: Record this run's winning decision into brand semantic memory
+        try:
+            from agents._lib._mem0_client import get_semantic_memory
+            _winner = result.get("loop_header", {}).get("winner", "?")
+            _angle = result.get("strategy_90day", {}).get("strategic_angle", "")
+            _fact = (f"Winning strategy variant: {_winner}. "
+                     f"Strategic angle: {_angle}").strip()
+            if _angle:
+                get_semantic_memory().remember(
+                    scope="brand",
+                    agent="strategy-agent",
+                    content=_fact,
+                    brand_slug=self.brand_slug,
+                    metadata={"date": datetime.now(timezone.utc).date().isoformat()},
+                )
+                self.log(f"Semantic memory written: variant {_winner}")
+        except Exception as _e:
+            self.log(f"Semantic remember skipped: {_e}")
+
         return result
 
+    @_LF.observe(name="strategy-agent.run")
     def run(self):
         self.log("=" * 60)
         self.log("STRATEGY AGENT — 90-DAY ROADMAP STARTING")
         self.log("=" * 60)
+        # Phase 1b: stamp trace metadata so we can filter by brand/agent in UI
+        _LF.set_trace_meta(
+            agent="strategy-agent",
+            brand_slug=self.brand_slug,
+            tags=["phase-1b", "strategy"],
+            input={"brand_slug": self.brand_slug, "north_star": "10 paying beta clients in 90 days"},
+        )
 
         # Step 1 — Load real trend data (Rule 1 gate)
         self.log("STEP 1 — Loading trend data...")
@@ -522,6 +584,14 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
         self.log("Pending approval in Notion. Approve to unlock: content-planner")
         self.log("=" * 60)
         cost_reporter.record(MODEL, self._total_input_tokens, self._total_output_tokens)
+        # Phase 1b: trace output + flush so traces actually reach Langfuse
+        _LF.set_output({
+            "winning_variant": loop_result.get("winning_variant"),
+            "winner_label": loop_header.get("winner"),
+            "total_input_tokens": self._total_input_tokens,
+            "total_output_tokens": self._total_output_tokens,
+        })
+        _LF.flush()
         return save_result
 
 
