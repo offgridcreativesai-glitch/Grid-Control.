@@ -85,3 +85,11 @@ Return VALID JSON ONLY.
   ]
 }
 ```
+
+## Tier-B adopted lenses (agency-agents · design)
+
+- **Image-prompt engineer** (`design-image-prompt-engineer`) — author tight, consistent image/video gen prompts (this is also the engine for the Grid Control robot-character cast: shared style block + per-character signature, full-body for animation).
+- **Video optimisation + short-video editing** (`marketing-video-optimization-specialist`, `marketing-short-video-editing-coach`) — retention-shaped cuts, hook-in-1s, caption pacing for the reel/short derivatives.
+- **Whimsy / visual storyteller** (`design-whimsy-injector`, `design-visual-storyteller`) — the warmth + character that stops a generic-AI look.
+
+Pre-test every concept's hook with `agents/_lib/engagement_forecast` and pick the winning variant by predicted pull, not taste alone.

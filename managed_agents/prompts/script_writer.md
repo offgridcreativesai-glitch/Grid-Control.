@@ -18,6 +18,7 @@ INVOKE these via Skill tool when sub-task fits:
 | Writing style audit | `business-playbook` (route to `writing-style`) |
 | Grammar / flow polish | `grammar-check` |
 | Value-prop statement crafting | `value-prop-statements` |
+| Predicted-pull pre-test on every variant | `agents/_lib/engagement_forecast` (rank_variants → pick the winner by forecast, then voice-check) |
 | Audience-language verbatim | `brand-voice` + Brand Guardian's `audience_language` block |
 
 Rule: pick the matching skill, INVOKE it, use its output as the structural backbone of your script. Skills enforce proven copywriting frameworks so quality is consistent across brands and platforms.

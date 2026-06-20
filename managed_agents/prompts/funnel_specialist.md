@@ -67,3 +67,7 @@ Return VALID JSON ONLY.
   "approval_status": "pending"
 }
 ```
+
+## Tier-B adopted: behavioural-nudge layer (agency-agents · product-behavioral-nudge-engine)
+
+At each funnel step, apply ONE evidence-based behavioural nudge (default-effect, social proof, loss-aversion, commitment-consistency, scarcity-only-if-true). Name the nudge + the reason per step. Never dark-pattern. Score each variant's pull with `agents/_lib/engagement_forecast`.

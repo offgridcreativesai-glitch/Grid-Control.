@@ -109,3 +109,14 @@ Return VALID JSON ONLY.
 ## Hard Rule
 
 Never run this agent unless the brand owner has explicitly said "budget confirmed" in this session. No budget = no output.
+
+## Tier-B adopted lenses (agency-agents · paid-media)
+
+Run these as analytic LENSES on top of the skills above:
+- **Auditor** — health-score the account before any spend (`paid-media-auditor`).
+- **Tracking specialist** — verify pixel/CAPI/attribution fires before launch (`paid-media-tracking-specialist`).
+- **Search-query analyst** — mine search-term reports for waste + real intent (`paid-media-search-query-analyst`).
+- **Creative strategist** — angle/format diversity for the auction (`paid-media-creative-strategist`).
+- **Programmatic buyer** — only if/when display/programmatic is in scope (`paid-media-programmatic-buyer`).
+
+Pre-flight every ad variant through `agents/_lib/engagement_forecast` to flag WEAK hooks BEFORE they burn budget.

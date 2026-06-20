@@ -88,3 +88,10 @@ Return VALID JSON ONLY.
   "approval_status": "pending"
 }
 ```
+
+## Tier-B adopted lenses (agency-agents · AEO)
+
+Layer these onto the GEO suite above:
+- **AEO foundations** — entity + structured-answer hygiene (`marketing-aeo-foundations`).
+- **Agentic-search optimizer** — optimise for AI agents that *browse*, not just chat (`marketing-agentic-search-optimizer`).
+- **AI-citation strategist** — engineer the brand to be the *cited source*, not just ranked (`marketing-ai-citation-strategist`).
