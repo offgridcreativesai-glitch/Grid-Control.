@@ -13,6 +13,8 @@ import { ConnectionsPage } from "@/pages/ConnectionsPage"
 import { AgentsPage } from "@/pages/AgentsPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
+import { LandingPage } from "@/landing/LandingPage"
+import { CockpitPage } from "@/landing/CockpitPage"
 import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
 import { AdminClientsPage } from "@/pages/AdminClientsPage"
 import { AdminRevenuePage } from "@/pages/AdminRevenuePage"
@@ -145,6 +147,19 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <Routes>
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/cockpit" element={<CockpitPage />} />
+            <Route path="/*" element={<GatedApp />} />
+          </Routes>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  )
+}
+
+function GatedApp() {
+  return (
           <AuthGate>
             <ShortcutBindings />
             <OnboardingGuard>
@@ -177,8 +192,5 @@ export default function App() {
             </DashboardLayout>
             </OnboardingGuard>
           </AuthGate>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
   )
 }
