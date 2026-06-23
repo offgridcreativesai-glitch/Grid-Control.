@@ -213,7 +213,9 @@ class CarouselDesigner:
             "brand_brief": self.brand_profile.get("brand_brief"),
         }
 
-        prompt = f"""You are designing a {slide_count}-slide carousel for {self.handle} on {platform}.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are designing a {slide_count}-slide carousel for {self.handle} on {platform}.
 
 BRAND CONTEXT:
 {json.dumps(brand_context, indent=2)}

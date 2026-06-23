@@ -39,9 +39,11 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 try:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._agent_framework import operating_framework as _operating_framework
 except ImportError:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._agent_framework import operating_framework as _operating_framework
 MODEL = model_for("script-writer")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -406,7 +408,8 @@ Apply -20% confidence penalty to any hook that matches a DEAD pattern.
         # Rule 10: Build citable reference so Claude sees exact valid paths + values
         citable_reference_block = _build_citable_reference(source_index, post) if source_index else ""
 
-        prompt = f"""You are the Script Writer for OffGrid Marketing OS.
+        prompt = _operating_framework(agent_class=2) + f"""
+You are the Script Writer for OffGrid Marketing OS.
 Write a complete script for one content piece using the BEAT structure.
 Check brand voice. Flag if human face or voice is required.
 

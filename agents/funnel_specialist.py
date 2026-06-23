@@ -96,7 +96,9 @@ class FunnelSpecialist:
         brand = self.brand_profile
         price = brand.get("price", {})
 
-        prompt = f"""You are the Funnel Specialist for OffGrid Creatives AI Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Funnel Specialist for OffGrid Creatives AI Marketing OS.
 
 BRAND: {brand.get('brand_name', 'OffGrid Creatives AI')}
 PRODUCT: {brand.get('product', 'AI Ad Intelligence Report')}

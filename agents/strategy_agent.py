@@ -233,7 +233,9 @@ class StrategyAgent:
         source_index = build_source_index(source_files)
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys across {len(source_files)} files")
 
-        prompt = f"""You are the Strategy Agent for OffGrid Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Strategy Agent for OffGrid Marketing OS.
 Your job: produce a 90-day growth roadmap for this brand based on real scraped trend data.
 This is a beta SaaS product. The goal is the first 10 paying clients.
 

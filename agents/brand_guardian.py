@@ -215,7 +215,9 @@ class BrandGuardian:
             }
             voice_block = f"\nBRAND VOICE DNA (core):\n{json.dumps(vp_core, indent=2)}\n"
 
-        prompt = f"""You are the Brand Guardian for {self.brand_profile.get('brand_name', self.brand_slug)}.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Brand Guardian for {self.brand_profile.get('brand_name', self.brand_slug)}.
 Your only job: audit all generated content for brand SOUL — voice consistency, audience-tone match,
 positioning fidelity, and forbidden-phrase compliance.
 

@@ -178,7 +178,8 @@ class EmailMarketingAgent:
         index = [{"email": s["email"], "name": s.get("name"),
                   "product_interest": s.get("product_interest")} for s in subscribers]
 
-        system = (
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        system = _operating_framework(2) + (
             f"You are the email marketer for {self.brand_profile.get('brand_name', self.brand_slug)}, "
             f"writing nurture emails in the founder's voice — founder-to-founder, direct, value-first, no hype, "
             f"no 'Dear valued customer', no fake urgency.\n"

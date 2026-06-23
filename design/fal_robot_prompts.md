@@ -51,3 +51,45 @@ no logos, no gold. Off-white #FBF9F4 body base with painted [ACCENT] accents onl
 - Generate each on the plain cream bg (clean cutout), full-body with feet/treads visible.
 - Hero pose first; then re-run each with `…in a mid-run pose, leaning forward, one leg lifted` for a run-cycle frame (enables walk animation on the floor).
 - No gold. Lava is scarce. Off-white body, single painted accent per character.
+
+---
+
+## COLOR RULE (LOCKED — Jun 22) — supersedes the per-agent accents above
+
+The cast is colored to show hierarchy: **one orange lead, a green team under him.**
+- **Atlas** (Chief of Staff) = **lava `#FF4D00`**, alone. The only one in the hot accent →
+  reads instantly as the lead the client talks to. Keeps lava scarce.
+- **All 8 other agents** = **emerald `#16A07E`**, shared. They become one unified crew.
+
+Body stays off-white `#FBF9F4`. No gold. Reason lava isn't used team-wide: it's the action
+accent (Approve button, CTAs) on the UI — spreading it across 9 robots kills its punch.
+
+## CANON STYLE (LOCKED) = "Cinematic"
+Weathered-but-clean matte finish, soft warm studio lighting, photoreal Pixar/WALL·E film
+quality, cream `#F2EEE6` bg, full body head-to-toe. (Reference: the Atlas / Riveter / Scout
+renders.) The smaller chibi/toy renders are OFF-canon and get restyled.
+
+## FAL Kontext regen phase (first generation done; this unifies the cast)
+Model: `fal-ai/flux-pro/kontext/max`. Feed each agent's current render as input; optionally
+attach Atlas as a style reference.
+
+**A. Restyle the 6 chibi renders** (Cadence, Lumen, Gauge, Echo, Sentry, Finch) — emerald accent:
+```
+Re-render this exact robot character in a premium cinematic style: weathered-but-clean matte
+finish, soft warm studio lighting, photoreal Pixar / WALL·E film quality, plain warm cream
+#F2EEE6 background, full body visible head-to-toe. Keep the character's design, parts and pose
+identical — only change the rendering style. Recolor its painted accents to emerald #16A07E
+only. Remove ALL text, letters, words and labels from its body — blank plates. No logos, no gold.
+```
+
+**B. Recolor + de-text the 2 canon renders** (Scout "VICAR", Riveter "WORDSMITH"):
+```
+Recolor this robot's painted accents to emerald #16A07E only, and remove all text, letters and
+words from its body — blank plates. Keep everything else identical: same character, cinematic
+style, pose, lighting and cream background.
+```
+
+**C. Atlas** — no change (already lava, cinematic, no text).
+
+After all 9 match → run-cycle frames (`…now in a mid-run pose, leaning forward, one leg lifted`)
+→ background-remove to transparent PNG (`fal-ai/birefnet` or `fal-ai/imageutils/rembg`).

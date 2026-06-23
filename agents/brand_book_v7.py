@@ -215,7 +215,8 @@ category signal. month_1 = quick wins, month_2 = build, month_3 = expand."""
 
 def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
     name = brand["instagram"].get("name") or profile.get("name")
-    system = (
+    from agents._lib._agent_framework import operating_framework as _operating_framework
+    system = _operating_framework(2) + (
         f"You are the lead brand strategist writing an onboarding BRAND AUDIT for {name} — a real client "
         "who just signed with OffGrid. You are their TRUSTED GROWTH GUIDE — they're relying on you to help "
         "them grow, so be generous, specific, and encouraging. It must read like a real brand audit (identity "

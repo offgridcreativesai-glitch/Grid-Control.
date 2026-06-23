@@ -205,7 +205,8 @@ Every comment_id in the input MUST appear exactly once."""
             return {}
         voice_slice = json.dumps(self.voice_profile, indent=2)[:1800] if self.voice_profile else "(no voice_profile.json — use the brand profile tone)"
 
-        system = (
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        system = _operating_framework(2) + (
             f"You are the Community Manager for {self.brand_profile.get('brand_name', self.brand_slug)}. "
             f"You reply to inbound comments and DMs so they sound like the founder (Gaurav) personally — "
             f"never like a bot, never generic. Direct, founder-to-founder, warm, specific. "

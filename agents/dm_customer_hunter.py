@@ -224,7 +224,8 @@ Every handle in the input MUST appear exactly once."""
                   "signal_text": p["signal_text"], "research_summary": p.get("research_summary", "")}
                  for p in draft_prospects]
 
-        system = (
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        system = _operating_framework(2) + (
             f"You are the DM Customer Hunter for {self.brand_profile.get('brand_name', self.brand_slug)}. "
             f"You write personalized FIRST DMs in the founder's voice.\n"
             f"Brand voice DNA:\n{voice_slice}\n\n"

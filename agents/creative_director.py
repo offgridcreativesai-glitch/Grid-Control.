@@ -250,7 +250,9 @@ If all 4 checks pass, return passed: true and empty flags array."""
         else:
             competitor_summary = "No competitor data available."
 
-        prompt = f"""You are the Creative Director for {brand_name}.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Creative Director for {brand_name}.
 
 {_UNTRUSTED_POLICY}
 

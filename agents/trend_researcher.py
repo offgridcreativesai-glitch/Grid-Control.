@@ -1543,7 +1543,9 @@ Return valid JSON only. No markdown.
         else:
             competitor_summary = "No competitor data scraped — skip Gap variant or note this in output."
 
-        prompt = f"""You are the Trend Researcher for {self.brand_name}.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Trend Researcher for {self.brand_name}.
 Your job: identify the highest-leverage content angle for this brand this week based on real scraped data.
 
 {_UNTRUSTED_POLICY}

@@ -220,7 +220,9 @@ class ContentPlanner:
         source_index = build_source_index(source_files)
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys across {len(source_files)} files")
 
-        prompt = f"""You are the Content Planner for OffGrid Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Content Planner for OffGrid Marketing OS.
 Your job: produce a 30-day content calendar based on the approved 90-day strategy and real trend data.
 Every piece must be specific — platform, format, topic, hook angle, CTA.
 

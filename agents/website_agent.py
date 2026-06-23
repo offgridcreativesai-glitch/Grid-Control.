@@ -101,7 +101,9 @@ class WebsiteAgent:
         funnel_cta_btn  = landing_cta.get("cta_button", "")
         objections      = funnel_data.get("objection_handlers", [])
 
-        prompt = f"""You are the Website Agent for OffGrid Creatives AI Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Website Agent for OffGrid Creatives AI Marketing OS.
 
 BRAND: {brand.get('brand_name', 'OffGrid Creatives AI')}
 PRODUCT: {brand.get('product', 'AI Ad Intelligence Report')}
