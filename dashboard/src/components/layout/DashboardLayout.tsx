@@ -4,6 +4,7 @@ import { LeftRail } from "./LeftRail";
 import { TopBar } from "./TopBar";
 import { TheBrain } from "./TheBrain";
 import { CommandPalette } from "./CommandPalette";
+import { SpaceBackground } from "@/components/SpaceBackground";
 import { useAppStore } from "@/store/appStore";
 
 interface DashboardLayoutProps {
@@ -14,7 +15,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isBrainOpen } = useAppStore();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background">
+    <div className="relative flex h-screen w-screen overflow-hidden">
+      {/* Cosmic backdrop — same universe as the landing page, behind everything */}
+      <SpaceBackground />
+
       {/* Left Rail - 64px */}
       <LeftRail />
 

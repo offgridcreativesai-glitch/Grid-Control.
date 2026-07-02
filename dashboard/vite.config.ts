@@ -12,7 +12,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // GC-unique fixed port (not 5173) so it never collides with other Vite
+    // projects (Hermes etc.) and the Google OAuth JS origin stays stable.
+    port: 5280,
+    strictPort: true,
     proxy: {
       "/api": {
         target: "http://localhost:5001",

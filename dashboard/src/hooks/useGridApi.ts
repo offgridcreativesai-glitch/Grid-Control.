@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/api"
 import { useBrandStore } from "@/store/brandStore"
+import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED } from "@/lib/demo"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,7 @@ export function useAgentStatus() {
     queryKey: ["agents", "status", activeBrand.slug],
     enabled: !!activeBrand.slug,
     queryFn: async () => {
+      if (isDemo()) return { agents: DEMO_AGENT_STATUS }
       // Endpoint returns { success, data: [...] } with camelCase `lastRun` and
       // session status "running"/"done"/"idle". Normalize to AgentStatus shape.
       const resp = await getJson<{ success: boolean; data: Array<Record<string, unknown>> }>(
@@ -159,6 +161,7 @@ export function usePendingOutputs() {
   return useQuery({
     queryKey: ["outputs", "pending", activeBrand.slug],
     queryFn: async () => {
+      if (isDemo()) return { outputs: DEMO_PENDING }
       // API returns { success, data: [{agentName, filename, timestamp, preview, ...}] }
       // Adapt to our PendingOutput shape so consumers don't need to know.
       const raw = await getJson<{ success: boolean; data: any[] }>(
@@ -232,10 +235,12 @@ export function usePerformanceHistory() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["performance", "history", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ history: any }>(
+    queryFn: async () => {
+      if (isDemo()) return { history: DEMO_PERF_HISTORY }
+      return getJson<{ history: any }>(
         `/api/performance/history?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ),
+      )
+    },
     enabled: !!activeBrand.slug,
     staleTime: 30_000,
   })
@@ -271,10 +276,12 @@ export function usePublishedPosts() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["published", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ success: boolean; data: PublishedPost[] }>(
+    queryFn: async () => {
+      if (isDemo()) return { success: true, data: DEMO_PUBLISHED }
+      return getJson<{ success: boolean; data: PublishedPost[] }>(
         `/api/published?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ),
+      )
+    },
     enabled: !!activeBrand.slug,
     refetchInterval: 30_000,
   })
@@ -318,10 +325,13 @@ export function useDigest() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["digest", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ success: boolean; data: DigestData }>(
+    queryFn: async () => {
+      if (isDemo()) return DEMO_DIGEST
+      const r = await getJson<{ success: boolean; data: DigestData }>(
         `/api/digest?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ).then((r) => r.data),
+      )
+      return r.data
+    },
     enabled: !!activeBrand.slug,
     staleTime: 30_000,
   })

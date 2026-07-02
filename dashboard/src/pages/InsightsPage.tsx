@@ -1,4 +1,8 @@
-import { useState, useMemo } from "react";
+/**
+ * Intelligence — how the brand is performing + what we're doing about it (route "/insights").
+ * Real data only (performance history + daily digest). Client-safe: no models / slugs / tokens.
+ */
+import { useState, useMemo, type ReactNode } from "react"
 import {
   LineChart,
   Line,
@@ -7,16 +11,16 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
-import { cn, formatNumber, formatDelta, formatTimeAgo } from "@/lib/utils";
-import type { Platform } from "@/store/appStore";
-import { StatusDot } from "@/components/ui/status-dot";
-import { PlatformIcon } from "@/components/ui/platform-icon";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePerformanceHistory } from "@/hooks/useGridApi";
-import { LearningPanel } from "@/components/LearningPanel";
+} from "recharts"
+import { cn, formatNumber, formatDelta, formatTimeAgo } from "@/lib/utils"
+import type { Platform } from "@/store/appStore"
+import { StatusDot } from "@/components/ui/status-dot"
+import { PlatformIcon } from "@/components/ui/platform-icon"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { usePerformanceHistory, useDigest } from "@/hooks/useGridApi"
+import { useBrandStore } from "@/store/brandStore"
 
-const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"];
+const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"]
 
 interface PerfPost {
   id?: string
@@ -39,72 +43,83 @@ function inferPlat(p?: string): Platform {
   return "x"
 }
 
+// Internal verdict → plain-English headline (no jargon leaks to the client).
+const VERDICT: Record<"PIVOT" | "TRACK" | "STAY", { title: string; tone: string; tint: string }> = {
+  STAY: { title: "Stay the course", tone: "var(--emerald)", tint: "rgba(22,160,126,0.10)" },
+  TRACK: { title: "Watch closely", tone: "var(--blue)", tint: "rgba(46,107,255,0.10)" },
+  PIVOT: { title: "Time to adjust", tone: "var(--status-queued)", tint: "rgba(240,160,48,0.10)" },
+}
+
+function Panel({ className = "", children }: { className?: string; children: ReactNode }) {
+  return <div className={"glass-panel rounded-2xl " + className}>{children}</div>
+}
+
 export function InsightsPage() {
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform | "all">("all");
-  const [sortBy, setSortBy] = useState<"impressions" | "engagements" | "saves">("impressions");
+  const { activeBrand } = useBrandStore()
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | "all">("all")
+  const [sortBy, setSortBy] = useState<"impressions" | "engagements" | "saves">("impressions")
 
-  const { data: perfData } = usePerformanceHistory();
-  const history: any = perfData?.history ?? {};
+  const { data: perfData } = usePerformanceHistory()
+  const { data: digest } = useDigest()
+  const history = (perfData?.history ?? {}) as Record<string, unknown>
 
-  const posts: PerfPost[] = Array.isArray(history.posts) ? history.posts : [];
+  const posts: PerfPost[] = Array.isArray(history.posts) ? (history.posts as PerfPost[]) : []
+
   const winningPatterns: string[] = useMemo(() => {
-    const wp = history.winning_patterns ?? {};
-    const out: string[] = [];
+    const wp = (history.winning_patterns ?? {}) as Record<string, unknown>
+    const out: string[] = []
     for (const arr of [wp.hook_patterns_top_3, wp.topic_clusters_top_3, wp.formats_top_3]) {
       if (Array.isArray(arr)) {
         for (const item of arr) {
-          if (typeof item === "string") out.push(item);
-          else if (item?.label) out.push(item.label);
-          else if (item?.name) out.push(item.name);
-          else if (item?.pattern) out.push(item.pattern);
+          if (typeof item === "string") out.push(item)
+          else if (item?.label) out.push(item.label)
+          else if (item?.name) out.push(item.name)
+          else if (item?.pattern) out.push(item.pattern)
         }
       }
     }
-    return out;
-  }, [history]);
+    return out
+  }, [history])
 
   const deadPatterns: string[] = useMemo(() => {
-    const dp = history.dead_patterns ?? [];
-    if (!Array.isArray(dp)) return [];
+    const dp = history.dead_patterns ?? []
+    if (!Array.isArray(dp)) return []
     return dp
-      .map((d: any) => (typeof d === "string" ? d : d?.label || d?.name || d?.pattern || ""))
-      .filter(Boolean);
-  }, [history]);
+      .map((d: unknown) =>
+        typeof d === "string" ? d : (d as Record<string, string>)?.label || (d as Record<string, string>)?.name || (d as Record<string, string>)?.pattern || "",
+      )
+      .filter(Boolean)
+  }, [history])
 
-  // KPIs derived from posts
-  const totalImpressions = posts.reduce((s, p) => s + (p.impressions ?? 0), 0);
-  const totalEngagements = posts.reduce((s, p) => s + (p.engagements ?? 0), 0);
-  const totalSaves = posts.reduce((s, p) => s + (p.saves ?? 0), 0);
-  const saveRate = totalImpressions > 0 ? (totalSaves / totalImpressions) * 100 : 0;
+  const totalImpressions = posts.reduce((s, p) => s + (p.impressions ?? 0), 0)
+  const totalEngagements = posts.reduce((s, p) => s + (p.engagements ?? 0), 0)
+  const totalSaves = posts.reduce((s, p) => s + (p.saves ?? 0), 0)
+  const saveRate = totalImpressions > 0 ? (totalSaves / totalImpressions) * 100 : 0
 
-  const insightKpis = [
-    { label: "Impressions", value: totalImpressions, unit: "", delta: 0 },
+  const kpis = [
+    { label: "Reach", value: totalImpressions, unit: "", delta: 0 },
     { label: "Engagements", value: totalEngagements, unit: "", delta: 0 },
     { label: "Followers", value: Number(history.followers_total ?? 0), unit: "", delta: Number(history.followers_delta ?? 0) },
     { label: "Save rate", value: saveRate, unit: "%", delta: 0 },
-  ];
+  ]
 
-  // Charts derived from posts (or empty if none)
-  const followerData = useMemo(() => {
-    if (posts.length === 0) return [];
-    return posts
-      .filter((p) => p.posted_at)
-      .map((p) => ({
-        date: p.posted_at!,
-        value: p.impressions ?? 0,
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [posts]);
+  const reachData = useMemo(
+    () =>
+      posts
+        .filter((p) => p.posted_at)
+        .map((p) => ({ date: p.posted_at!, value: p.impressions ?? 0 }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    [posts],
+  )
 
-  const engagementData = useMemo(() => {
-    return posts
-      .filter((p) => p.posted_at && p.impressions)
-      .map((p) => ({
-        date: p.posted_at!,
-        value: ((p.engagements ?? 0) / (p.impressions || 1)) * 100,
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [posts]);
+  const engagementData = useMemo(
+    () =>
+      posts
+        .filter((p) => p.posted_at && p.impressions)
+        .map((p) => ({ date: p.posted_at!, value: ((p.engagements ?? 0) / (p.impressions || 1)) * 100 }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    [posts],
+  )
 
   const filteredPosts = posts
     .filter((post) => selectedPlatform === "all" || inferPlat(post.platform) === selectedPlatform)
@@ -117,251 +132,207 @@ export function InsightsPage() {
       saves: p.saves ?? 0,
       postedAt: p.posted_at ? new Date(p.posted_at) : new Date(),
     }))
-    .sort((a, b) => (b[sortBy] as number) - (a[sortBy] as number));
+    .sort((a, b) => (b[sortBy] as number) - (a[sortBy] as number))
+
+  const hasData = posts.length > 0
+  const verdict = digest?.verdict ? VERDICT[digest.verdict] : null
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
-      {/* Platform Tabs */}
-      <Tabs
-        value={selectedPlatform}
-        onValueChange={(v) => setSelectedPlatform(v as Platform | "all")}
-      >
-        <TabsList>
-          {PLATFORMS.map((platform) => (
-            <TabsTrigger key={platform} value={platform} className="capitalize">
-              {platform === "all" ? (
-                "All"
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <PlatformIcon platform={platform} className="h-3.5 w-3.5" />
-                  {platform}
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+    <div className="min-h-full bg-background/60">
+      <div className="mx-auto max-w-[1100px] space-y-6 px-6 pb-20 pt-10">
+        {/* Header */}
+        <div>
+          <h1 className="font-display text-[26px] font-semibold tracking-tight text-foreground">Intelligence</h1>
+          <p className="mt-1.5 text-[14px] text-muted-foreground">
+            How <span className="text-foreground">{activeBrand.name}</span> is performing — and what the team is doing about it.
+          </p>
+        </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {insightKpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-lg border border-border bg-card p-4"
-          >
-            <p className="text-xs text-muted-foreground mb-1">{kpi.label}</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-semibold font-mono">
-                {kpi.unit ? kpi.value.toFixed(1) + kpi.unit : formatNumber(kpi.value)}
-              </span>
-              {kpi.delta !== 0 && (
-                <span
-                  className={cn(
-                    "text-xs font-mono",
-                    kpi.delta >= 0 ? "text-primary" : "text-destructive",
-                  )}
-                >
-                  {formatDelta(kpi.delta)} 30d
-                </span>
-              )}
+        {/* Verdict hero */}
+        {verdict && (
+          <Panel className="flex items-start gap-4 p-5" >
+            <span
+              className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+              style={{ background: verdict.tint }}
+            >
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: verdict.tone }} />
+            </span>
+            <div>
+              <p className="text-[16px] font-semibold tracking-tight" style={{ color: verdict.tone }}>
+                {verdict.title}
+              </p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-foreground/85">
+                {digest?.verdict_reason || "Your team's current read on the brand."}
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
+          </Panel>
+        )}
 
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-medium mb-4">Follower growth (30d)</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={followerData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v) => new Date(v).getDate().toString()}
-                stroke="var(--border)"
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v) => formatNumber(v)}
-                stroke="var(--border)"
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                labelStyle={{ color: "var(--muted-foreground)" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="var(--primary)"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-medium mb-4">Engagement rate (30d)</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={engagementData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v) => new Date(v).getDate().toString()}
-                stroke="var(--border)"
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v) => v.toFixed(1) + "%"}
-                stroke="var(--border)"
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                formatter={(value: unknown) => [Number(value).toFixed(2) + "%", "Rate"]}
-                labelStyle={{ color: "var(--muted-foreground)" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="var(--chart-2)"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Top Posts */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium">Top posts</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Sort by:</span>
-            {(["impressions", "engagements", "saves"] as const).map((sort) => (
-              <button
-                key={sort}
-                onClick={() => setSortBy(sort)}
-                className={cn(
-                  "text-xs capitalize transition-colors",
-                  sortBy === sort
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground"
+        {/* Platform filter */}
+        <Tabs value={selectedPlatform} onValueChange={(v) => setSelectedPlatform(v as Platform | "all")}>
+          <TabsList>
+            {PLATFORMS.map((platform) => (
+              <TabsTrigger key={platform} value={platform} className="capitalize">
+                {platform === "all" ? (
+                  "All"
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <PlatformIcon platform={platform} className="h-3.5 w-3.5" />
+                    {platform}
+                  </span>
                 )}
-              >
-                {sort}
-              </button>
+              </TabsTrigger>
             ))}
-          </div>
-        </div>
+          </TabsList>
+        </Tabs>
 
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-secondary/30">
-                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                  Post
-                </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
-                  Impressions
-                </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
-                  Engagements
-                </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
-                  Saves
-                </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
-                  Posted
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredPosts.map((post) => (
-                <tr key={post.id} className="hover:bg-secondary/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <PlatformIcon platform={post.platform} className="h-4 w-4" />
-                      <span className="text-sm line-clamp-1">{post.caption}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-mono text-muted-foreground">
-                    {formatNumber(post.impressions)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-mono text-muted-foreground">
-                    {formatNumber(post.engagements)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-mono text-muted-foreground">
-                    {formatNumber(post.saves)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-mono text-muted-foreground">
-                    {formatTimeAgo(post.postedAt)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Agent Learning */}
-      <LearningPanel />
-
-      {/* Patterns */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-medium mb-3">Winning patterns</h3>
-          {winningPatterns.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              Performance Tracker hasn&apos;t detected patterns yet. Ship 5+ posts and re-run.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {winningPatterns.map((pattern, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <StatusDot status="success" className="mt-1.5" />
-                  <span className="text-sm text-muted-foreground italic">
-                    {pattern}
+        {/* KPIs */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {kpis.map((kpi) => (
+            <Panel key={kpi.label} className="p-4">
+              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{kpi.label}</p>
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <span className="font-display text-[26px] font-semibold text-foreground">
+                  {kpi.unit ? kpi.value.toFixed(1) + kpi.unit : formatNumber(kpi.value)}
+                </span>
+                {kpi.delta !== 0 && (
+                  <span className={cn("text-[12px]", kpi.delta >= 0 ? "text-emerald" : "text-destructive")}>
+                    {formatDelta(kpi.delta)} 30d
                   </span>
-                </li>
-              ))}
-            </ul>
-          )}
+                )}
+              </div>
+            </Panel>
+          ))}
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-medium mb-3">Dead patterns</h3>
-          {deadPatterns.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
-              No dead patterns yet.
+        {!hasData ? (
+          <Panel className="p-10 text-center">
+            <p className="text-[14px] text-muted-foreground">
+              No performance data yet. Once your posts are live, the numbers and trends show up here.
             </p>
-          ) : (
-            <ul className="space-y-2">
-              {deadPatterns.map((pattern, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <StatusDot status="error" className="mt-1.5" />
-                  <span className="text-sm text-muted-foreground italic line-through">
-                    {pattern}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          </Panel>
+        ) : (
+          <>
+            {/* Charts */}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <Panel className="p-5">
+                <h3 className="mb-4 text-[14px] font-semibold text-foreground">Reach over time</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={reachData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(v) => new Date(v).getDate().toString()} stroke="var(--border)" />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(v) => formatNumber(v)} stroke="var(--border)" />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "12px" }} labelStyle={{ color: "var(--muted-foreground)" }} />
+                    <Line type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Panel>
+
+              <Panel className="p-5">
+                <h3 className="mb-4 text-[14px] font-semibold text-foreground">Engagement rate</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={engagementData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(v) => new Date(v).getDate().toString()} stroke="var(--border)" />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(v) => v.toFixed(1) + "%"} stroke="var(--border)" />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--popover)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "12px" }} formatter={(value: unknown) => [Number(value).toFixed(2) + "%", "Rate"]} labelStyle={{ color: "var(--muted-foreground)" }} />
+                    <Line type="monotone" dataKey="value" stroke="var(--blue)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Panel>
+            </div>
+
+            {/* Top posts */}
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-[14px] font-semibold text-foreground">Top posts</h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-muted-foreground">Sort by</span>
+                  {(["impressions", "engagements", "saves"] as const).map((sort) => (
+                    <button
+                      key={sort}
+                      onClick={() => setSortBy(sort)}
+                      className={cn(
+                        "text-[12px] capitalize transition-colors",
+                        sortBy === sort ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {sort === "impressions" ? "reach" : sort}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Panel className="overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">Post</th>
+                      <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">Reach</th>
+                      <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">Engagements</th>
+                      <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">Saves</th>
+                      <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">Posted</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredPosts.map((post) => (
+                      <tr key={post.id} className="transition-colors hover:bg-white/[0.02]">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <PlatformIcon platform={post.platform} className="h-4 w-4" />
+                            <span className="line-clamp-1 text-[13px] text-foreground/90">{post.caption}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right text-[13px] text-muted-foreground">{formatNumber(post.impressions)}</td>
+                        <td className="px-4 py-3 text-right text-[13px] text-muted-foreground">{formatNumber(post.engagements)}</td>
+                        <td className="px-4 py-3 text-right text-[13px] text-muted-foreground">{formatNumber(post.saves)}</td>
+                        <td className="px-4 py-3 text-right text-[13px] text-muted-foreground">{formatTimeAgo(post.postedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Panel>
+            </div>
+          </>
+        )}
+
+        {/* What's working / what to retire */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <Panel className="p-5">
+            <h3 className="mb-3 text-[14px] font-semibold text-foreground">What&rsquo;s working</h3>
+            {winningPatterns.length === 0 ? (
+              <p className="text-[12.5px] italic text-muted-foreground">
+                We&rsquo;ll surface winning patterns once a handful of posts are live.
+              </p>
+            ) : (
+              <ul className="space-y-2.5">
+                {winningPatterns.map((pattern, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <StatusDot status="success" className="mt-1.5" />
+                    <span className="text-[13px] leading-relaxed text-foreground/85">{pattern}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel className="p-5">
+            <h3 className="mb-3 text-[14px] font-semibold text-foreground">What to retire</h3>
+            {deadPatterns.length === 0 ? (
+              <p className="text-[12.5px] italic text-muted-foreground">Nothing to retire yet.</p>
+            ) : (
+              <ul className="space-y-2.5">
+                {deadPatterns.map((pattern, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <StatusDot status="error" className="mt-1.5" />
+                    <span className="text-[13px] leading-relaxed text-muted-foreground line-through">{pattern}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
       </div>
     </div>
-  );
+  )
 }

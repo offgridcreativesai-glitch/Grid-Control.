@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GRID CONTROL — Daily Surface (mockup)</title>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#13161b; --panel-2:#171b21; --line:#232831;
+    --text:#e8ebef; --muted:#8b94a3; --faint:#5c6573;
+    --coral:#ff6a4d; --coral-soft:rgba(255,106,77,.12);
+    --amber:#f5b544; --green:#3ecf8e; --green-soft:rgba(62,207,142,.12);
+    --blue:#5b9dff; --red:#ff5d6c;
+    --radius:14px; --radius-sm:10px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+  .app{display:flex;min-height:100vh;}
+
+  /* left rail */
+  .rail{width:64px;background:#0e1116;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:22px;}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--coral),#ff9a4d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#1a0f0a;}
+  .rail .ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:17px;cursor:pointer;}
+  .rail .ico.active{background:var(--coral-soft);color:var(--coral);}
+  .rail .ico:hover{color:var(--text);}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:60px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:rgba(11,13,16,.7);backdrop-filter:blur(8px);}
+  .brandsw{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);padding:7px 12px;border-radius:10px;cursor:pointer;font-size:14px;}
+  .brandsw .dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#ffd9b0,var(--coral));}
+  .brandsw .chev{color:var(--faint);font-size:11px;}
+  .topright{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:13px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--green-soft);color:var(--green);padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;}
+  .pill .d{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+  .content{padding:26px 30px 60px;max-width:1080px;width:100%;margin:0 auto;}
+
+  /* greeting / brief line */
+  .hello{font-size:22px;font-weight:700;letter-spacing:-.2px;}
+  .hello span{color:var(--muted);font-weight:500;}
+  .briefline{margin-top:8px;color:var(--muted);font-size:14.5px;line-height:1.5;}
+  .briefline b{color:var(--text);font-weight:600;}
+  .briefline .acc{color:var(--coral);font-weight:600;}
+
+  .sectlabel{display:flex;align-items:center;gap:10px;margin:30px 0 14px;}
+  .sectlabel h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0;font-weight:700;}
+  .sectlabel .rule{height:1px;background:var(--line);flex:1;}
+
+  /* health cards */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;}
+  .metric .k{font-size:12px;color:var(--muted);font-weight:500;}
+  .metric .v{font-size:26px;font-weight:750;letter-spacing:-.5px;margin-top:8px;}
+  .metric .chg{font-size:12px;font-weight:600;margin-top:7px;display:inline-flex;align-items:center;gap:5px;}
+  .up{color:var(--green);} .down{color:var(--red);}
+  .metric.spotlight{border-color:rgba(255,106,77,.35);background:linear-gradient(180deg,var(--coral-soft),var(--panel));}
+  .metric .spark{height:26px;margin-top:10px;display:flex;align-items:flex-end;gap:3px;}
+  .metric .spark i{flex:1;background:var(--line);border-radius:2px;display:block;}
+  .metric.spotlight .spark i{background:rgba(255,106,77,.35);}
+
+  /* brief / work cards */
+  .cards{display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;gap:16px;}
+  .card .thumb{width:74px;height:74px;border-radius:var(--radius-sm);flex-shrink:0;background:#222833;display:flex;align-items:center;justify-content:center;font-size:24px;}
+  .thumb.carousel{background:linear-gradient(135deg,#2a1f1a,#3a2a20);}
+  .thumb.reel{background:linear-gradient(135deg,#1d2330,#283449);}
+  .thumb.post{background:linear-gradient(135deg,#22231d,#33351f);}
+  .card .body{flex:1;min-width:0;}
+  .card .meta{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--faint);margin-bottom:6px;flex-wrap:wrap;}
+  .tag{padding:3px 8px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-weight:600;letter-spacing:.02em;}
+  .tag.plat{color:var(--coral);border-color:rgba(255,106,77,.25);background:var(--coral-soft);}
+  .card h3{margin:0 0 5px;font-size:15.5px;font-weight:650;letter-spacing:-.1px;}
+  .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5;}
+  .card .why{margin-top:8px;font-size:12px;color:var(--faint);}
+  .card .why b{color:var(--muted);font-weight:600;}
+  .actions{display:flex;flex-direction:column;gap:8px;justify-content:center;flex-shrink:0;}
+  .btn{border:none;cursor:pointer;font-size:13px;font-weight:650;padding:9px 16px;border-radius:9px;white-space:nowrap;font-family:inherit;}
+  .btn.approve{background:var(--coral);color:#1a0f0a;}
+  .btn.approve:hover{filter:brightness(1.07);}
+  .btn.change{background:transparent;color:var(--muted);border:1px solid var(--line);}
+  .btn.change:hover{color:var(--text);border-color:var(--faint);}
+  .btn.publish{background:transparent;color:var(--green);border:1px solid rgba(62,207,142,.3);}
+
+  /* decision card */
+  .decision{background:linear-gradient(180deg,rgba(245,181,68,.08),var(--panel));border-color:rgba(245,181,68,.35);}
+  .decision .thumb{background:rgba(245,181,68,.12);color:var(--amber);}
+  .decision .actions{flex-direction:row;align-items:center;}
+  .btn.choice{background:var(--panel-2);border:1px solid var(--line);color:var(--text);}
+  .btn.choice.primary{background:rgba(245,181,68,.16);border-color:rgba(245,181,68,.4);color:var(--amber);}
+
+  /* overnight log */
+  .log{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.7;}
+  .log b{color:var(--text);font-weight:600;}
+  .log .dotx{color:var(--faint);margin:0 7px;}
+
+  .footnote{margin-top:26px;text-align:center;color:var(--faint);font-size:11.5px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- left rail -->
+  <nav class="rail">
+    <div class="logo">G</div>
+    <div class="ico active" title="Today">◧</div>
+    <div class="ico" title="Calendar">▦</div>
+    <div class="ico" title="Insights">◔</div>
+    <div class="ico" title="Agents">⬡</div>
+    <div class="ico" title="Connections">⌁</div>
+    <div class="ico" title="System" style="margin-top:auto">⚙</div>
+  </nav>
+
+  <div class="main">
+    <!-- top bar -->
+    <div class="topbar">
+      <div class="brandsw">
+        <span class="dot"></span>
+        <span>askgauravai</span>
+        <span class="chev">▼</span>
+      </div>
+      <div class="topright">
+        <span class="pill"><span class="d"></span> All agents healthy</span>
+        <span>Tue, 9 Jun · 8:42 AM</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- greeting + brief -->
+      <div class="hello">Morning, Gaurav. <span>Here's what the team did overnight.</span></div>
+      <div class="briefline">
+        Drafted <b>3 posts</b> for your yes/no · <span class="acc">1 decision</span> needs you ·
+        research refreshed across <b>5 competitors</b> · spend so far this week <b>₹1,840</b>.
+      </div>
+
+      <!-- BRAND HEALTH -->
+      <div class="sectlabel"><h2>Brand Health · this week</h2><div class="rule"></div></div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="k">Followers</div>
+          <div class="v">2,341</div>
+          <div class="chg up">▲ +38</div>
+          <div class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:45%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:100%"></i></div>
+        </div>
+        <div class="metric">
+          <div class="k">Engagement rate</div>
+          <div class="v">6.2%</div>
+          <div class="chg up">▲ +0.8%</div>
+          <div class="spark"><i style="height:50%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:55%"></i><i style="height:75%"></i><i style="height:68%"></i><i style="height:90%"></i></div>
+        </div>
+        <div class="metric spotlight">
+          <div class="k">Saves / post ★</div>
+          <div class="v">47</div>
+          <div class="chg up">▲ +12</div>
+          <div class="spark"><i style="height:30%"></i><i style="height:45%"></i><i style="height:40%"></i><i style="height:60%"></i><i style="height:72%"></i><i style="height:80%"></i><i style="height:100%"></i></div>
+        </div>
+        <div class="metric">
+          <div class="k">Reach this week</div>
+          <div class="v">18.4k</div>
+          <div class="chg up">▲ +22%</div>
+          <div class="spark"><i style="height:35%"></i><i style="height:30%"></i><i style="height:50%"></i><i style="height:48%"></i><i style="height:65%"></i><i style="height:78%"></i><i style="height:95%"></i></div>
+        </div>
+      </div>
+
+      <!-- NEEDS YOU (unified queue: decisions + approvals) -->
+      <div class="sectlabel"><h2>Needs you · 4 items</h2><div class="rule"></div></div>
+      <div class="cards">
+        <div class="card decision">
+          <div class="thumb">⚡</div>
+          <div class="body">
+            <div class="meta"><span class="tag" style="color:var(--amber);border-color:rgba(245,181,68,.35);background:rgba(245,181,68,.1)">● Decision</span><span class="tag">Trend Sentinel</span><span>PIVOT</span></div>
+            <h3>"AI ad fatigue" is spiking +240% this week</h3>
+            <p>It's outside your current ad-spend story arc. Want the team to ride the trend with a fast reactive post, or stay on the planned arc?</p>
+          </div>
+          <div class="actions">
+            <button class="btn choice primary">Ride the trend</button>
+            <button class="btn choice">Stay on arc</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="thumb carousel">▤</div>
+          <div class="body">
+            <div class="meta"><span class="tag" style="color:var(--coral);border-color:rgba(255,106,77,.3);background:var(--coral-soft)">● Approve</span><span class="tag plat">Instagram</span><span class="tag">Carousel · 7 slides</span><span>Script Writer + Carousel Designer</span></div>
+            <h3>3 Meta ad mistakes quietly burning your budget</h3>
+            <p>Hook: "Your CPM didn't double by accident." Continues the ad-spend arc → mistake #2 of the series.</p>
+            <div class="why"><b>Why this:</b> saves are your strongest signal (+12) and how-to carousels drive them.</div>
+          </div>
+          <div class="actions">
+            <button class="btn approve">Approve</button>
+            <button class="btn change">Change</button>
+            <button class="btn publish">Preview</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="thumb reel">▷</div>
+          <div class="body">
+            <div class="meta"><span class="tag" style="color:var(--coral);border-color:rgba(255,106,77,.3);background:var(--coral-soft)">● Approve</span><span class="tag plat">Reel</span><span class="tag">0:34 · founder on cam</span><span>Creative Director</span></div>
+            <h3>Why your CPM doubled in 2 weeks (and the fix)</h3>
+            <p>Talking-head + b-roll. Needs you to record the 12-sec opener — script + shot list attached.</p>
+            <div class="why"><b>Flag:</b> founder voice required — not auto-generated.</div>
+          </div>
+          <div class="actions">
+            <button class="btn approve">Approve script</button>
+            <button class="btn change">Change</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="thumb post">in</div>
+          <div class="body">
+            <div class="meta"><span class="tag" style="color:var(--coral);border-color:rgba(255,106,77,.3);background:var(--coral-soft)">● Approve</span><span class="tag plat">LinkedIn</span><span class="tag">Text post</span><span>Script Writer</span></div>
+            <h3>The ad metric everyone reads wrong</h3>
+            <p>Founder-to-founder POV on ROAS vs. real profit. 180 words, ends with a soft question CTA.</p>
+            <div class="why"><b>Voice check:</b> passed · brand-guardian approved.</div>
+          </div>
+          <div class="actions">
+            <button class="btn approve">Approve</button>
+            <button class="btn change">Change</button>
+            <button class="btn publish">Publish now</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- OVERNIGHT LOG -->
+      <div class="sectlabel"><h2>Overnight activity</h2><div class="rule"></div></div>
+      <div class="log">
+        <b>Trend Researcher</b> scraped 5 competitors + cached results
+        <span class="dotx">·</span> <b>Script Writer</b> drafted 3 pieces
+        <span class="dotx">·</span> <b>Carousel Designer</b> rendered 2 carousels
+        <span class="dotx">·</span> <b>Data Analyst</b> pulled IG insights
+        <span class="dotx">·</span> <b>Brand Guardian</b> ran soul-check on all 3
+        <span class="dotx">·</span> 0 errors.
+      </div>
+
+      <div class="footnote">GRID CONTROL · Chief-of-Staff surface — static mockup, not wired · askgauravai</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
