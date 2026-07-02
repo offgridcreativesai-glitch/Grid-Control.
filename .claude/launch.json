@@ -11,12 +11,18 @@
       "name": "dashboard-vite",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "dashboard", "run", "dev"],
-      "port": 5173
+      "port": 5280
     },
     {
       "name": "scheduler-worker",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["scheduler/worker.py"]
+    },
+    {
+      "name": "design",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4500"],
+      "port": 4500
     }
   ]
 }

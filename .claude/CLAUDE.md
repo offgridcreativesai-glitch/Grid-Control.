@@ -68,13 +68,17 @@ A 18-agent autonomous AI marketing system on the Claude Agent SDK. CEO Brain orc
 9. **AutoResearch loop.** Every output is a winner of an internal 3+ variant loop. Header format: `LOOP: [agent] — [type] / GOAL / METRIC / VARIANTS / WINNER`. Eval harness: `docs/EVAL_HARNESS.md`.
 10. **Source citation enforcement.** Class-1 (decision) agents = pure math, `decision_engine: "pure_math"`. Class-2 (generation) agents = Claude allowed but every output has `data_provenance` field citing source_file + path + value. Helpers in `agents/_provenance.py`. Status: ✅ Trend Sentinel, Performance Tracker, Strategy, Content Planner, Script Writer, Creative Director, Brand Guardian. ⏳ Trend Researcher AutoResearch (partial).
 
+## Build Stage — STAGE 5 of 10 (Integration / wiring) · safe word `GRIDLOCK-WIRE-24JUN`
+
+Agency SDLC pin: 1 Discovery ✅ · 2 Architecture ✅ · 3 Backend ✅ · 4 FE design ✅ (LOCKED — no redesign) · **5 Wiring 👈 HERE** · 6 QA · 7 UAT · 8 Staging · 9 Prod launch · 10 Monitor. Approach = Option 1: wire ONE page → verify live → lock → next (first = Connections). FE rebuild on `gridcontrol-rebuild` is uncommitted/local-only; Vercel still serves old FE; Railway = backend only. Full resume + Jun 24 security read + legal risk register: memory `context_packages/GRIDLOCK-WIRE-24JUN.md`.
+
 ## GRID CONTROL Dashboard (Live)
 
 - React 19 + Vite + Tailwind v4 + shadcn (oklch tokens) + TanStack Query v5 + Zustand + react-router-dom v7.
 - Pages: `/`, `/review`, `/agents`, `/agents/:id`, `/calendar`, `/insights`, `/connections`, `/system` (in `dashboard/src/pages/`).
 - Layout in `dashboard/src/components/layout/` (DashboardLayout, LeftRail, TopBar, TheBrain, CommandPalette).
 - Brand switcher in left rail. ⌘K command palette. ⌘J The Brain.
-- Flask `/api/*` on port 5001 with `/api` proxy on Vite 5173.
+- Flask `/api/*` on port 5001 with `/api` proxy on Vite **5280** (GC-unique fixed port, strictPort — not the default 5173, to avoid collisions with other Vite/Hermes projects + keep the Google OAuth origin stable).
 - The Brain backend: `/api/brain/chat` (Sonnet 4.6 default, opt `use_opus`) + `/api/brain/execute` (gated edit/bash). Tools: `read_file` `list_dir` (auto), `propose_edit` `propose_bash` (gated).
 
 ## Multi-Brand & File Layout (per-brand)
@@ -139,7 +143,7 @@ cd /Users/gauravoffgrid/offgrid-marketing-os && source .env && python3 dashboard
 cd /Users/gauravoffgrid/offgrid-marketing-os/dashboard && npm run dev
 
 # Browser
-http://localhost:5173
+http://localhost:5280
 ```
 
 Production build: `cd dashboard && npm run build`.
