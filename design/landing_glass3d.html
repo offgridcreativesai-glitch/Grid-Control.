@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grid Control — Landing (Glass Cockpit, 8/10)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#06070a}
+@keyframes lpdrift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(7%,-6%) scale(1.18)}100%{transform:translate(0,0) scale(1)}}
+@keyframes lpdrift2{0%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-8%,7%) scale(1)}100%{transform:translate(0,0) scale(1.1)}}
+@keyframes lprise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes lppulse{0%,100%{opacity:1}50%{opacity:.5}}
+.lpblob{position:absolute;border-radius:50%;filter:blur(64px);z-index:0;pointer-events:none}
+.lpglass{background:rgba(18,22,23,.5);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(242,238,230,.1);box-shadow:inset 0 1px 0 rgba(242,238,230,.06),0 18px 50px -30px rgba(0,0,0,.7)}
+.lprise{animation:lprise .9s cubic-bezier(.2,.7,.2,1) both}
+.lpcard{transition:transform .5s cubic-bezier(.16,1,.3,1)}.lpcard:hover{transform:translateY(-8px)}
+</style></head>
+<body>
+<div id="lpwrap" style="position:relative;background:#0A0C0B;color:#F2EEE6;min-height:100vh;overflow:hidden;font-family:'Geist',system-ui,sans-serif">
+<canvas id="lp3d" style="position:absolute;inset:0;z-index:0;opacity:.6"></canvas>
+<div class="lpblob" style="width:380px;height:380px;background:#FF4D00;opacity:.16;top:-120px;left:50%;margin-left:-190px;animation:lpdrift 16s ease-in-out infinite"></div>
+<div class="lpblob" style="width:320px;height:320px;background:#16A07E;opacity:.13;top:380px;right:-80px;animation:lpdrift2 19s ease-in-out infinite"></div>
+<div class="lpblob" style="width:300px;height:300px;background:#2E6BFF;opacity:.12;bottom:-60px;left:-60px;animation:lpdrift 22s ease-in-out infinite"></div>
+<div style="position:relative;z-index:1;max-width:1100px;margin:0 auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 26px">
+    <div style="font-family:'Bricolage Grotesque';font-weight:600;font-size:19px;letter-spacing:-.02em">grid<span style="color:#FF4D00">·</span>control</div>
+    <div style="display:flex;align-items:center;gap:24px;font-size:14px;color:#9aa19d"><span>Work</span><span>The team</span><span class="lpglass" style="padding:9px 18px;border-radius:999px;color:#F2EEE6">Sign in</span></div>
+  </div>
+  <div style="text-align:center;padding:70px 26px 60px">
+    <div class="lprise lpglass" style="display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:999px;font-size:12.5px;color:#cdd3d0;margin-bottom:30px;animation-delay:.05s"><span style="width:6px;height:6px;border-radius:50%;background:#16A07E;animation:lppulse 1.8s infinite;box-shadow:0 0 8px #16A07E"></span>A team for your marketing — live</div>
+    <h1 class="lprise" style="font-family:'Bricolage Grotesque';font-weight:500;font-size:clamp(40px,7vw,72px);line-height:.98;letter-spacing:-.04em;max-width:13ch;margin:0 auto;animation-delay:.15s">You direct. They make it. You say <span style="font-family:'Instrument Serif';font-style:italic;font-weight:400;color:#FF4D00">yes</span>.</h1>
+    <p class="lprise" style="font-family:'Instrument Serif';font-size:clamp(18px,2.4vw,24px);line-height:1.4;color:#aab0ac;max-width:30ch;margin:26px auto 36px;animation-delay:.28s">One person to talk to — and a whole crew behind them, building your marketing and bringing every piece to you for the final word.</p>
+    <div class="lprise" style="display:flex;gap:14px;justify-content:center;align-items:center;animation-delay:.4s">
+      <span style="background:#FF4D00;color:#0A0C0B;font-weight:500;font-size:15px;padding:13px 26px;border-radius:999px;box-shadow:0 10px 30px -8px rgba(255,77,0,.5)">Meet your team</span>
+      <span class="lpglass" style="padding:13px 24px;border-radius:999px;font-size:15px;color:#F2EEE6">See how it works →</span>
+    </div>
+  </div>
+  <div style="padding:30px 26px 10px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8C9491">The crew on your side</div>
+  <div style="padding:0 22px 30px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="crew"></div>
+  <div style="padding:24px 26px 10px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8C9491">The work they ship</div>
+  <div style="padding:0 22px 36px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="work"></div>
+  <div style="padding:30px 26px 60px"><div class="lpglass" style="border-radius:24px;padding:54px 28px;text-align:center">
+    <h2 style="font-family:'Bricolage Grotesque';font-weight:500;font-size:clamp(28px,4.4vw,46px);line-height:1;letter-spacing:-.03em;max-width:16ch;margin:0 auto 28px">The team does the work. You keep the <span style="font-family:'Instrument Serif';font-style:italic;color:#FF4D00">final word</span>.</h2>
+    <span style="background:#FF4D00;color:#0A0C0B;font-weight:500;font-size:15px;padding:14px 30px;border-radius:999px;box-shadow:0 10px 30px -8px rgba(255,77,0,.5)">Get your command deck</span>
+  </div></div>
+  <div style="border-top:0.5px solid rgba(242,238,230,.08);padding:24px 26px;display:flex;justify-content:space-between;font-size:13px;color:#8C9491"><span style="font-family:'Bricolage Grotesque';font-weight:600">grid<span style="color:#FF4D00">·</span>control</span><span>A team you direct. Work you approve.</span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+ const crew=[{n:'Atlas',r:'Chief of Staff',c:'#FF4D00',lead:1},{n:'Scout',r:'Strategist',c:'#16A07E'},{n:'Lumen',r:'Creative',c:'#FF6A2B'},{n:'Riveter',r:'Writer',c:'#2A8E80'},{n:'Gauge',r:'Analyst',c:'#2A8E80'},{n:'Sentry',r:'Brand Guardian',c:'#16A07E'}];
+ document.getElementById('crew').innerHTML=crew.map((m,i)=>`<div class="lprise lpglass lpcard" style="border-radius:16px;padding:20px;text-align:center;animation-delay:${0.1+i*0.06}s"><div style="width:52px;height:52px;margin:0 auto 12px;border-radius:15px;background:${m.c}22;border:1px solid ${m.c}66;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px -6px ${m.c}88"><div style="width:26px;height:8px;border-radius:5px;background:${m.c};display:flex;justify-content:space-around;align-items:center;padding:0 4px"><span style="width:2.5px;height:2.5px;border-radius:50%;background:#0A0C0B"></span><span style="width:2.5px;height:2.5px;border-radius:50%;background:#0A0C0B"></span></div></div><div style="font-family:'Bricolage Grotesque';font-weight:500;font-size:15px">${m.n}</div><div style="font-size:12px;color:#8C9491;margin-top:2px">${m.r}</div>${m.lead?'<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#FF4D00;margin-top:7px">Talks to you</div>':''}</div>`).join('');
+ const work=[['Launch carousel','Creative · Copy','#FF4D00'],['Competitor teardown','Research','#16A07E'],['Week-1 hooks','Copy · Voice','#2A8E80'],['Brand voice system','Strategy','#16A07E'],['Reels engine','Video','#FF6A2B'],['Growth experiments','Growth','#2A8E80']];
+ document.getElementById('work').innerHTML=work.map((w,i)=>`<div class="lprise lpcard" style="animation-delay:${0.12+i*0.05}s"><div style="border-radius:14px;height:96px;background:radial-gradient(120% 120% at 30% 20%, ${w[2]}, #0A0C0B);box-shadow:0 14px 36px -22px ${w[2]}"></div><div style="font-family:'Bricolage Grotesque';font-weight:500;font-size:14px;margin-top:11px">${w[0]}</div><div style="font-size:12px;color:#8C9491;margin-top:2px">${w[1]}</div></div>`).join('');
+ if(window.THREE){const wrap=document.getElementById('lpwrap'),cv=document.getElementById('lp3d');const W=wrap.clientWidth,H=wrap.clientHeight;const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,W/H,0.1,100);cam.position.z=6;const rn=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});rn.setSize(W,H);rn.setPixelRatio(Math.min(devicePixelRatio,2));const o1=new THREE.Mesh(new THREE.IcosahedronGeometry(1.6,1),new THREE.MeshBasicMaterial({color:0xFF4D00,wireframe:true,transparent:true,opacity:.45}));const o2=new THREE.Mesh(new THREE.IcosahedronGeometry(2.4,1),new THREE.MeshBasicMaterial({color:0x16A07E,wireframe:true,transparent:true,opacity:.3}));o1.position.y=1.6;o2.position.y=1.6;sc.add(o1);sc.add(o2);addEventListener('resize',()=>{rn.setSize(wrap.clientWidth,wrap.clientHeight);cam.aspect=wrap.clientWidth/wrap.clientHeight;cam.updateProjectionMatrix();});(function loop(){requestAnimationFrame(loop);o1.rotation.x+=0.003;o1.rotation.y+=0.004;o2.rotation.x-=0.0018;o2.rotation.y-=0.0014;rn.render(sc,cam);})();}
+})();
+</script>
+</div></body></html>
