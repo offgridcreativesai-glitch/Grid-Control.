@@ -306,10 +306,18 @@ def _foundation(narrative):
         return ""
     voice = f.get("voice") or {}
     chips = lambda items: "".join(f"<span class='fchip'>{_esc(x)}</span>" for x in (items or []))
-    pillars = "".join(f"<li>{_esc(p)}</li>" for p in (f.get("pillars") or []))
+    # Pillars with a one-line proof when available; fall back to plain pillar names.
+    pe = f.get("pillars_explained") or []
+    if pe:
+        pillars = "".join(f"<li><b>{_esc(p.get('pillar'))}</b> — {_esc(p.get('proof'))}</li>" for p in pe)
+    else:
+        pillars = "".join(f"<li>{_esc(p)}</li>" for p in (f.get("pillars") or []))
     do = "".join(f"<li>{_esc(x)}</li>" for x in (voice.get("do") or []))
     dont = "".join(f"<li>{_esc(x)}</li>" for x in (voice.get("dont") or []))
-    return (f"<div class='callout'><b>Positioning.</b> {_esc(f.get('positioning_statement'))}</div>"
+    purpose_html = (f"<div class='callout'><b>Why you exist.</b> {_esc(f.get('purpose'))}</div>"
+                    if f.get("purpose") else "")
+    return (purpose_html
+            + f"<div class='callout'><b>Positioning.</b> {_esc(f.get('positioning_statement'))}</div>"
             f"<p class='lead'><b>Value proposition.</b> {_esc(f.get('value_prop'))}</p>"
             f"<h3>Content pillars to own</h3><ol class='playbook'>{pillars}</ol>"
             f"<h3>Ideal audience</h3><p class='lead'>{_esc(f.get('icp'))}</p>"
@@ -495,9 +503,15 @@ def _build_html(report, intel, palette):
                    _exec_summary(n) + f"<div class='verdictstrip-label'>The channel verdict, in one screen</div>{_snapshot(n)}",
                    brk=False)
 
+    sov_html = (f"<div class='callout'><b>Share of voice.</b> {_esc(n.get('share_of_voice'))}</div>"
+                if n.get("share_of_voice") else "")
+    ws_html = (f"<div class='callout'><b>Your open lane.</b> {_esc(n.get('white_space'))}</div>"
+               if n.get("white_space") else "")
     where = _sec("01", "Where you stand", "You vs the category",
                  f"<p class='lead'>{_esc(n.get('where_you_stand'))}</p>"
-                 f"<h3>Engagement per post — you against your category</h3>{_you_vs_category(report['benchmark'], accent)}")
+                 f"{sov_html}"
+                 f"<h3>Engagement per post — you against your category</h3>{_you_vs_category(report['benchmark'], accent)}"
+                 f"{ws_html}")
 
     identity = _sec("02", "Brand identity", "Who you are — and the gap", _identity(report), brk=False)
 

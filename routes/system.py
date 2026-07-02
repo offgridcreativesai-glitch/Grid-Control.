@@ -55,12 +55,15 @@ def sse_events():
 
 @bp.route("/api/scheduler/trigger", methods=["POST"])
 def scheduler_trigger():
-    """Service-to-service: run the daily pipeline for a brand. Token-authed.
-    Body: { brand_slug }. Returns immediately; pipeline runs in background."""
+    """Service-to-service: run a pipeline for a brand. Token-authed.
+    Body: { brand_slug, pipeline? }. pipeline defaults to "daily"; "weekly" runs
+    the proactive weekly operating program (run_weekly_program). Returns
+    immediately; pipeline runs in background."""
     if not _valid_service_token():
         return jsonify({"success": False, "error": "invalid service token"}), 401
     data = request.get_json(silent=True) or {}
     brand_slug = (data.get("brand_slug") or "").strip()
+    pipeline = (data.get("pipeline") or "daily").strip().lower()
     if not brand_slug:
         return jsonify({"success": False, "error": "brand_slug required"}), 400
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", brand_slug):
@@ -68,11 +71,15 @@ def scheduler_trigger():
         return jsonify({"success": False, "error": "invalid brand_slug"}), 400
     if not (BRANDS_DIR / brand_slug).is_dir():
         return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
-    print(f"[scheduler-trigger] daily pipeline for {brand_slug} (service token)")
-    threading.Thread(target=run_daily_pipeline, args=(brand_slug,), daemon=True).start()
+    if pipeline not in ("daily", "weekly"):
+        return jsonify({"success": False, "error": f"unknown pipeline '{pipeline}'"}), 400
+    target = run_daily_pipeline if pipeline == "daily" else run_weekly_program
+    print(f"[scheduler-trigger] {pipeline} pipeline for {brand_slug} (service token)")
+    threading.Thread(target=target, args=(brand_slug,), daemon=True).start()
     return jsonify({"success": True, "data": {
-        "message": f"daily pipeline started for {brand_slug}",
+        "message": f"{pipeline} pipeline started for {brand_slug}",
         "brand_slug": brand_slug,
+        "pipeline": pipeline,
         "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }})
 
@@ -116,24 +123,10 @@ def n8n_webhook():
     if not script_path.exists():
         return jsonify({"success": False, "error": f"Agent script not found: {script_val}"}), 404
 
-    # Rate-limit check
+    # In-flight lock (reusable — also guards run_weekly_program's own dispatch)
     agent_slug_key = _agent_name_to_slug(agent_name)
-    if _DB_AVAILABLE:
-        try:
-            brand_id_check = _get_brand_id(brand_slug)
-            if brand_id_check:
-                existing = (
-                    _db._client.table("agent_runs")
-                    .select("id")
-                    .eq("brand_id", brand_id_check)
-                    .eq("agent_slug", agent_slug_key)
-                    .eq("status", "running")
-                    .execute()
-                )
-                if existing.data:
-                    return jsonify({"success": False, "error": "Agent already running"}), 409
-        except Exception:
-            pass
+    if _agent_already_running(brand_slug, agent_slug_key):
+        return jsonify({"success": False, "error": "Agent already running"}), 409
 
     # Mark running + create DB row
     _update_session_agent_status(brand_slug, agent_name, "running")

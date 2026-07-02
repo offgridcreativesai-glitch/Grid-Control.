@@ -40,6 +40,7 @@ try:
 except ImportError:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+from agents._lib import phases as _phases
 MODEL = model_for("content-planner")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -158,6 +159,62 @@ class ContentPlanner:
             json.dump(calendar, f, indent=2)
         self.log(f"content_calendar.json saved → {path}")
 
+    def _build_hard_constraints_block(self) -> str:
+        """Build the hard-constraints prompt section generically per-brand.
+
+        Volume is always phase-driven (agents/_lib/phases.py, keyed by
+        brand_profile.program_phase) so it scales with any brand's actual
+        phase rather than a hardcoded number. Every other rule block (CTA
+        week-gating, lived-history/naming, never-use words) is INCLUDED ONLY
+        IF the brand_profile actually defines the corresponding field — a
+        brand with no lived_history_sources (e.g. a product brand with no
+        founder-narrative content model) simply gets no lived-history rule,
+        instead of universally hardcoding one specific brand's rules.
+        """
+        phase_plan = _phases.get_phase_plan(self.brand_profile.get("program_phase"))
+        vol = phase_plan["weekly_volume"]
+        primary_platforms = ", ".join(self.brand_profile.get("platforms") or ["Instagram"])
+
+        lines = ["PLATFORM + VOLUME:"]
+        lines.append(f"- Primary platforms: {primary_platforms}. (See brand_profile.platforms.)")
+        lines.append(
+            f"- Volume this week ({phase_plan['label']} phase): {vol.get('long_form', 0)} long-form piece(s), "
+            f"{vol.get('social', 0)} social posts, {vol.get('creator_seeds', 0)} creator-seed touches. "
+            f"Do not exceed this — quality over volume."
+        )
+
+        cta_fields = ("week_1_cta_rule", "freebie_strategy", "hire_signal_rule")
+        if any(self.brand_profile.get(f) for f in cta_fields):
+            lines.append("\nCTA RULES BY WEEK:")
+            if self.brand_profile.get("week_1_cta_rule"):
+                lines.append(f"- Week 1: {self.brand_profile['week_1_cta_rule']}")
+            if self.brand_profile.get("freebie_strategy"):
+                lines.append(
+                    "- Freebie CTAs allowed ONLY IF brand_profile.freebie_strategy indicates the "
+                    "freebie is actually built. See brand_profile.freebie_strategy."
+                )
+            if self.brand_profile.get("hire_signal_rule"):
+                lines.append(f"- {self.brand_profile['hire_signal_rule']}")
+
+        lived_fields = ("lived_history_sources", "lived_history_NOT_allowed", "grid_control_naming_rule")
+        if any(self.brand_profile.get(f) for f in lived_fields):
+            lines.append("\nLIVED-HISTORY + NAMING RULES:")
+            if self.brand_profile.get("lived_history_NOT_allowed"):
+                lines.append(
+                    f"- NEVER name: {self.brand_profile['lived_history_NOT_allowed']}. "
+                    f"Reference only via the approved framing in brand_profile.lived_history_sources."
+                )
+            if self.brand_profile.get("grid_control_naming_rule"):
+                lines.append(f"- {self.brand_profile['grid_control_naming_rule']}")
+            if self.brand_profile.get("lived_history_sources"):
+                lines.append("- Use ONLY the lived-history sources in brand_profile.lived_history_sources.")
+
+        if self.brand_profile.get("what_to_never_say"):
+            lines.append("\nNEVER-USE WORDS (from brand_profile.what_to_never_say):")
+            lines.append(f"- {self.brand_profile['what_to_never_say']}")
+
+        return "\n".join(lines)
+
     def run_autoresearch_loop(self, strategy: dict, trends: dict) -> dict:
         """
         Rule 9 — AutoResearch Loop.
@@ -210,6 +267,8 @@ class ContentPlanner:
         import datetime as _dt
         now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat()
 
+        hard_constraints_block = self._build_hard_constraints_block()
+
         # ── Rule 10: Build source index ─────────────────────────────────────
         project_root = Path(__file__).resolve().parent.parent
         source_files = [
@@ -242,23 +301,21 @@ REAL TREND DATA:
 Run the AutoResearch Loop. Evaluate 3 calendar variants:
 
 VARIANT A — EDUCATION-HEAVY CALENDAR
-Majority of posts teach the audience something valuable.
-"How to read competitor ads", "Why most D2C brands waste ad spend", etc.
-Builds authority. Slower to convert but positions OffGrid as the expert.
+Majority of posts teach the audience something valuable relevant to the brand's category.
+Builds authority. Slower to convert but positions the brand as the expert/trusted source.
 
 VARIANT B — SOCIAL PROOF-HEAVY CALENDAR
 Majority of posts show results, behind-the-scenes, process transparency.
-Client stories, live demos, report screenshots (anonymised).
+Customer stories, live demos, real proof (anonymised where needed).
 Faster trust for warm leads but requires existing proof to show.
 
 VARIANT C — CURIOSITY/HOOK-HEAVY CALENDAR
-Majority of posts use pattern interrupts, contrarian takes, bold claims.
-"Your competitors know what you're spending. You don't know what they're spending."
+Majority of posts use pattern interrupts, contrarian takes, bold claims relevant to the category.
 High reach potential. Drives saves and shares. Works even with zero social proof.
 
 SELECTION METRIC:
-better = which calendar maximises QUALIFIED FOUNDER DMs PER WEEK (the brand's north_star_metric)
-in the first 30 days, for a brand with no existing audience and no social proof.
+better = which calendar maximises the brand's north_star_metric in the first 30 days, for a
+brand with no existing audience and no social proof.
 DO NOT optimize for follower-count benchmarks (deprecated metric per brand_profile.deprecated_metrics).
 
 Select the winner. One-line reason.
@@ -266,28 +323,7 @@ Select the winner. One-line reason.
 ---
 
 🚨 HARD CONTENT CALENDAR CONSTRAINTS (read brand_profile, violations = REJECTED):
-
-PLATFORM + VOLUME:
-- PRIMARY platforms: Instagram + YouTube. NOT LinkedIn-primary. (See brand_profile.primary_platform_phase_1.)
-- Volume per week: 1 long-form YouTube (10-15 min) → cut into 4 IG Reels + 2 YouTube Shorts. PLUS 3 IG carousels (independent). TOTAL ~9 published units/week. (See brand_profile.weekly_volume_target.)
-- Do NOT plan more than ~9-12 units/week in Week 1. Less is better. Quality > volume.
-- LinkedIn + Twitter = repurpose-only from primary content. Don't plan original LinkedIn-first content.
-
-CTA RULES BY WEEK:
-- Week 1: NO comment-gated CTAs ("comment WORD"), NO promised deliverables. Only OPEN-LOOP DIAGNOSTIC engagement: "drop your AI tool stack", "what's your AI question". (See brand_profile.week_1_cta_rule.)
-- Week 2-4: Same as Week 1 by default. Freebie CTAs allowed ONLY IF brand_profile.freebie_strategy.first_freebie_built becomes true AND dm_automation_required.status becomes BUILT.
-- Week 5+: Freebie CTAs allowed. Grid Control nameable as proof point.
-- NEVER plan hire-me CTAs at any week. Banned forever per brand_profile.hire_signal_rule.
-
-LIVED-HISTORY + NAMING RULES:
-- NEVER name "Third Gen Tribe", "TGT", "T-shirt brand". Reference is "the brands I ran" (UNNAMED).
-- NEVER frame TGT as AI-built — it was agency-run.
-- Week 1-4: NEVER name "Grid Control". Reference as "a multi-agent system I'm building" / "the back-end I'm building".
-- Week 5+: Grid Control nameable. Approved framing: "I'm building this brand using Grid Control — a multi-agent system I built with Claude as a non-coder."
-- Use ONLY the lived-history sources in brand_profile.lived_history_sources.
-
-NEVER-USE WORDS (from brand_profile.what_to_never_say):
-- AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer, paradigm shift, master AI in 7 days
+{hard_constraints_block}
 
 ---
 

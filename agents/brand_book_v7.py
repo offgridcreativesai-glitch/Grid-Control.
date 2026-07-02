@@ -99,6 +99,16 @@ def _benchmark(brand: dict, intel: dict, scores: dict) -> dict:
     peer_comment_best = max((r["avg_comments"] for r in cs.get("rows", [])), default=0)
     brand_comments = bi.get("avg_comments") or 0
 
+    # Share of voice — % of the category's total engagement that is THIS brand's.
+    # Deterministic (brand + every scraped competitor); never estimated.
+    total_eng = round(sum(r["engagement"] for r in rows), 1)
+    share_of_voice_pct = round(100 * brand_eng / total_eng, 1) if total_eng else None
+
+    # White space — channels the category wins on that the brand isn't claiming yet
+    # (scored gaps + channels the brand is entirely absent from).
+    white_space = [c["channel"] for c in scores.get("channels", []) if c.get("is_gap")] \
+        + [c["channel"] for c in scores.get("channels_absent", [])]
+
     return {
         "brand_engagement": brand_eng,
         "rows": rows,
@@ -106,6 +116,8 @@ def _benchmark(brand: dict, intel: dict, scores: dict) -> dict:
         "role_model": role_model,                 # Gary Vee — the aspiration
         "competitor_ceiling": competitor_ceiling,  # top peer — the near-term target
         "gap_to_median_x": round(median / brand_eng, 1) if brand_eng else None,
+        "share_of_voice_pct": share_of_voice_pct,  # real % of category engagement
+        "white_space": white_space,                # gap + absent channels
         "comment_funnel_gap": {
             "brand_avg_comments": brand_comments,
             "peer_best_avg_comments": round(peer_comment_best, 1),
@@ -136,6 +148,8 @@ def _facts(brand, benchmark, scores, profile, signals) -> str:
             "competitor_ceiling": benchmark["competitor_ceiling"],   # top peer = near-term target
             "role_model": benchmark["role_model"],                   # Gary Vee = aspiration
             "gap_to_median_x": benchmark["gap_to_median_x"],
+            "share_of_voice_pct": benchmark["share_of_voice_pct"],   # real % of category engagement
+            "white_space_channels": benchmark["white_space"],        # gap + absent channels
         },
         "brand_identity": {
             "positioning_wedge": signals["identity"]["positioning_wedge"],
@@ -168,6 +182,8 @@ come from FACTS. Keys:
   "exec_summary": [ "<=24 words each. 3-5 critical findings/opportunities for the founder, each tied to a real number" ],
   "starting_line": "<=45 words. honest read of where the brand is TODAY (cite real numbers). runway, not verdict",
   "where_you_stand": "<=55 words. brand vs competitor_ceiling vs category median — honest gap. cite numbers",
+  "share_of_voice": "<=24 words. cite the REAL share_of_voice_pct in plain words — e.g. 'of all the buzz in your niche right now, about X% of it is yours'. honest, not spun",
+  "white_space": "<=28 words. the lane NO competitor owns that you could grab (use white_space_channels). name the concrete opening, not a platitude",
   "snapshot": [ {"verdict":"RIDE|GAP|TEST|SKIP","channel":"...","line":"<=22 words"} ],
   "identity": {
      "summary": "<=40 words. who the brand IS per its positioning",
@@ -185,9 +201,11 @@ come from FACTS. Keys:
   "route_steps": [ {"verdict":"...","channel":"...","action":"<=10 words imperative","why":"<=34 words. cite a real number"} ],
   "intros": {"channel_map":"<=26w","how":"<=26w"},
   "foundation": {
+     "purpose": "<=22 words. the WHY — why this brand exists for its people, beyond making money. human and plain, no mission-statement clichés",
      "positioning_statement": "<=30 words. the ONE prescriptive sentence: what this brand IS and for whom. sign-off-ready, grounded in positioning_wedge",
      "value_prop": "<=25 words. the core promise to the audience — concrete, no hype",
      "pillars": [ "3-4 content pillars this brand should OWN — <=6 words each, drawn from your_playbook + category signals" ],
+     "pillars_explained": [ {"pillar":"<=6 words — MUST match a pillar above","proof":"<=16 words — why it's THIS brand's to own, tied to a real signal"} ],
      "icp": "<=30 words. the ideal follower/customer in one precise line (use audience + demographics)",
      "north_star": "<=20 words. the single 90-day goal that matters most (tie to roadmap month_3)",
      "voice": {
@@ -201,10 +219,11 @@ come from FACTS. Keys:
 }
 One snapshot + one route_step per channel in `channels`, same order.
 FOUNDATION is the SIGN-OFF PAYLOAD — the prescriptive "WHAT" the founder approves to seed their
-brand_profile + voice_profile. It is the audit's conclusion: positioning, value prop, the 3-4
-pillars they should own, ICP, the 90-day north star, and voice DNA. Synthesize it from the
-identity (positioning_wedge, tone_of_voice), the playbook, and audience — prescriptive, not
-diagnostic, and concrete enough to brief a content team.
+brand_profile + voice_profile. It is the audit's conclusion: the PURPOSE (the why behind the brand),
+positioning, value prop, the 3-4 pillars they should own (each with a one-line proof in
+pillars_explained), ICP, the 90-day north star, and voice DNA. Synthesize it from the identity
+(positioning_wedge, tone_of_voice), the playbook, and audience — prescriptive, not diagnostic, and
+concrete enough to brief a content team. pillars_explained MUST cover the same pillars as `pillars`.
 ROADMAP IS THE GUIDE'S CONTENT PLAN — each `moves` entry SUGGESTS a TYPE of content the brand
 could publish (e.g. "A weekly carousel breaking down one automation you built", "Short Reels
 demoing a tool with a comment-trigger", "Build-in-public clips showing the system working"),
@@ -228,18 +247,24 @@ def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
         "to beat now — never confuse them. You write PROSE around facts already proven by a deterministic "
         "engine; NEVER invent a number, keyword, channel, or verdict — only use what's in FACTS. No vague "
         "advice like 'be more authentic' — every recommendation must be concrete and tied to a real number "
-        "or a real competitor example. The brand is tiny and new — frame gaps as runway, never condescend."
+        "or a real competitor example. The brand is tiny and new — frame gaps as runway, never condescend. "
+        "VOICE — write like a sharp friend who runs marketing explaining it to the founder over coffee: short "
+        "plain sentences, warm and direct, zero MBA-speak or agency jargon. Whenever you use a metric or term "
+        "(share of voice, engagement, funnel), explain it in plain words in the same breath the first time "
+        "(e.g. 'share of voice — how much of the chatter in your niche is about you'). A smart 16-year-old "
+        "should understand every line. Never sound like a template or a robot."
     )
     prompt = "\n\n".join([
         UNTRUSTED_POLICY,
         "FACTS (REAL, pre-computed — the only numbers/verdicts/keywords that exist; do not add or alter):\n"
         + _facts(brand, benchmark, scores, profile, signals),
-        "Write the full brand-audit narrative per the schema. Arc: exec summary → where they stand → who they "
-        "ARE (identity + the external-image gap) → who their audience is → how the COMPETITORS win (the "
+        "Write the full brand-audit narrative per the schema. Arc: exec summary → where they stand (include "
+        "share of voice — their slice of the niche's buzz — and the white-space lane no rival owns yet) → who "
+        "they ARE (identity + the external-image gap) → who their audience is → how the COMPETITORS win (the "
         "comment-keyword→DM funnel, reverse-engineered with real examples) → what the ROLE MODEL proves about "
         "the destination → the brand's own concrete playbook → a 90-day roadmap → and CLOSE with the FOUNDATION "
-        "(the prescriptive sign-off WHAT: positioning, value prop, pillars, ICP, north star, voice DNA). "
-        "Make every line actionable.",
+        "(the prescriptive sign-off WHAT: purpose, positioning, value prop, pillars + their proofs, ICP, north "
+        "star, voice DNA). Make every line actionable.",
         "HARD STYLE RULE — never use these phrases or close variants (auto-rejected if any appear): "
         + "; ".join(_FILLER) + ".",
         _SCHEMA,

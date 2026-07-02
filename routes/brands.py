@@ -1,9 +1,101 @@
 """routes/brands.py — GRID CONTROL brands endpoints (blueprint). S2b split."""
 from core import *  # noqa: F401,F403  (app, helpers, stdlib re-exports)
 from flask import Blueprint
+from agents._lib import phases as _phases
 
 bp = Blueprint("brands", __name__)
 
+
+# ── Brand-profile normalization (GC-wide, authoritative) ──────────────────────
+# Runs on EVERY brand create/update so no single brand ever carries dirty input.
+# Never trust the client: even if the FE sends clean data, we re-normalize here.
+
+_HANDLE_NULLS = {"", "na", "n/a", "none", "nil", "-", "—", "n.a.", "tbd", "null"}
+# Split a handle blob on commas, semicolons, newlines, the word "and", pipes,
+# ampersands, and whitespace. NOT on "/" — that would shred pasted profile URLs
+# before _clean_handle can extract the handle from them.
+_HANDLE_SPLIT = re.compile(r"(?:\s+and\s+|[,;|&\n]+|\s+)", re.IGNORECASE)
+_HEX_RE = re.compile(r"^#?[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$")
+
+
+def _clean_handle(v) -> str:
+    """One social/competitor handle → bare lowercase token, or '' if it's a null-ish placeholder."""
+    if not isinstance(v, str):
+        return ""
+    s = v.strip().lstrip("@").strip().rstrip("/")
+    # Pull a handle out of a profile URL if one was pasted.
+    m = re.search(r"(?:instagram\.com|twitter\.com|x\.com|tiktok\.com|linkedin\.com/(?:in|company))/([^/?#]+)", s, re.IGNORECASE)
+    if m:
+        s = m.group(1).lstrip("@")
+    return "" if s.lower() in _HANDLE_NULLS else s
+
+
+def _split_handles(raw) -> list[str]:
+    """A list-or-string of handles → clean, deduped, order-preserving list."""
+    parts: list[str] = []
+    items = raw if isinstance(raw, list) else [raw]
+    for item in items:
+        if not isinstance(item, str):
+            continue
+        for tok in _HANDLE_SPLIT.split(item):
+            h = _clean_handle(tok)
+            if h:
+                parts.append(h)
+    seen, out = set(), []
+    for h in parts:
+        k = h.lower()
+        if k not in seen:
+            seen.add(k); out.append(h)
+    return out
+
+
+_PLATFORM_LABELS = {"instagram": "Instagram", "linkedin": "LinkedIn",
+                    "youtube": "YouTube", "tiktok": "TikTok", "x": "X"}
+
+
+def _normalize_brand_profile(profile: dict) -> dict:
+    """Authoritative cleanup of a brand profile before persistence.
+    - strips @ / URLs / null-ish placeholders from every handle
+    - rebuilds `platforms` ONLY from platforms that have a real handle
+    - re-splits mangled competitor blobs ("@a and @b" → ["a","b"])
+    - drops placeholder brand colors so the 'system picks a palette' path can fire
+    """
+    if not isinstance(profile, dict):
+        return profile
+    p = dict(profile)
+
+    # Instagram primary handle
+    if "instagram_handle" in p:
+        p["instagram_handle"] = _clean_handle(p.get("instagram_handle"))
+
+    # Per-platform handles (clean each; null-ish → "")
+    social = dict(p.get("social_handles") or {})
+    plat   = dict(p.get("platform_handles") or {})
+    ig = _clean_handle(social.get("instagram") or p.get("instagram_handle") or "")
+    cleaned = {
+        "instagram": ig,
+        "linkedin":  _clean_handle(social.get("linkedin")  or plat.get("linkedin")  or ""),
+        "youtube":   _clean_handle(social.get("youtube")   or plat.get("youtube")   or ""),
+        "tiktok":    _clean_handle(social.get("tiktok")    or plat.get("tiktok")    or ""),
+        "x":         _clean_handle(social.get("x")         or plat.get("x")         or ""),
+    }
+    p["social_handles"]   = cleaned
+    p["platform_handles"] = {k: cleaned[k] for k in ("linkedin", "youtube", "tiktok", "x")}
+
+    # platforms = ONLY those with a real handle (no "NA"-truthy bug)
+    p["platforms"] = [_PLATFORM_LABELS[k] for k in _PLATFORM_LABELS if cleaned.get(k)]
+
+    # Competitor handles — re-split any mangled blob, fall back to reference_accounts
+    raw = p.get("competitor_handles") or p.get("reference_accounts") or []
+    p["competitor_handles"] = _split_handles(raw)
+
+    # Brand colors — keep only valid hex; drop placeholders so palette flow triggers
+    colors_in = p.get("brand_colors") or []
+    if isinstance(colors_in, str):
+        colors_in = [colors_in]
+    p["brand_colors"] = [c.strip() for c in colors_in if isinstance(c, str) and _HEX_RE.match(c.strip())]
+
+    return p
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -66,7 +158,7 @@ def auth_create_brand():
     if not _DB_AVAILABLE:
         return jsonify({"success": False, "error": "Database not available"}), 503
 
-    profile = data.get("profile", {})
+    profile = _normalize_brand_profile(data.get("profile", {}))
     if user:
         brand = _db.create_brand_with_owner(slug, name, profile, user["id"])
     else:
@@ -84,6 +176,201 @@ def auth_create_brand():
         _atomic_write_json(bp_path, profile)
 
     return jsonify({"success": True, "brand": brand})
+
+
+# ── Handle validation gate (pre-flight, before any paid report run) ───────────
+
+@bp.route("/api/brands/<brand_slug>/validate-handles", methods=["POST"])
+@require_auth
+def validate_handles(brand_slug: str):
+    """Resolve every handle on the brand in real time, BEFORE the paid Opus report.
+    Cheap-first: free HTTP for YT/X/LinkedIn; Apify for Instagram (reuses the report
+    scraper, so the pull doubles as report data). A handle is 'valid' only when verified
+    live — never assumed. Returns invalid (not_found) handles so Atlas can ask the user
+    to fix them; the report is gated until all_valid.
+    Body: { "cheap_only": bool }  # true = skip Apify (HTTP only) for a free pre-check.
+    """
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+
+    pf = BRANDS_DIR / brand_slug / "brand_profile.json"
+    if not pf.exists():
+        return jsonify({"success": False, "error": "Brand profile not found"}), 404
+    try:
+        profile = _normalize_brand_profile(json.loads(pf.read_text()))
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Could not read profile: {e}"}), 500
+
+    cheap_only = bool((request.get_json(silent=True) or {}).get("cheap_only"))
+
+    social = profile.get("social_handles") or {}
+    handles: list[dict] = []
+    own_ig = (profile.get("instagram_handle") or social.get("instagram") or "").strip().lstrip("@")
+    if own_ig:
+        handles.append({"platform": "instagram", "handle": own_ig, "role": "own"})
+    # Competitors are Instagram handles in this pipeline (the report scrapes IG).
+    for c in profile.get("competitor_handles", []) or []:
+        if isinstance(c, str) and c.strip():
+            handles.append({"platform": "instagram", "handle": c.strip().lstrip("@"), "role": "competitor"})
+    for p in ("youtube", "x", "linkedin", "tiktok"):
+        h = (social.get(p) or "").strip().lstrip("@")
+        if h:
+            handles.append({"platform": p, "handle": h, "role": "own"})
+
+    from agents.intel.handle_resolver import resolve_handles, _http_probe
+    if cheap_only:
+        # HTTP-only pre-check: IG/TikTok reported as 'skipped' (no Apify spend).
+        results = []
+        for it in handles:
+            plat = it["platform"]
+            if plat == "instagram":
+                r = {"status": "skipped", "note": "Apify check skipped (cheap_only)"}
+            else:
+                r = _http_probe(plat, it["handle"])
+            results.append({**it, **r})
+    else:
+        results = []
+        roles = {(h["platform"], h["handle"].lower()): h.get("role") for h in handles}
+        for r in resolve_handles(brand_slug, handles):
+            r["role"] = roles.get((r["platform"], r["handle"].lower()))
+            results.append(r)
+
+    invalid = [r for r in results if r.get("status") == "not_found"]
+    return jsonify({"success": True, "data": {
+        "all_valid": len(invalid) == 0,
+        "invalid": invalid,
+        "results": results,
+    }})
+
+
+@bp.route("/api/brands/<brand_slug>/profile/handles", methods=["POST"])
+@require_auth
+def update_brand_handles(brand_slug: str):
+    """Patch handle fields on a brand profile — used by the first-run validation gate
+    to correct a mistyped handle, then re-validate. Whitelisted fields only; the result
+    is re-normalized so placeholder/URL junk can't slip back in.
+    Body: { instagram_handle?, competitor_handles?: [str], social_handles?: {yt/x/li/tt} }
+    """
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    pf = BRANDS_DIR / brand_slug / "brand_profile.json"
+    if not pf.exists():
+        return jsonify({"success": False, "error": "Brand profile not found"}), 404
+    try:
+        profile = json.loads(pf.read_text())
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Could not read profile: {e}"}), 500
+
+    body = request.get_json(silent=True) or {}
+    if "instagram_handle" in body:
+        profile["instagram_handle"] = body["instagram_handle"]
+        profile.setdefault("social_handles", {})["instagram"] = body["instagram_handle"]
+    if isinstance(body.get("competitor_handles"), list):
+        profile["competitor_handles"] = body["competitor_handles"]
+    if isinstance(body.get("social_handles"), dict):
+        sh = profile.setdefault("social_handles", {})
+        for k, v in body["social_handles"].items():
+            if k in ("youtube", "x", "linkedin", "tiktok", "instagram"):
+                sh[k] = v
+
+    profile = _normalize_brand_profile(profile)
+    pf.write_text(json.dumps(profile, indent=2))
+    return jsonify({"success": True, "data": {
+        "instagram_handle":   profile.get("instagram_handle", ""),
+        "competitor_handles": profile.get("competitor_handles", []),
+        "social_handles":     profile.get("social_handles", {}),
+    }})
+
+
+# ── Editable Memory doc (the FE Memory page; Workspace/Personal/Account groups) ──
+
+_MEMORY_DOC_KEYS = ("workspace", "personal", "account")
+_PLATFORM_LABELS = {"x": "X", "instagram": "Instagram", "linkedin": "LinkedIn",
+                    "youtube": "YouTube", "tiktok": "TikTok"}
+
+
+def _li(items) -> list:
+    """[{"id","text"}] from a list of strings (drops blanks)."""
+    return [{"id": f"li_{i}", "text": t} for i, t in enumerate(items) if isinstance(t, str) and t.strip()]
+
+
+def _seed_memory_doc_from_foundation(brand_slug: str, foundation: dict, profile: dict) -> None:
+    """Seed brands/<slug>/memory_doc.json from an approved Foundation. Does NOT clobber
+    an existing doc (the founder may have edited it)."""
+    p = BRANDS_DIR / brand_slug / "memory_doc.json"
+    if p.exists() or not foundation or foundation.get("_unparsed"):
+        return
+    voice = foundation.get("voice") or {}
+    social = profile.get("social_handles") or {}
+    accounts = []
+    for plat in ("instagram", "linkedin", "youtube", "x", "tiktok"):
+        h = (social.get(plat) or "").strip()
+        if h:
+            accounts.append({"id": plat,
+                             "handle": h if h.startswith("@") else "@" + h,
+                             "platform": _PLATFORM_LABELS.get(plat, plat)})
+    goals = [g for g in (foundation.get("north_star"), profile.get("content_goal_90d")) if g]
+    rules = ([profile["what_to_never_say"]] if profile.get("what_to_never_say") else []) + (voice.get("dont") or [])
+    services = ([{"id": "s1", "name": profile.get("name", ""), "description": profile["product_description"]}]
+                if profile.get("product_description") else [])
+    doc = {
+        "workspace": {
+            "brandOverview": foundation.get("value_prop") or foundation.get("positioning_statement") or profile.get("product_description", ""),
+            "services": services,
+            "goals": _li(goals),
+            "keyMetrics": [],
+        },
+        "personal": {
+            "overview": " ".join(x for x in (foundation.get("purpose"), voice.get("personality")) if x),
+            "voiceKeywords": _li(voice.get("vocab_use") or []),
+            "voiceExamples": [],
+            "contentPillars": _li(foundation.get("pillars") or profile.get("messaging_pillars") or []),
+            "contentAudience": foundation.get("icp") or profile.get("target_audience", ""),
+            "effectivePatterns": [],
+            "pitfalls": _li(voice.get("dont") or []),
+            "rules": _li(rules),
+        },
+        "account": {
+            "accounts": accounts,
+            "selectedId": accounts[0]["id"] if accounts else "",
+            "overview": foundation.get("positioning_statement", ""),
+            "voiceKeywords": _li(voice.get("vocab_use") or []),
+        },
+    }
+    p.write_text(json.dumps(doc, indent=2))
+
+
+@bp.route("/api/brands/<brand_slug>/memory-doc", methods=["GET"])
+@require_auth
+def get_memory_doc(brand_slug: str):
+    """Return the brand's editable Memory doc (null if not seeded yet)."""
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    p = BRANDS_DIR / brand_slug / "memory_doc.json"
+    if not p.exists():
+        return jsonify(success=True, data=None)
+    try:
+        return jsonify(success=True, data=json.loads(p.read_text()))
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@bp.route("/api/brands/<brand_slug>/memory-doc", methods=["POST"])
+@require_auth
+def save_memory_doc(brand_slug: str):
+    """Persist the brand's editable Memory doc (full replace; FE owns the shape)."""
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict) or not all(k in body for k in _MEMORY_DOC_KEYS):
+        return jsonify(success=False, error="Invalid memory doc shape"), 400
+    p = BRANDS_DIR / brand_slug / "memory_doc.json"
+    p.write_text(json.dumps(body, indent=2))
+    return jsonify(success=True, data={"saved": True})
 
 
 # ── BRAND FILE READER (used by InsightsSpace provenance audit) ───────────────
@@ -644,6 +931,8 @@ def get_brand_summary():
         "brand_name":   profile.get("brand_name", brand_slug),
         "product":      profile.get("product", ""),
         "phase":        profile.get("phase", "Beta"),
+        "program_phase":      _phases.normalize_phase(profile.get("program_phase")),
+        "program_phase_plan": _phases.get_phase_plan(profile.get("program_phase")),
         "platforms":    profile.get("platforms", []),
         "bottlenecks":  profile.get("bottlenecks", []),
         "audience":     profile.get("audience", []),
@@ -1232,6 +1521,31 @@ def get_brand_book_status(brand_slug: str):
     return jsonify(success=True, data={**info, "report_summary": summary})
 
 
+@bp.route("/api/brands/<brand_slug>/brand-book/pdf", methods=["GET"])
+@require_auth
+def get_brand_book_pdf(brand_slug: str):
+    """Serve the rendered Brand-Book PDF for in-app review (review card → Open report)."""
+    brand_id, err = _authorize_brand(brand_slug)
+    if err:
+        return err
+    info = _brand_book_status(brand_slug)
+    lp = info.get("latest_path")
+    if not lp or not Path(lp).exists():
+        return jsonify(success=False, error="No report generated yet"), 404
+    try:
+        raw = Path(lp).read_text()
+        body = raw.split("\n---\n", 1)[1] if "\n---\n" in raw else raw
+        report = json.loads(body)
+    except Exception as e:
+        return jsonify(success=False, error=f"Could not parse report: {e}"), 500
+    pdf_path = report.get("_pdf_path")
+    if not pdf_path or not Path(pdf_path).exists():
+        return jsonify(success=False, error="PDF not available for this report"), 404
+    from flask import send_file
+    return send_file(pdf_path, mimetype="application/pdf",
+                     as_attachment=False, download_name=f"{brand_slug}_brand_book.pdf")
+
+
 @bp.route("/api/brands/<brand_slug>/brand-book/generate", methods=["POST"])
 @require_auth
 def generate_brand_book(brand_slug: str):
@@ -1303,11 +1617,26 @@ def approve_brand_book(brand_slug: str):
     # v7 places the prescriptive sign-off Foundation inside narrative.foundation.
     foundation = report.get("narrative", {}).get("foundation", {})
     _write_foundation(brand_slug, foundation)
+    # Seed the editable Memory doc from the approved Foundation (won't clobber edits).
+    try:
+        _pf = BRANDS_DIR / brand_slug / "brand_profile.json"
+        _profile = json.loads(_pf.read_text()) if _pf.exists() else {}
+        _seed_memory_doc_from_foundation(brand_slug, foundation, _profile)
+    except Exception:
+        pass
     ts = datetime.utcnow().isoformat() + "Z"
-    _update_brand_profile_fields(brand_slug, {
+    profile_updates = {
         "brand_book_status":      "approved",
         "brand_book_approved_ts": ts,
-    })
+    }
+    # Stage 1 (GRIDLOCK-PROGRAM-01JUL): seed the machine-readable program phase on
+    # first approval only — never overwrite an already-set phase (e.g. a later
+    # manual re-phase or Stage-5 trust-dial change).
+    _pf_check = BRANDS_DIR / brand_slug / "brand_profile.json"
+    _existing_profile = json.loads(_pf_check.read_text()) if _pf_check.exists() else {}
+    if not _existing_profile.get("program_phase"):
+        profile_updates["program_phase"] = _phases.DEFAULT_PHASE
+    _update_brand_profile_fields(brand_slug, profile_updates)
     # Append narrative entry (Phase A)
     ps = (foundation or {}).get("positioning_statement", "")
     summary_text = f"Brand Foundation approved (brand-book v7). Positioning: {ps[:120]}"

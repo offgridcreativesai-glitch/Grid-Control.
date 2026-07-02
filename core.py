@@ -1002,6 +1002,30 @@ def _update_notion_card_status(brand_slug: str, page_id: str, status: str) -> No
         print(f"[dashboard_api] notion card update failed: {e}")
 
 
+def _agent_already_running(brand_slug: str, agent_slug_key: str) -> bool:
+    """DB-backed in-flight lock: is there an agent_runs row with status='running' for
+    this brand + agent_slug? Reusable for real agents (n8n_webhook) and for synthetic
+    program-level slugs like 'weekly-program' (run_weekly_program's own lock).
+    Fail-open (False) if the DB is unavailable — matches prior best-effort behavior."""
+    if not _DB_AVAILABLE:
+        return False
+    try:
+        brand_id_check = _get_brand_id(brand_slug)
+        if not brand_id_check:
+            return False
+        existing = (
+            _db._client.table("agent_runs")
+            .select("id")
+            .eq("brand_id", brand_id_check)
+            .eq("agent_slug", agent_slug_key)
+            .eq("status", "running")
+            .execute()
+        )
+        return bool(existing.data)
+    except Exception:
+        return False
+
+
 def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db_run_id: str | None = None) -> None:
     """Background thread: run agent script, update session state + Supabase on finish."""
     # DB-WIRED Step 5 + Phase 1 Step 2
@@ -1185,6 +1209,81 @@ def run_daily_pipeline(brand_slug: str) -> None:
         ss_path.write_text(json.dumps(ss, indent=2))
     except Exception as e:
         print(f"[daily-run] Failed to stamp last_pipeline_run: {e}")
+
+
+# ── WEEKLY PROGRAM RUN ──────────────────────────────────────────────────────────
+
+def run_weekly_program(brand_slug: str) -> None:
+    """The proactive weekly operating program (GRIDLOCK-PROGRAM-01JUL).
+
+    Stage 0: in-flight lock + pre-run cost guard.
+    Stage 2 (this): the REVIEW loop — Data Analyst + Performance Tracker + Trend
+    Sentinel run in parallel (independent inputs, same pattern as run_daily_pipeline's
+    Phase 1), then the Weekly Review Composer aggregates their real output into one
+    "last week + keep/cut/scale" card in outputs/pending_approval/. No fabrication:
+    the composer only reads files those three agents actually wrote this run.
+    Stage 3 adds the BUILD loop (trend-researcher → content-planner → script-writer
+    etc.) after this. Module-level so both the HTTP endpoint and the scheduler reuse
+    it, same shape as run_daily_pipeline."""
+    if _agent_already_running(brand_slug, "weekly-program"):
+        print(f"[weekly-program] Skipping {brand_slug} — already in flight")
+        return
+
+    db_run_id: str | None = None
+    brand_id = _get_brand_id(brand_slug) if _DB_AVAILABLE else None
+    if brand_id:
+        run_row = _db.save_agent_run(brand_id, "weekly-program")
+        if run_row:
+            db_run_id = run_row["id"]
+
+    try:
+        from agents._lib import paid_ops
+    except Exception as e:
+        print(f"[weekly-program] ⛔ paid-ops unavailable ({e}) — blocking (fail-closed)")
+        if _DB_AVAILABLE and db_run_id:
+            _db.update_agent_run_status(db_run_id, "blocked")
+        return
+
+    # Coarse program-level pre-check (in ADDITION to each subprocess's own
+    # per-agent paid_ops.check inside _run_agent_subprocess) — fail fast and log
+    # clearly before spawning any threads at all.
+    ok, reason = paid_ops.check("agent:weekly-program")
+    if not ok:
+        print(f"[weekly-program] ⛔ {brand_slug} — {reason}")
+        if _DB_AVAILABLE and db_run_id:
+            _db.update_agent_run_status(db_run_id, "blocked")
+        return
+
+    print(f"[weekly-program] {brand_slug}: lock acquired + cost guard passed. Starting review loop.")
+
+    def _run_one(agent_name: str, script_rel: str) -> None:
+        if not script_rel:
+            print(f"[weekly-program] Skipping {agent_name} — no script path configured")
+            return
+        script_path = BASE_DIR / script_rel
+        if not script_path.exists():
+            print(f"[weekly-program] Skipping {agent_name} — script not found: {script_path}")
+            return
+        print(f"[weekly-program] Starting: {agent_name} for {brand_slug}")
+        _run_agent_subprocess(str(script_path), brand_slug, agent_name, None)
+        print(f"[weekly-program] Completed: {agent_name}")
+
+    # Review chain, phase 1: independent inputs, run in parallel.
+    t_data = threading.Thread(target=_run_one,
+                              args=("Data Analyst", AGENT_SCRIPTS.get("Data Analyst")), daemon=True)
+    t_perf = threading.Thread(target=_run_one,
+                              args=("Performance Tracker", AGENT_SCRIPTS.get("Performance Tracker")), daemon=True)
+    t_sentinel = threading.Thread(target=_run_one,
+                              args=("Trend Sentinel", AGENT_SCRIPTS.get("Trend Sentinel")), daemon=True)
+    t_data.start(); t_perf.start(); t_sentinel.start()
+    t_data.join(); t_perf.join(); t_sentinel.join()
+    print("[weekly-program] Review phase 1 complete (Data Analyst + Performance Tracker + Trend Sentinel)")
+
+    # Review chain, phase 2: composer needs phase-1 outputs on disk — serial.
+    _run_one("Weekly Review Composer", "agents/weekly_review_composer.py")
+
+    if _DB_AVAILABLE and db_run_id:
+        _db.update_agent_run_status(db_run_id, "done")
 
 
 def _daily_scheduler_loop() -> None:
@@ -2339,6 +2438,8 @@ def _write_foundation(brand_slug: str, foundation: dict) -> None:
         return
     # brand_profile fields
     bp_updates = {}
+    if foundation.get("purpose"):
+        bp_updates["brand_purpose"] = foundation["purpose"]
     if foundation.get("positioning_statement"):
         bp_updates["positioning_statement"] = foundation["positioning_statement"]
     if foundation.get("value_prop"):

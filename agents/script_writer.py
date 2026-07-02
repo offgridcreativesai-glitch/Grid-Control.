@@ -251,6 +251,11 @@ class ScriptWriter:
         self.voice_profile = None
         self.winning_hooks: list = []   # BUILD C — top hook patterns from past performance
         self.dead_hooks: list    = []   # BUILD C — hook patterns that historically flopped
+        # Which physical production model this brand's content needs — a personal-brand
+        # founder-on-camera piece (talking head) vs. a product brand (photography/lifestyle,
+        # no founder face required). Defaults to founder_talking_head only for brands that
+        # don't specify (matches this pipeline's original single-brand assumption).
+        self.production_format = self.brand_profile.get("production_format", "founder_talking_head")
         self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', 'Unknown')}")
         self._load_voice_profile()
         self._load_performance_history()

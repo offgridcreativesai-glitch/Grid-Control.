@@ -254,6 +254,46 @@ def format_for_notion(agent_name: str, data: Any) -> str:
             for action in actions:
                 lines.append(f"- {action}")
 
+    # ── Weekly Program (GRIDLOCK-PROGRAM-01JUL Stage 2 — review-loop digest) ────
+    elif "weekly program" in agent_lower or "weekly-program" in agent_lower:
+        lines.append(f"## {agent_name} — Last Week + Keep / Cut / Scale\n")
+        summary = data.get("executive_summary", "")
+        if summary:
+            lines.append(f"**Executive summary:** {summary}\n")
+        actions = data.get("action_items") or []
+        if actions:
+            lines.append("**Action items:**")
+            for a in actions:
+                lines.append(f"- {a}")
+            lines.append("")
+        keep = data.get("keep") or []
+        lines.append(f"### Keep ({len(keep)})")
+        if keep:
+            for k in keep:
+                lines.append(f"- **{k.get('pattern', '?')}** — {k.get('why', '')}")
+        else:
+            lines.append("- No winning patterns identified yet.")
+        cut = data.get("cut") or []
+        lines.append(f"\n### Cut ({len(cut)})")
+        if cut:
+            for c in cut:
+                lines.append(f"- **{c.get('pattern', '?')}** — {c.get('why', '')}")
+        else:
+            lines.append("- Nothing flagged as dead yet.")
+        scale = data.get("scale_decision", "STAY")
+        lines.append(f"\n### Scale: {scale}")
+        if data.get("scale_reason"):
+            lines.append(data["scale_reason"])
+        missing = [
+            label for key, label in (
+                ("has_data_analyst", "Data Analyst"),
+                ("has_performance_history", "Performance Tracker"),
+                ("has_pivot_decision", "Trend Sentinel"),
+            ) if not data.get(key)
+        ]
+        if missing:
+            lines.append(f"\n_No data yet from: {', '.join(missing)}._")
+
     # ── Funnel Specialist ──────────────────────────────────────────────────────
     elif "funnel" in agent_lower:
         stages = format_funnel(data)
