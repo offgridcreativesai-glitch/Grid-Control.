@@ -131,6 +131,12 @@ class ContentPlanner:
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "brands", self.brand_slug
         )
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Decides content-mix psychology.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
         self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', 'Unknown')}")
         self._total_input_tokens = 0
         self._total_output_tokens = 0
@@ -280,13 +286,15 @@ class ContentPlanner:
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys across {len(source_files)} files")
 
         from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
+        archetype_block = directive_block(self.archetype, agent="content-planner")
         prompt = _operating_framework(2) + f"""
 You are the Content Planner for OffGrid Marketing OS.
 Your job: produce a 30-day content calendar based on the approved 90-day strategy and real trend data.
 Every piece must be specific — platform, format, topic, hook angle, CTA.
 
 {_UNTRUSTED_POLICY}
-
+{archetype_block}
 BRAND CONTEXT:
 {brand_ctx}
 
@@ -314,9 +322,14 @@ Majority of posts use pattern interrupts, contrarian takes, bold claims relevant
 High reach potential. Drives saves and shares. Works even with zero social proof.
 
 SELECTION METRIC:
-better = which calendar maximises the brand's north_star_metric in the first 30 days, for a
+better = which calendar maximises the brand's north_star_metric in the first 30 days,
+judged through the STEP 0 archetype's consideration cycle (same-session action for
+product, saves/inbound for service, replies/relationship for personal), for a
 brand with no existing audience and no social proof.
 DO NOT optimize for follower-count benchmarks (deprecated metric per brand_profile.deprecated_metrics).
+The winning calendar's post mix, CTA types, and proof formats MUST obey the STEP 0
+STEPPS priority and CTA distance — a calendar that wins on reach but violates the
+archetype psychology is a losing calendar.
 
 Select the winner. One-line reason.
 

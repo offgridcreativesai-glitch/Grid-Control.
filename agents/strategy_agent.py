@@ -42,6 +42,7 @@ try:
 except ImportError:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+from agents._lib import phases as _phases
 MODEL = model_for("strategy-agent")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -136,6 +137,12 @@ class StrategyAgent:
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "brands", self.brand_slug
         )
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Frames the whole 90-day strategy.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
         self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', 'Unknown')}")
         self._total_input_tokens = 0
         self._total_output_tokens = 0
@@ -156,6 +163,63 @@ class StrategyAgent:
             data = json.load(f)
         self.log(f"Loaded trends_live.json (scraped at: {data.get('scraped_at', 'unknown')})")
         return data
+
+    def _build_hard_constraints_block(self) -> str:
+        """Generic hard-constraints section for the 90-day strategy — same pattern
+        as content_planner.py/script_writer.py. Volume is phase-driven via
+        agents/_lib/phases.py; platform priority reads brand_profile fields instead
+        of hardcoding a specific brand's channel mix; CTA/naming rule blocks are
+        included only when the brand_profile actually defines them."""
+        phase_plan = _phases.get_phase_plan(self.brand_profile.get("program_phase"))
+        vol = phase_plan["weekly_volume"]
+        lines = []
+
+        primary = self.brand_profile.get("primary_platform_phase_1")
+        secondary = self.brand_profile.get("secondary_platform_phase_1")
+        lines.append("PLATFORM PRIORITY:")
+        if primary:
+            lines.append(f"- PRIMARY: {primary}. (See brand_profile.primary_platform_phase_1.)")
+        if secondary:
+            lines.append(f"- SECONDARY (repurpose-only, NOT original content): {secondary}.")
+        if not primary and not secondary:
+            platforms = ", ".join(self.brand_profile.get("platforms") or ["Instagram"])
+            lines.append(f"- Platforms: {platforms}. (See brand_profile.platforms.)")
+
+        lines.append(
+            f"\nVOLUME ({phase_plan['label']} phase, per agents/_lib/phases.py): "
+            f"{vol.get('long_form', 0)} long-form piece(s)/week, {vol.get('social', 0)} social posts/week, "
+            f"{vol.get('creator_seeds', 0)} creator-seed touches/week. Do not inflate beyond this — quality over volume."
+        )
+
+        cta_fields = ("week_1_cta_rule", "freebie_strategy", "hire_signal_rule")
+        if any(self.brand_profile.get(f) for f in cta_fields):
+            lines.append("\nCTA RULES:")
+            if self.brand_profile.get("week_1_cta_rule"):
+                lines.append(f"- {self.brand_profile['week_1_cta_rule']}")
+            if self.brand_profile.get("hire_signal_rule"):
+                lines.append(f"- {self.brand_profile['hire_signal_rule']}")
+
+        if not self.brand_profile.get("budget_confirmed") and not self.brand_profile.get("ad_budget"):
+            lines.append("\n- DO NOT plan paid_amplification unless brand_profile confirms budget exists. Default to organic-only.")
+
+        naming_fields = ("lived_history_sources", "lived_history_NOT_allowed", "grid_control_naming_rule")
+        if any(self.brand_profile.get(f) for f in naming_fields):
+            lines.append("\nNAMING + LIVED HISTORY:")
+            if self.brand_profile.get("lived_history_NOT_allowed"):
+                lines.append(
+                    f"- NEVER name: {self.brand_profile['lived_history_NOT_allowed']}. "
+                    f"Reference only via the approved framing in brand_profile.lived_history_sources."
+                )
+            if self.brand_profile.get("grid_control_naming_rule"):
+                lines.append(f"- {self.brand_profile['grid_control_naming_rule']}")
+            if self.brand_profile.get("lived_history_sources"):
+                lines.append("- Use ONLY brand_profile.lived_history_sources for lived examples.")
+
+        if self.brand_profile.get("what_to_never_say"):
+            lines.append("\nNEVER-USE (from brand_profile.what_to_never_say):")
+            lines.append(f"- {self.brand_profile['what_to_never_say']}")
+
+        return "\n".join(lines)
 
     def save_strategy(self, strategy: dict):
         """Write strategy_90day.json to brand directory for downstream agents."""
@@ -233,14 +297,18 @@ class StrategyAgent:
         source_index = build_source_index(source_files)
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys across {len(source_files)} files")
 
+        hard_constraints_block = self._build_hard_constraints_block()
+
         from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
+        archetype_block = directive_block(self.archetype, agent="strategy-agent")
         prompt = _operating_framework(2) + f"""
 You are the Strategy Agent for OffGrid Marketing OS.
 Your job: produce a 90-day growth roadmap for this brand based on real scraped trend data.
-This is a beta SaaS product. The goal is the first 10 paying clients.
+The goal is the brand's north_star_metric (see brand_profile.north_star_metric).
 
 {_UNTRUSTED_POLICY}
-
+{archetype_block}
 BRAND CONTEXT:
 {brand_ctx}
 
@@ -254,7 +322,7 @@ Run the AutoResearch Loop. Evaluate 3 distinct strategic variants:
 VARIANT A — AGGRESSIVE GROWTH PLAY
 Pure volume strategy. Maximum content output, maximum reach.
 Go wide fast. Accept lower trust-building in exchange for speed.
-What does this look like for OffGrid specifically?
+What does this look like for this brand specifically?
 
 VARIANT B — TRUST-FIRST SLOW BURN
 Quality over quantity. Deep credibility building.
@@ -263,13 +331,13 @@ Slower to convert but higher LTV clients when it does.
 
 VARIANT C — HYBRID WITH CLEAR PHASE GATES
 Phase 1 (Days 1-30): Trust foundation
-Phase 2 (Days 31-60): Content volume ramp  
+Phase 2 (Days 31-60): Content volume ramp
 Phase 3 (Days 61-90): Paid amplification of best performers
 Each phase has a measurable gate before unlocking the next.
 
 SELECTION METRIC:
-better = which strategy maximises QUALIFIED FOUNDER DMs PER WEEK (the brand's north_star_metric)
-over 90 days, given current zero-budget constraints and a new brand with no social proof.
+better = which strategy maximises the brand's north_star_metric over 90 days, given current
+budget constraints and social-proof level.
 DO NOT optimize for follower count or generic reach. (See brand_profile.deprecated_metrics — follower-count benchmarks are explicitly OUT.)
 
 Select the winner. One-line reason.
@@ -277,35 +345,7 @@ Select the winner. One-line reason.
 ---
 
 🚨 HARD CONSTRAINTS — VIOLATIONS = STRATEGY REJECTED 🚨
-
-PLATFORM PRIORITY (Phase 1):
-- PRIMARY: Instagram + YouTube (parallel). NOT LinkedIn-primary. NOT Twitter-primary.
-- SECONDARY (repurpose-only, NOT original content): LinkedIn + Twitter/X.
-- See brand_profile.primary_platform_phase_1 and brand_profile.secondary_platform_phase_1.
-- Strategy MUST reflect: 1 long-form YouTube/week → cut into 4 IG Reels + 2 YouTube Shorts. PLUS 3 IG carousels/week (independent). LinkedIn + Twitter = repurpose ONLY.
-- DO NOT propose 4-5 LinkedIn posts/week as the top channel. That violates the brand's locked positioning.
-
-VOLUME (per brand_profile.weekly_volume_target):
-- Phase 1 weekly_output target: ~9 published units/week from 1 long-form recording session.
-- DO NOT inflate volume beyond this in Phase 1. Quality over volume.
-- Phase 2-3 ramps are allowed but stay grounded in 1-recording-session-per-week budget.
-
-CTA RULES (per brand_profile.week_1_cta_rule + freebie_strategy):
-- Phase 1 (Days 1-30): NO comment-gated CTAs ("comment WORD"), NO promised deliverables, NO freebies. ONLY open-loop diagnostic engagement ("drop your AI tool stack", "what's your AI question?").
-- Phase 1 build window (Days 8-28): freebie inventory + DM automation get built. Freebie CTAs unlock Day 29+.
-- Phase 2-3: Freebie CTAs allowed once freebies + DM automation are confirmed BUILT.
-- NEVER plan hire-me CTAs at any phase. Banned forever (brand_profile.hire_signal_rule).
-- NEVER plan paid_amplification in Phase 2 unless brand_profile says budget exists. ASKGauravAI is zero-budget; only organic.
-
-NAMING + LIVED HISTORY:
-- Phase 1 (Days 1-28): Grid Control SILENT. Reference as "a multi-agent system I'm building".
-- Phase 1 transition (Day 29 onward) + Phase 2: Grid Control nameable as proof point.
-- NEVER name "Third Gen Tribe" / "TGT" / "T-shirt brand". Reference as "the brands I ran" (UNNAMED).
-- NEVER frame TGT as AI-built (it was agency-run).
-- Use ONLY brand_profile.lived_history_sources for lived examples.
-
-NEVER-USE (from brand_profile.what_to_never_say):
-- AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer.
+{hard_constraints_block}
 
 ---
 

@@ -184,6 +184,33 @@ class BaseAgent:
         title = "Account-wide context" if scope == "grid_control" else f"Brand context ({brand_slug})"
         return f"\n## Semantic Memory — {title}\n" + "\n".join(lines) + "\n"
 
+    # ── second brain (linked knowledge vault · Jul 3 2026) ───────────────────
+    # Unifying layer over the KV/semantic/narrative/learnings/skills stores:
+    # a per-brand linked-markdown vault at brands/{slug}/second_brain/.
+    # See agents/_lib/second_brain.py for the design rationale.
+
+    def brain(self, brand_slug: str):
+        """Return this brand's SecondBrain vault handle."""
+        from agents._lib.second_brain import get_second_brain
+        return get_second_brain(brand_slug)
+
+    def brain_note(self, brand_slug: str, title: str, body: str,
+                   kind: str = "insight", source: str = "",
+                   links: list[str] | None = None) -> str | None:
+        """Write one durable, linked note to the brand's second brain.
+        `source` must name the run/file that grounds the note (zero-fabrication)."""
+        return self.brain(brand_slug).note(
+            self._agent_slug(), title, body, kind=kind, source=source, links=links
+        )
+
+    def brain_context(self, brand_slug: str, query: str = "",
+                      budget_chars: int = 6000) -> str:
+        """Prompt-ready block from the brand's second brain (index + linked
+        notes). Free + offline. Complements semantic_recall (vector, paid)."""
+        return self.brain(brand_slug).context_block(
+            agent=self._agent_slug(), query=query, budget_chars=budget_chars
+        )
+
     # ── narrative memory (story-so-far) ───────────────────────────────────────
     # Append-only timeline of decisions/actions/results across ALL agents, so a
     # run CONTINUES the brand's story instead of cold-starting (Phase A).
@@ -354,10 +381,15 @@ class BaseAgent:
             brand_slug, n=8, agent_filter=self._agent_slug()
         )
         narrative = self.narrative_read_as_text(brand_slug, n=20)
+        try:
+            brain = self.brain_context(brand_slug)
+        except Exception:
+            brain = ""
         self._session_context = {
             "state": state,
             "learnings": learnings,
             "narrative": narrative,
+            "brain": brain,
             "brand_slug": brand_slug,
         }
         self._session_start_time = time.time()
@@ -402,6 +434,13 @@ class BaseAgent:
             self.narrative_append(
                 brand_slug, narrative_type, narrative_summary, refs=narrative_refs
             )
+
+        # Refresh the second-brain vault from the stores this session touched
+        # (idempotent, file-based, zero API cost).
+        try:
+            self.brain(brand_slug).sync()
+        except Exception as e:
+            self.log(f"[second_brain] sync skipped: {e}")
 
         write_brand_state(brand_slug)
         elapsed = time.time() - self._session_start_time
