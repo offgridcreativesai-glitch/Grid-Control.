@@ -73,6 +73,22 @@ export const DEMO_PENDING: PendingOutput[] = [
     slide_images: [],
     scheduled_for: null,
   },
+  // Plan-level item — renders in the Vault's "Big decisions" lane so the demo
+  // shows decision-weight separation (strategy ≠ single caption).
+  {
+    filename: "demo_week3_calendar.json",
+    agent_slug: "content-planner",
+    agent_name: "Content Planner",
+    created_at: iso(7 * 3600_000),
+    platform: null,
+    title: "Week 3 content plan — barrier-repair education arc",
+    caption:
+      "Next week doubles down on what's working: 3 education carousels on barrier repair (your top saver), 1 founder POV, 1 community reply-bait. Posting shifts to 9am after last week's morning spike.",
+    body_text: "",
+    hashtags: [],
+    slide_images: [],
+    scheduled_for: null,
+  },
 ]
 
 // ── Live agent status (names must match the canonical roster) ──
@@ -279,6 +295,24 @@ export const DEMO_CONNECTIONS = [
   { platform: "twitter", handle: "@aurora_skin", env_key: "TW", has_token: false, connected: false, account: "" },
   { platform: "tiktok", handle: "", env_key: "TT", has_token: false, connected: false, account: "" },
 ]
+
+// ── Week view (operating rhythm) ──
+export const DEMO_WEEK = {
+  ran: [
+    { agent_slug: "trend-researcher", status: "success", started_at: iso(6 * 3600_000), completed_at: iso(5 * 3600_000) },
+    { agent_slug: "script-writer", status: "running", started_at: iso(1 * 3600_000), completed_at: null },
+    { agent_slug: "carousel-designer", status: "success", started_at: iso(DAY + 2 * 3600_000), completed_at: iso(DAY + 3600_000) },
+    { agent_slug: "content-planner", status: "success", started_at: iso(2 * DAY), completed_at: iso(2 * DAY - 3600_000) },
+    { agent_slug: "data-analyst", status: "success", started_at: iso(3 * DAY), completed_at: iso(3 * DAY - 3600_000) },
+    { agent_slug: "weekly-review-composer", status: "success", started_at: iso(5 * DAY), completed_at: iso(5 * DAY - 1800_000) },
+  ],
+  waiting: { count: 3, by_agent: { "carousel-designer": 1, "script-writer": 2 } },
+  next: [
+    { pipeline: "daily", day_of_week: null, hour: 7, minute: 30 },
+    { pipeline: "weekly", day_of_week: "fri", hour: 18, minute: 0 },
+    { pipeline: "monthly", day_of_week: "mon", hour: 10, minute: 0 },
+  ],
+}
 
 /** Seed the stores so demo pages render alive. Idempotent. */
 export function seedDemo() {

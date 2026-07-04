@@ -5,7 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/api"
 import { useBrandStore } from "@/store/brandStore"
-import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED } from "@/lib/demo"
+import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED, DEMO_WEEK } from "@/lib/demo"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -211,6 +211,69 @@ export function useRejectOutput() {
     mutationFn: (filename: string) =>
       postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outputs", "pending"] }),
+  })
+}
+
+// ── Week view (operating rhythm · Fable 5 UX pass) ────────────────────────────
+
+export interface WeekRun {
+  agent_slug: string
+  status: string
+  started_at: string
+  completed_at?: string | null
+}
+
+export interface WeekData {
+  ran: WeekRun[]
+  waiting: { count: number; by_agent: Record<string, number> }
+  next: { pipeline: string; day_of_week?: string | null; hour?: number | null; minute?: number | null }[]
+}
+
+export function useWeek() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["week", activeBrand.slug],
+    queryFn: async () => {
+      if (isDemo()) return DEMO_WEEK
+      const raw = await getJson<{ success: boolean; data: WeekData }>(
+        `/api/week?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      )
+      return raw.data
+    },
+    enabled: !!activeBrand.slug,
+    refetchInterval: 60_000,
+  })
+}
+
+// ── Trust dial (GRIDLOCK-PROGRAM-01JUL Stage 5) ────────────────────────────────
+
+export type TrustLevel = "consult" | "automate" | "direct"
+
+export interface TrustDialData {
+  levels: TrustLevel[]
+  default_level: TrustLevel
+  settings: Record<string, TrustLevel>   // agent_slug -> level; missing key = default
+}
+
+export function useTrustDial() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["trust-dial", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: TrustDialData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/trust-dial`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 30_000,
+  })
+}
+
+export function useSetTrustDial() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { agent_slug: string; level: TrustLevel }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/trust-dial`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trust-dial", activeBrand.slug] }),
   })
 }
 

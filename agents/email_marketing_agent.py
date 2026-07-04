@@ -84,6 +84,12 @@ class EmailMarketingAgent:
         if not ANTHROPIC_API_KEY:
             raise ValueError("ANTHROPIC_API_KEY not found in .env")
         self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Decides nurture pacing + CTA distance.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
         self._total_input_tokens = 0
         self._total_output_tokens = 0
 
@@ -179,12 +185,15 @@ class EmailMarketingAgent:
                   "product_interest": s.get("product_interest")} for s in subscribers]
 
         from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
         system = _operating_framework(2) + (
             f"You are the email marketer for {self.brand_profile.get('brand_name', self.brand_slug)}, "
-            f"writing nurture emails in the founder's voice — founder-to-founder, direct, value-first, no hype, "
+            f"writing nurture emails in the brand's voice — direct, value-first, no hype, "
             f"no 'Dear valued customer', no fake urgency.\n"
             f"OFFER (only mention when earned): {offer}\n"
-            f"Brand voice DNA:\n{voice_slice}\n\n"
+            f"Brand voice DNA:\n{voice_slice}\n"
+            f"{directive_block(self.archetype, agent='email-marketing-agent')}\n"
+            f"Email 3's CTA must obey STEP 0's CTA DISTANCE for this archetype.\n\n"
             f"{UNTRUSTED_POLICY}"
         )
 

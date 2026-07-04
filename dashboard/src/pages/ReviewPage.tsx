@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import { Check, X, Send, ChevronDown, ChevronUp, MessageSquare, ExternalLink, Loader2 } from "lucide-react"
+import { Check, X, Send, ChevronDown, ChevronUp, MessageSquare, ExternalLink, Loader2, FileText } from "lucide-react"
 import { cn, formatTime } from "@/lib/utils"
 import { type Platform } from "@/store/appStore"
 import { StatusDot } from "@/components/ui/status-dot"
@@ -30,6 +30,34 @@ type PipelineItem = {
   script?: string
   slideImages: string[]
   permalink?: string
+  /** Decision weight — a 90-day strategy is not the same size decision as one
+   * caption. "strategy" items get their own lane at the top of Drafts. */
+  weight: "strategy" | "content"
+}
+
+// Backend slugs whose outputs steer the PLAN (weeks/months of downstream work)
+// rather than being one publishable piece. Used only for lane grouping — the
+// client still sees personas, never these slugs (THE SECRET holds).
+const STRATEGY_SLUGS = new Set([
+  "strategy-agent", "ceo-brain", "content-planner", "brand-guardian",
+  "weekly-program", "weekly-review-composer",
+  "monthly-program", "monthly-mix-composer", "quarterly-program",
+  "brand-book",
+])
+
+function weightFor(slug?: string | null): "strategy" | "content" {
+  return slug && STRATEGY_SLUGS.has(slug) ? "strategy" : "content"
+}
+
+/** Account-manager framing — one plain sentence: what this is, why it exists,
+ * and what approving does. The "here's what ran and why" wrapper a real
+ * agency AM would put around any deliverable. */
+function framingFor(item: PipelineItem): string {
+  if (item.weight === "strategy") {
+    return `${item.draftedBy} prepared this for your sign-off. It's a plan-level decision — approving it steers what the team builds over the coming weeks.`
+  }
+  const when = item.time ? ` for ${item.time.toLocaleDateString(undefined, { weekday: "long" })}` : ""
+  return `${item.draftedBy} drafted this ${item.platform === "x" ? "X" : item.platform} post${when} as part of this week's plan. Approving moves it to Ready — nothing publishes without you.`
 }
 
 type Stage = "pending" | "approved" | "published"
@@ -54,6 +82,7 @@ function adaptPending(po: PendingOutput): PipelineItem {
     hashtags: po.hashtags || [],
     script: po.body_text || undefined,
     slideImages: po.slide_images || [],
+    weight: weightFor(po.agent_slug),
   }
 }
 
@@ -69,6 +98,7 @@ function adaptPublished(p: PublishedPost): PipelineItem {
     script: p.body_text || undefined,
     slideImages: p.slide_images || [],
     permalink: (p as PublishedPost & { permalink?: string }).permalink,
+    weight: weightFor(p.agent_slug),
   }
 }
 
@@ -235,28 +265,58 @@ export function ReviewPage() {
         </div>
       ) : (
         <div className="flex flex-1 overflow-hidden">
-          {/* List */}
+          {/* List — Drafts stage splits into decision-weight lanes: plan-level
+              sign-offs first (they gate weeks of work), then content approvals. */}
           <div className="w-80 overflow-auto border-r border-border">
-            <div className="divide-y divide-border">
-              {items.map((it) => (
+            {(() => {
+              const strategyItems = stage === "pending" ? items.filter((i) => i.weight === "strategy") : []
+              const contentItems = stage === "pending" ? items.filter((i) => i.weight === "content") : items
+              const renderItem = (it: PipelineItem) => (
                 <button
                   key={it.id}
                   onClick={() => { setSelectedId(it.id); setPublishResult(null) }}
                   className={cn(
                     "w-full px-4 py-3 text-left transition-colors hover:bg-white/[0.03]",
                     selectedId === it.id && "bg-white/[0.05]",
+                    it.weight === "strategy" && stage === "pending" && "border-l-2 border-l-primary/60",
                   )}
                 >
                   <div className="mb-1 flex items-center gap-2">
-                    <PlatformIcon platform={it.platform} className="h-3.5 w-3.5" />
+                    {it.weight === "strategy" ? (
+                      <FileText className="h-3.5 w-3.5 text-primary/80" />
+                    ) : (
+                      <PlatformIcon platform={it.platform} className="h-3.5 w-3.5" />
+                    )}
                     <span className="text-[11.5px] text-muted-foreground">{it.draftedBy}</span>
                     <StatusDot status={stage === "published" ? "success" : "queued"} className="ml-auto" />
                   </div>
                   {it.title && <p className="mb-0.5 line-clamp-1 text-[13.5px] font-medium text-foreground">{it.title}</p>}
                   <p className="line-clamp-2 text-[12px] text-muted-foreground">{it.caption}</p>
                 </button>
-              ))}
-            </div>
+              )
+              return (
+                <>
+                  {strategyItems.length > 0 && (
+                    <div className="border-b border-border">
+                      <p className="px-4 pb-1.5 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-primary/90">
+                        Big decisions · steer the plan
+                      </p>
+                      <div className="divide-y divide-border">{strategyItems.map(renderItem)}</div>
+                    </div>
+                  )}
+                  {contentItems.length > 0 && (
+                    <div>
+                      {stage === "pending" && strategyItems.length > 0 && (
+                        <p className="px-4 pb-1.5 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          Content approvals
+                        </p>
+                      )}
+                      <div className="divide-y divide-border">{contentItems.map(renderItem)}</div>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
 
           {/* Preview + actions */}
@@ -264,24 +324,60 @@ export function ReviewPage() {
             <div className="flex flex-1 flex-col overflow-hidden">
               <div className="flex items-center gap-4 border-b border-border px-6 py-3.5">
                 <div className="flex items-center gap-2">
-                  <PlatformIcon platform={selected.platform} className="h-5 w-5" />
-                  <span className="text-[13.5px] font-medium capitalize text-foreground">{selected.platform}</span>
+                  {selected.weight === "strategy" ? (
+                    <>
+                      <FileText className="h-5 w-5 text-primary/80" />
+                      <span className="text-[13.5px] font-medium text-foreground">Plan</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlatformIcon platform={selected.platform} className="h-5 w-5" />
+                      <span className="text-[13.5px] font-medium capitalize text-foreground">{selected.platform}</span>
+                    </>
+                  )}
                 </div>
                 <span className="text-[12px] text-muted-foreground">by {selected.draftedBy}</span>
                 <span className="ml-auto text-[12px] text-muted-foreground">
-                  {stage === "published" ? "Posted" : "Scheduled"}: {formatTime(selected.time)}
+                  {selected.weight === "strategy"
+                    ? `Prepared: ${formatTime(selected.time)}`
+                    : `${stage === "published" ? "Posted" : "Scheduled"}: ${formatTime(selected.time)}`}
                 </span>
               </div>
 
               <div className="flex-1 overflow-auto p-6">
                 <div className="mx-auto max-w-lg">
-                  <PostPreview item={selected} brandName={brandName} handle={handle} />
+                  {stage === "pending" && (
+                    <p className="mb-4 rounded-xl border border-border bg-white/[0.02] px-4 py-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                      {framingFor(selected)}
+                    </p>
+                  )}
+                  {selected.weight === "strategy" ? (
+                    /* Plan-level output — a document, not a social post mockup */
+                    <div className="rounded-2xl border border-primary/25 bg-white/[0.02] p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary/80" />
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/90">
+                          Plan for your sign-off
+                        </span>
+                      </div>
+                      {selected.title && (
+                        <p className="mb-2 text-[15px] font-semibold leading-snug text-foreground">{selected.title}</p>
+                      )}
+                      <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-foreground/85">
+                        {selected.caption}
+                      </p>
+                    </div>
+                  ) : (
+                    <PostPreview item={selected} brandName={brandName} handle={handle} />
+                  )}
 
                   <div className="mt-6 space-y-4">
-                    <div>
-                      <h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Caption</h3>
-                      <p className="whitespace-pre-wrap text-[13.5px] text-foreground/90">{selected.caption}</p>
-                    </div>
+                    {selected.weight !== "strategy" && (
+                      <div>
+                        <h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Caption</h3>
+                        <p className="whitespace-pre-wrap text-[13.5px] text-foreground/90">{selected.caption}</p>
+                      </div>
+                    )}
 
                     {selected.hashtags.length > 0 && (
                       <div>

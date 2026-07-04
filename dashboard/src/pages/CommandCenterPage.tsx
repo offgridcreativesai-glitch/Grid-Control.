@@ -18,7 +18,9 @@ import {
   usePendingOutputs,
   useApproveOutput,
   useLiveAgents,
+  useWeek,
   type PendingOutput,
+  type WeekRun,
 } from "@/hooks/useGridApi"
 import { useRequestRevision } from "@/hooks/useRevisions"
 import { personaForSlug, activityPhrase, type Persona } from "@/lib/agentPersona"
@@ -68,8 +70,16 @@ function LiveDot({ on }: { on: boolean }) {
 type CardStatus = "pending" | "approved" | "changes"
 
 // Proactive system moves (GRIDLOCK-PROGRAM-01JUL) get an emerald border to read
-// as "Atlas did this on the weekly clock" — distinct from a content-approval card.
-const PROGRAM_CARD_SLUGS = new Set(["weekly-program", "weekly-review-composer"])
+// as "Atlas did this on the program's own clock" — distinct from a content-approval
+// card. Quarterly QBR reuses Strategy Agent's own card type on purpose (it's a
+// normal Strategy Agent output, just on a new cadence) so it's NOT in this map —
+// badging every manual Strategy Agent run as a "system move" would be wrong.
+const PROGRAM_CARD_SLUGS: Record<string, string> = {
+  "weekly-program": "Weekly Program",
+  "weekly-review-composer": "Weekly Program",
+  "monthly-program": "Monthly Program",
+  "monthly-mix-composer": "Monthly Program",
+}
 
 function ApprovalCard({ item }: { item: PendingOutput }) {
   const approve = useApproveOutput()
@@ -78,9 +88,10 @@ function ApprovalCard({ item }: { item: PendingOutput }) {
   const [noting, setNoting] = useState(false)
   const [note, setNote] = useState("")
 
-  const isProgramCard = PROGRAM_CARD_SLUGS.has(item.agent_slug)
+  const programLabel = PROGRAM_CARD_SLUGS[item.agent_slug]
+  const isProgramCard = Boolean(programLabel)
   const persona = personaForSlug(item.agent_slug)
-  const typeLabel = isProgramCard ? "Weekly Program" : item.platform || persona.role
+  const typeLabel = programLabel || item.platform || persona.role
   const text = item.caption || item.body_text || item.preview || ""
 
   const onApprove = () => {
@@ -100,7 +111,7 @@ function ApprovalCard({ item }: { item: PendingOutput }) {
     <div className={"glass-panel overflow-hidden rounded-2xl" + (isProgramCard ? " border border-emerald/40" : "")}>
       {isProgramCard && !resolved && (
         <div className="flex items-center gap-2 border-b border-emerald/20 bg-emerald/[0.06] px-4 py-2 text-[11.5px] font-medium text-emerald">
-          <Sparkles size={13} /> Atlas ran your weekly program
+          <Sparkles size={13} /> Atlas ran your {programLabel!.toLowerCase()}
         </div>
       )}
       {resolved && (
@@ -204,6 +215,114 @@ function ApprovalCard({ item }: { item: PendingOutput }) {
 
 // ── Live Work Feed (right rail) ─────────────────────────────────────────────────
 
+// ── Your Week (operating rhythm · Fable 5 UX pass) ─────────────────────────────
+// The agency cadence made visible: what the team DID this week, what's WAITING
+// on the owner, what's COMING UP on the program clock. Personas only — THE
+// SECRET holds (no slugs, no status codes, no pipeline jargon).
+
+const DOW_LABEL: Record<string, string> = {
+  mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday",
+  fri: "Friday", sat: "Saturday", sun: "Sunday",
+}
+
+function nextLabel(n: { pipeline: string; day_of_week?: string | null; hour?: number | null; minute?: number | null }): string {
+  const t =
+    n.hour != null ? `${String(n.hour).padStart(2, "0")}:${String(n.minute ?? 0).padStart(2, "0")}` : ""
+  switch (n.pipeline) {
+    case "daily":
+      return `Fresh research every morning${t ? ` · ${t}` : ""}`
+    case "weekly":
+      return `Weekly review lands ${DOW_LABEL[n.day_of_week ?? ""] ?? "each week"}${t ? ` · ${t}` : ""}`
+    case "monthly":
+      return "Monthly content-mix check-in"
+    case "quarterly":
+      return "Quarterly strategy review"
+    default:
+      return "Scheduled team run"
+  }
+}
+
+const DONE_PHRASE: Record<string, string> = {
+  atlas: "wrapped a team review",
+  riveter: "finished new drafts",
+  lumen: "finished new visuals",
+  spark: "finished this week's research",
+  exactor: "finished the performance review",
+  aegis: "finished brand checks",
+  nexus: "caught up on conversations",
+  forge: "finished build work",
+}
+
+function weekRunPhrase(run: WeekRun): string {
+  const p = personaForSlug(run.agent_slug)
+  if ((run.status || "").toLowerCase() === "running") return `${p.name} ${p.action}`
+  if ((run.status || "").toLowerCase() === "error") return `${p.name} hit a snag — Atlas is on it`
+  return `${p.name} ${DONE_PHRASE[p.key] ?? "finished a task"}`
+}
+
+function WeekPulse({ pendingCount, onReview }: { pendingCount: number; onReview: () => void }) {
+  const { data: week } = useWeek()
+  if (!week) return null
+  const ran = (week.ran || []).slice(0, 5)
+  const upcoming = (week.next || []).slice(0, 3)
+  const waitingCount = Math.max(week.waiting?.count ?? 0, pendingCount)
+  if (ran.length === 0 && upcoming.length === 0 && waitingCount === 0) return null
+
+  return (
+    <section className="mb-6">
+      <p className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Your week
+      </p>
+      <div className="space-y-3 rounded-xl border border-border bg-white/[0.02] p-3.5">
+        {ran.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80">
+              What ran
+            </p>
+            <div className="space-y-1">
+              {ran.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <PersonaAvatar slug={r.agent_slug} px={18} />
+                  <p className="min-w-0 flex-1 truncate text-[12px] text-foreground/80">{weekRunPhrase(r)}</p>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">{relativeTime(r.started_at)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {waitingCount > 0 && (
+          <button
+            onClick={onReview}
+            className="flex w-full items-center gap-2 rounded-lg border border-gold/30 bg-gold/[0.07] px-2.5 py-2 text-left transition-colors hover:bg-gold/[0.12]"
+            style={{ borderColor: "color-mix(in oklch, var(--status-queued) 35%, transparent)", background: "color-mix(in oklch, var(--status-queued) 8%, transparent)" }}
+          >
+            <Inbox size={13} style={{ color: "var(--status-queued)" }} />
+            <span className="text-[12px] font-medium" style={{ color: "var(--status-queued)" }}>
+              Waiting on you: {waitingCount} decision{waitingCount === 1 ? "" : "s"}
+            </span>
+          </button>
+        )}
+
+        {upcoming.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80">
+              Coming up
+            </p>
+            <div className="space-y-1">
+              {upcoming.map((n, i) => (
+                <p key={i} className="text-[12px] text-foreground/70">
+                  {nextLabel(n)}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function LiveWorkFeed({
   working,
   pendingCount,
@@ -230,6 +349,7 @@ function LiveWorkFeed({
       </div>
 
       <div className="flex-1 overflow-auto px-5 py-5">
+        <WeekPulse pendingCount={pendingCount} onReview={onReview} />
         {quiet ? (
           <div className="rounded-xl border border-border bg-white/[0.02] p-5 text-center">
             <p className="text-[13px] leading-relaxed text-muted-foreground">

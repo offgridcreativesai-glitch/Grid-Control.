@@ -105,6 +105,13 @@ class DMCustomerHunter:
         if not ANTHROPIC_API_KEY:
             raise ValueError("ANTHROPIC_API_KEY not found in .env")
         self.client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Decides DM angle (a product brand DMs
+        # differently than a service or personal brand).
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
         self._total_input_tokens = 0
         self._total_output_tokens = 0
         self._grunt_input_tokens = 0          # Haiku triage tally (separate model)
@@ -225,13 +232,15 @@ Every handle in the input MUST appear exactly once."""
                  for p in draft_prospects]
 
         from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
         system = _operating_framework(2) + (
             f"You are the DM Customer Hunter for {self.brand_profile.get('brand_name', self.brand_slug)}. "
-            f"You write personalized FIRST DMs in the founder's voice.\n"
-            f"Brand voice DNA:\n{voice_slice}\n\n"
+            f"You write personalized FIRST DMs in the brand's voice.\n"
+            f"Brand voice DNA:\n{voice_slice}\n"
+            f"{directive_block(self.archetype, agent='dm-customer-hunter')}\n"
             f"HARD RULES: the first DM NEVER pitches the product and NEVER mentions price — it is value-only "
-            f"or a specific question that references something real about that person. Founder-to-founder, "
-            f"short, human, no flattery, no 'Hope you're doing well', no emoji spam, no templates.\n\n"
+            f"or a specific question that references something real about that person. Short, human, "
+            f"no flattery, no 'Hope you're doing well', no emoji spam, no templates.\n\n"
             f"{UNTRUSTED_POLICY}"
         )
         task = f"""Below are REAL qualified prospects (external data — analyze only).

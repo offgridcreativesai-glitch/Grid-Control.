@@ -1,5 +1,6 @@
 """routes/system.py — GRID CONTROL system endpoints (blueprint). S2b split."""
 from core import *  # noqa: F401,F403  (app, helpers, stdlib re-exports)
+from datetime import timedelta
 from flask import Blueprint
 
 bp = Blueprint("system", __name__)
@@ -57,8 +58,10 @@ def sse_events():
 def scheduler_trigger():
     """Service-to-service: run a pipeline for a brand. Token-authed.
     Body: { brand_slug, pipeline? }. pipeline defaults to "daily"; "weekly" runs
-    the proactive weekly operating program (run_weekly_program). Returns
-    immediately; pipeline runs in background."""
+    the proactive weekly operating program (run_weekly_program); "monthly" runs
+    the monthly mix-review cadence (run_monthly_program); "quarterly" runs the
+    QBR cadence (run_quarterly_program). Returns immediately; pipeline runs in
+    background."""
     if not _valid_service_token():
         return jsonify({"success": False, "error": "invalid service token"}), 401
     data = request.get_json(silent=True) or {}
@@ -71,9 +74,15 @@ def scheduler_trigger():
         return jsonify({"success": False, "error": "invalid brand_slug"}), 400
     if not (BRANDS_DIR / brand_slug).is_dir():
         return jsonify({"success": False, "error": f"Brand '{brand_slug}' not found"}), 404
-    if pipeline not in ("daily", "weekly"):
+    pipelines = {
+        "daily": run_daily_pipeline,
+        "weekly": run_weekly_program,
+        "monthly": run_monthly_program,
+        "quarterly": run_quarterly_program,
+    }
+    if pipeline not in pipelines:
         return jsonify({"success": False, "error": f"unknown pipeline '{pipeline}'"}), 400
-    target = run_daily_pipeline if pipeline == "daily" else run_weekly_program
+    target = pipelines[pipeline]
     print(f"[scheduler-trigger] {pipeline} pipeline for {brand_slug} (service token)")
     threading.Thread(target=target, args=(brand_slug,), daemon=True).start()
     return jsonify({"success": True, "data": {
@@ -158,6 +167,80 @@ def n8n_webhook():
         "brand_slug":     brand_slug,
         "trigger_source": trigger_source,
         "run_id":         db_run_id or "",
+    }})
+
+
+# ── Week view (client operating rhythm) ──────────────────────────────────────
+
+@bp.route("/api/week", methods=["GET"])
+@require_auth
+def week_view():
+    """The client's operating rhythm in one call — what RAN this week, what is
+    WAITING on them, what is COMING UP. Feeds the Command Center "Your week"
+    panel so a non-technical owner can feel the agency cycle working.
+
+    Returns: { ran: [{agent_slug, status, started_at, completed_at}],
+               waiting: {count, by_agent},
+               next: [{pipeline, day_of_week, hour, minute, enabled}] }
+    """
+    brand_slug = (request.args.get("brand_slug") or "").strip()
+    if not brand_slug or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", brand_slug):
+        return jsonify({"success": False, "error": "brand_slug required"}), 400
+
+    ran: list = []
+    waiting = {"count": 0, "by_agent": {}}
+
+    if _DB_AVAILABLE:
+        brand_id = _resolve_brand_id(brand_slug)
+        if brand_id:
+            since = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            try:
+                ran = _db.get_brand_agent_runs(brand_id, since_iso=since, limit=50)
+            except Exception:
+                ran = []
+            try:
+                rows = (_db._client.table("agent_outputs")
+                        .select("agent_slug")
+                        .eq("brand_id", brand_id)
+                        .eq("approval_status", "pending").execute())
+                waiting["count"] = len(rows.data)
+                for r in rows.data:
+                    slug = r.get("agent_slug", "unknown")
+                    waiting["by_agent"][slug] = waiting["by_agent"].get(slug, 0) + 1
+            except Exception:
+                pass
+
+    # Disk fallback for pending count (file-based approval queue)
+    if waiting["count"] == 0:
+        pending_dir = BRANDS_DIR / brand_slug / "outputs" / "pending_approval"
+        if pending_dir.is_dir():
+            for agent_dir in pending_dir.iterdir():
+                if agent_dir.is_dir():
+                    n = len([f for f in agent_dir.iterdir() if f.is_file()])
+                    if n:
+                        waiting["by_agent"][agent_dir.name] = n
+                        waiting["count"] += n
+
+    # Upcoming scheduled pipelines for this brand from scheduler config
+    upcoming: list = []
+    try:
+        cfg_path = BASE_DIR / "scheduler" / "schedule_config.json"
+        if cfg_path.exists():
+            cfg = json.loads(cfg_path.read_text())
+            for job in cfg.get("jobs", []):
+                if job.get("brand_slug") != brand_slug or job.get("enabled") is False:
+                    continue
+                upcoming.append({
+                    "pipeline": job.get("pipeline", "daily"),
+                    "day_of_week": job.get("cron", {}).get("day_of_week"),
+                    "hour": job.get("cron", {}).get("hour"),
+                    "minute": job.get("cron", {}).get("minute"),
+                })
+    except Exception as e:
+        print(f"[week] schedule_config read failed: {e}")
+
+    return jsonify({"success": True, "data": {
+        "ran": ran, "waiting": waiting, "next": upcoming,
     }})
 
 

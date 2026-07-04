@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Rocket, TrendingUp, ArrowRight, ArrowLeft, Loader2, Check, Camera, Briefcase, Video, Hash } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { useBrandStore } from "@/store/brandStore"
@@ -24,6 +24,9 @@ interface BrandData {
   name: string
   slug: string
   offer: string
+  /** business-model archetype — Product / Service / Personal brand. Feeds the
+   * backend STEP-0 reasoning layer (brand_profile.business_model_archetype). */
+  archetype: string
   heroProducts: string
   industry: string
   stage: string
@@ -50,7 +53,7 @@ interface BrandData {
 }
 
 const EMPTY: BrandData = {
-  brandType: "", name: "", slug: "", offer: "", heroProducts: "", industry: "", stage: "",
+  brandType: "", name: "", slug: "", offer: "", archetype: "", heroProducts: "", industry: "", stage: "",
   website: "", audience: "", usp: "", goal: "", bottleneck: "", market: "English / Global",
   tone: "", wordsLove: "", redLines: "", brandFace: "", referenceAccounts: "",
   followerRange: "", whatsWorking: "", instagram: "", linkedin: "", youtube: "", tiktok: "",
@@ -216,7 +219,7 @@ export function OnboardingPage() {
   function canAdvance(): boolean {
     switch (step) {
       case 0: return data.brandType !== ""
-      case 1: return !!data.name.trim() && !!data.offer.trim() && !!data.stage
+      case 1: return !!data.name.trim() && !!data.offer.trim() && !!data.stage && !!data.archetype
       case 2: return !!data.audience.trim() && !!data.usp.trim() && !!data.goal
       case 3: return !!data.tone.trim() && !!data.redLines.trim() && !!data.brandFace &&
                      (isNew ? !!data.referenceAccounts.trim() : true)
@@ -240,6 +243,8 @@ export function OnboardingPage() {
     const xh = cleanHandle(data.x)
     const profile = {
       brand_type: data.brandType,
+      // "Personal brand" → "personal"; matches agents/_lib/brand_archetype.py ARCHETYPES
+      business_model_archetype: data.archetype.toLowerCase().split(" ")[0],
       name: data.name,
       product_description: data.offer,
       hero_products: data.heroProducts,
@@ -372,14 +377,15 @@ export function OnboardingPage() {
               </p>
               <h1 className="mb-6 mt-1 font-display text-2xl font-bold tracking-tight text-foreground">{STEP_TITLES[step]}</h1>
 
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -16 }}
-                  className="space-y-4"
-                >
+              {/* No AnimatePresence mode="wait" here: a stuck exit animation left the
+                  card EMPTY on step change (old fields unmounting, new never mounting).
+                  A simple keyed fade-in can't strand the user. */}
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-4"
+              >
                   {/* STEP 1 — basics */}
                   {step === 1 && (
                     <>
@@ -388,6 +394,16 @@ export function OnboardingPage() {
                       </Field>
                       <Field label="What you sell / your offer" required>
                         <Area value={data.offer} onChange={(v) => up("offer", v)} placeholder="What you do, who it's for, in a sentence or two." rows={2} />
+                      </Field>
+                      <Field label="What kind of brand is this" required>
+                        <Choice
+                          options={["Product", "Service", "Personal brand"]}
+                          value={data.archetype}
+                          onChange={(v) => up("archetype", v)}
+                        />
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                          This changes how the team writes for you — a product sells on desire, a service on trust, a personal brand on connection.
+                        </p>
                       </Field>
                       <Field label="Hero products + rough price points">
                         <Text value={data.heroProducts} onChange={(v) => up("heroProducts", v)} placeholder="e.g. Reporting ₹2.5–7k · Grid Control ₹15–50k" />
@@ -496,6 +512,7 @@ export function OnboardingPage() {
                       {[
                         ["Type", isNew ? "New Venture" : "Active Brand"],
                         ["Brand", data.name],
+                        ["Kind", data.archetype || "—"],
                         ["Offer", data.offer],
                         ["Audience", data.audience],
                         ["Goal", data.goal],
@@ -567,7 +584,6 @@ export function OnboardingPage() {
                     </div>
                   )}
                 </motion.div>
-              </AnimatePresence>
 
               {error && (
                 <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-[13px] font-medium text-destructive">

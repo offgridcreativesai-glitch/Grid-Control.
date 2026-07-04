@@ -1111,6 +1111,17 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
                                 print(f"[dashboard_api] Notion page created: {notion_res.get('notion_url', '')}")
                 except Exception as _notion_err:
                     print(f"[dashboard_api] Notion push skipped: {_notion_err}")
+            # Stage 5 (GRIDLOCK-PROGRAM-01JUL) — trust dial. Default is "consult"
+            # for every agent on every brand (nothing changes unless a human has
+            # explicitly set this agent to automate/direct via the FE control) —
+            # this call is a no-op for the overwhelming majority of runs.
+            try:
+                from agents._lib import trust_dial
+                level = trust_dial.get_level(brand_slug, agent_slug_key)
+                if level in ("automate", "direct"):
+                    _auto_advance_output(brand_slug, agent_slug_key, agent_name)
+            except Exception as _trust_err:
+                print(f"[GRID CONTROL] trust-dial check skipped: {_trust_err}")
         # Phase L — fire approval-needed notification (best-effort, never blocks)
         try:
             _maybe_notify_pending(brand_slug)
@@ -1130,6 +1141,63 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
         _update_session_agent_status(brand_slug, agent_name, "error", str(exc))
         if _DB_AVAILABLE and db_run_id:
             _db.update_agent_run_status(db_run_id, "error", str(exc))
+
+
+def _auto_advance_output(brand_slug: str, agent_slug_key: str, agent_name: str) -> None:
+    """Stage 5 trust dial — move this agent's just-written pending_approval
+    output straight to approved/, without a human clicking Approve. Only
+    called when a human has explicitly set this agent to automate/direct for
+    this brand (agents/_lib/trust_dial.py; default is always consult).
+
+    Deliberately reuses the SAME underlying moves the manual approve route
+    (routes/content.py approve_output) makes — filesystem move to approved/,
+    Supabase approve + audit log, unlock the next agent, skill-learning
+    extraction — so an auto-advanced output is indistinguishable downstream
+    from a manually-approved one. Nothing here triggers publish_runner; the
+    approval gate's "publish only from outputs/approved/" boundary (K1) is
+    unchanged — this only decides who clicks Approve, not whether a human
+    reviews before anything goes out to a real platform."""
+    brand_dir = get_brand_dir(brand_slug)
+    pending_folder = brand_dir / "outputs" / "pending_approval" / agent_slug_key
+    if not pending_folder.exists():
+        return
+    files = sorted(pending_folder.glob("*.json"), reverse=True)
+    if not files:
+        return
+    src = files[0]
+
+    print(f"[trust-dial] AUTO-ADVANCING {agent_name} output ({src.name}) for {brand_slug} — "
+          f"agent set to automate/direct, skipping manual approval click.")
+
+    resolved_agent_slug = agent_slug_key
+    if _DB_AVAILABLE:
+        brand_id = _get_brand_id(brand_slug)
+        if brand_id:
+            try:
+                rows = _db.get_pending_outputs(brand_id)
+                match = next((r for r in rows if r.get("agent_slug") == resolved_agent_slug), None)
+                if match:
+                    _db.approve_output(match["id"])
+                    _db.log_audit(brand_id, "output_auto_approved", "trust_dial",
+                                   {"agent": resolved_agent_slug, "file": src.name})
+            except Exception as e:
+                print(f"[trust-dial] Supabase auto-approve skipped: {e}")
+            try:
+                _unlock_next_agent(brand_id, resolved_agent_slug)
+            except Exception as e:
+                print(f"[trust-dial] unlock_next_agent skipped: {e}")
+
+    try:
+        _skill_on_approve(brand_slug, resolved_agent_slug, str(src))
+    except Exception as e:
+        print(f"[trust-dial] skill-learning skipped: {e}")
+
+    try:
+        approved_dir = brand_dir / "outputs" / "approved"
+        approved_dir.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(approved_dir / src.name))
+    except Exception as e:
+        print(f"[trust-dial] filesystem move to approved/ failed: {e}")
 
 
 def get_brand_dir(brand_slug: str) -> Path:
@@ -1213,18 +1281,38 @@ def run_daily_pipeline(brand_slug: str) -> None:
 
 # ── WEEKLY PROGRAM RUN ──────────────────────────────────────────────────────────
 
+def _load_brand_program_phase(brand_slug: str) -> str:
+    """Read brand_profile.json's program_phase for brand_slug, normalized via
+    agents/_lib/phases.py. Never raises — missing/unreadable profile falls back
+    to phases.DEFAULT_PHASE, same as every other program_phase reader in this repo."""
+    from agents._lib import phases as _phases
+    try:
+        profile_path = BRANDS_DIR / brand_slug / "brand_profile.json"
+        with open(profile_path) as f:
+            profile = json.load(f)
+        return _phases.normalize_phase(profile.get("program_phase"))
+    except Exception:
+        return _phases.DEFAULT_PHASE
+
+
 def run_weekly_program(brand_slug: str) -> None:
     """The proactive weekly operating program (GRIDLOCK-PROGRAM-01JUL).
 
     Stage 0: in-flight lock + pre-run cost guard.
-    Stage 2 (this): the REVIEW loop — Data Analyst + Performance Tracker + Trend
+    Stage 2: the REVIEW loop — Data Analyst + Performance Tracker + Trend
     Sentinel run in parallel (independent inputs, same pattern as run_daily_pipeline's
     Phase 1), then the Weekly Review Composer aggregates their real output into one
     "last week + keep/cut/scale" card in outputs/pending_approval/. No fabrication:
     the composer only reads files those three agents actually wrote this run.
-    Stage 3 adds the BUILD loop (trend-researcher → content-planner → script-writer
-    etc.) after this. Module-level so both the HTTP endpoint and the scheduler reuse
-    it, same shape as run_daily_pipeline."""
+    Stage 3 (this): the BUILD loop — trend-researcher → content-planner → (script-writer
+    + creative-director in parallel) → carousel-designer (per-carousel-post), scoped to
+    whichever agents the brand's current program_phase actually activates
+    (agents/_lib/phases.PHASE_PLANS[phase]['active_agents']). Everything lands in
+    outputs/pending_approval/ — nothing publishes without a human approve click.
+    ad-strategist promotion is explicitly NOT wired here: it stays budget-gated per
+    the existing rule and the script itself is still coming_soon.
+    Module-level so both the HTTP endpoint and the scheduler reuse it, same shape as
+    run_daily_pipeline."""
     if _agent_already_running(brand_slug, "weekly-program"):
         print(f"[weekly-program] Skipping {brand_slug} — already in flight")
         return
@@ -1281,9 +1369,207 @@ def run_weekly_program(brand_slug: str) -> None:
 
     # Review chain, phase 2: composer needs phase-1 outputs on disk — serial.
     _run_one("Weekly Review Composer", "agents/weekly_review_composer.py")
+    print("[weekly-program] Review loop complete.")
+
+    # ── Stage 3: BUILD loop — scoped to this brand's active program_phase ──────
+    active_agents = set(_phases_active_agents(brand_slug))
+    print(f"[weekly-program] Build loop: active_agents for this phase = {sorted(active_agents)}")
+
+    if "trend-researcher" in active_agents:
+        _run_one("Trend Researcher", AGENT_SCRIPTS.get("Trend Researcher"))
+
+    if "content-planner" in active_agents:
+        _run_one("Content Planner", AGENT_SCRIPTS.get("Content Planner"))
+
+        # script-writer + creative-director both consume content_calendar.json —
+        # independent of each other once it exists, so run in parallel (same
+        # pattern as the review chain above).
+        build_threads = []
+        if "script-writer" in active_agents:
+            build_threads.append(threading.Thread(
+                target=_run_one, args=("Script Writer", AGENT_SCRIPTS.get("Script Writer")), daemon=True))
+        if "creative-director" in active_agents:
+            build_threads.append(threading.Thread(
+                target=_run_one, args=("Creative Director", AGENT_SCRIPTS.get("Creative Director")), daemon=True))
+        for t in build_threads:
+            t.start()
+        for t in build_threads:
+            t.join()
+        if build_threads:
+            print("[weekly-program] Build phase 2 complete (Script Writer + Creative Director).")
+
+        if "carousel-designer" in active_agents:
+            _run_carousel_batch_for_week(brand_slug)
+    else:
+        print("[weekly-program] Skipping build loop — content-planner not active in this brand's program_phase.")
 
     if _DB_AVAILABLE and db_run_id:
         _db.update_agent_run_status(db_run_id, "done")
+
+
+def _phases_active_agents(brand_slug: str) -> list[str]:
+    """This brand's current program_phase's active_agents list (agents/_lib/phases.py)."""
+    from agents._lib import phases as _phases
+    phase = _load_brand_program_phase(brand_slug)
+    return _phases.get_phase_plan(phase)["active_agents"]
+
+
+def _run_carousel_batch_for_week(brand_slug: str) -> None:
+    """Carousel Designer takes one topic/post at a time (routes/content.py's
+    /api/carousel/generate uses the same --topic CLI contract) — it has no
+    'run everything in the calendar' mode like the other content agents. This
+    loops over the week_1 posts content-planner just wrote with format=="Carousel"
+    and runs one Carousel Designer subprocess per post, same cost-gate/lock
+    path as every other agent (_run_agent_subprocess checks paid_ops itself)."""
+    calendar_path = BRANDS_DIR / brand_slug / "content_calendar.json"
+    if not calendar_path.exists():
+        print("[weekly-program] Skipping Carousel Designer — content_calendar.json not found")
+        return
+    try:
+        with open(calendar_path) as f:
+            calendar = json.load(f)
+    except Exception as e:
+        print(f"[weekly-program] Skipping Carousel Designer — could not read content_calendar.json: {e}")
+        return
+
+    posts = ((calendar.get("week_1") or {}).get("posts")) or []
+    carousel_posts = [p for p in posts if (p.get("format") or "").strip().lower() == "carousel"]
+    if not carousel_posts:
+        print("[weekly-program] No Carousel-format posts in week_1 — skipping Carousel Designer.")
+        return
+
+    script_rel = AGENT_SCRIPTS.get("Carousel Designer")
+    if not script_rel:
+        print("[weekly-program] Skipping Carousel Designer — no script path configured")
+        return
+    script_path = BASE_DIR / script_rel
+    if not script_path.exists():
+        print(f"[weekly-program] Skipping Carousel Designer — script not found: {script_path}")
+        return
+
+    for post in carousel_posts:
+        topic = (post.get("topic") or "").strip()
+        if not topic:
+            continue
+        ok, reason = _agent_paid_ops_check_for_launch("carousel-designer")
+        if not ok:
+            print(f"[weekly-program] ⛔ Carousel Designer NOT launched for '{topic}' — {reason}")
+            break  # cap hit — stop launching more, don't spam-fail the rest
+        print(f"[weekly-program] Starting: Carousel Designer for '{topic}'")
+        agent_env = os.environ.copy()
+        agent_env["ACTIVE_BRAND"] = brand_slug
+        agent_env["GRID_BRAND_SLUG"] = brand_slug
+        agent_env.update({k: v for k, v in brand_env(brand_slug).items() if v})
+        agent_env["PYTHONPATH"] = str(BASE_DIR) + (":" + agent_env.get("PYTHONPATH", "") if agent_env.get("PYTHONPATH") else "")
+        try:
+            subprocess.run(
+                [sys.executable, str(script_path), "--brand-slug", brand_slug, "--topic", topic],
+                cwd=str(BASE_DIR), capture_output=True, text=True, timeout=300, env=agent_env,
+            )
+            print(f"[weekly-program] Completed: Carousel Designer for '{topic}'")
+        except subprocess.TimeoutExpired:
+            print(f"[weekly-program] Carousel Designer timed out for '{topic}'")
+
+
+def _agent_paid_ops_check_for_launch(agent_slug_key: str) -> tuple[bool, str]:
+    """Same pre-launch cost-gate check _run_agent_subprocess does internally —
+    exposed here so _run_carousel_batch_for_week can stop launching more
+    carousels the moment the cap is hit, instead of firing them all and letting
+    each one individually fail after the fact."""
+    try:
+        from agents._lib import paid_ops
+        from agents._lib.model_gateway import is_pure_math
+        if is_pure_math(agent_slug_key):
+            return True, "pure-math, no cost gate"
+        return paid_ops.check(f"agent:{agent_slug_key}")
+    except Exception as e:
+        return False, f"paid-ops unavailable ({e}) — fail-closed"
+
+
+def _run_program_pipeline(
+    brand_slug: str,
+    program_slug: str,
+    body_fn,
+) -> None:
+    """Shared lock + cost-guard + DB-run-row scaffold for the monthly/quarterly
+    cadence programs — same shape as run_weekly_program's own scaffold (Stage 0),
+    factored out so run_monthly_program/run_quarterly_program don't each
+    re-implement the lock/guard/run-row bookkeeping. `body_fn()` is called once
+    the lock is acquired and the coarse cost guard has passed."""
+    if _agent_already_running(brand_slug, program_slug):
+        print(f"[{program_slug}] Skipping {brand_slug} — already in flight")
+        return
+
+    db_run_id: str | None = None
+    brand_id = _get_brand_id(brand_slug) if _DB_AVAILABLE else None
+    if brand_id:
+        run_row = _db.save_agent_run(brand_id, program_slug)
+        if run_row:
+            db_run_id = run_row["id"]
+
+    try:
+        from agents._lib import paid_ops
+    except Exception as e:
+        print(f"[{program_slug}] ⛔ paid-ops unavailable ({e}) — blocking (fail-closed)")
+        if _DB_AVAILABLE and db_run_id:
+            _db.update_agent_run_status(db_run_id, "blocked")
+        return
+
+    ok, reason = paid_ops.check(f"agent:{program_slug}")
+    if not ok:
+        print(f"[{program_slug}] ⛔ {brand_slug} — {reason}")
+        if _DB_AVAILABLE and db_run_id:
+            _db.update_agent_run_status(db_run_id, "blocked")
+        return
+
+    print(f"[{program_slug}] {brand_slug}: lock acquired + cost guard passed.")
+    body_fn(brand_slug)
+
+    if _DB_AVAILABLE and db_run_id:
+        _db.update_agent_run_status(db_run_id, "done")
+
+
+def run_monthly_program(brand_slug: str) -> None:
+    """Monthly mix-review cadence (GRIDLOCK-PROGRAM-01JUL Stage 4). $0 — runs the
+    pure-math Monthly Mix Composer (agents/monthly_mix_composer.py), which rolls
+    up the brand's already-computed performance_history.json into one monthly
+    scale/keep/cut card. No LLM call, no new agent spend. Scheduler fires this
+    on a weekly cron tick gated to one week-of-month (scheduler/worker.py) so it
+    only actually runs once a month per brand."""
+    def _body(slug: str) -> None:
+        script_path = BASE_DIR / "agents/monthly_mix_composer.py"
+        if not script_path.exists():
+            print(f"[monthly-program] Skipping — script not found: {script_path}")
+            return
+        _run_agent_subprocess(str(script_path), slug, "Monthly Mix Composer", None)
+        print(f"[monthly-program] {slug}: Monthly Mix Composer complete.")
+
+    _run_program_pipeline(brand_slug, "monthly-program", _body)
+
+
+def run_quarterly_program(brand_slug: str) -> None:
+    """Quarterly QBR cadence (GRIDLOCK-PROGRAM-01JUL Stage 4). Re-runs the real
+    Strategy Agent (agents/strategy_agent.py — Opus, paid) to refresh the 90-day
+    roadmap against the quarter's accumulated real trend + performance data,
+    same script and cost-gate path as every other paid agent run — nothing new
+    here, just a new cadence that dispatches the existing agent. Scheduler fires
+    this on a weekly cron tick gated to one week-of-month in one quarter-start
+    month (scheduler/worker.py) so it only actually runs once a quarter per
+    brand. NOT wired to any auto-publish — Strategy Agent's output lands in
+    pending_approval/ like every other run, approval gate intact."""
+    def _body(slug: str) -> None:
+        script_rel = AGENT_SCRIPTS.get("Strategy Agent")
+        if not script_rel:
+            print(f"[quarterly-program] Skipping — Strategy Agent script not configured")
+            return
+        script_path = BASE_DIR / script_rel
+        if not script_path.exists():
+            print(f"[quarterly-program] Skipping — script not found: {script_path}")
+            return
+        _run_agent_subprocess(str(script_path), slug, "Strategy Agent", None)
+        print(f"[quarterly-program] {slug}: Strategy Agent QBR re-run complete.")
+
+    _run_program_pipeline(brand_slug, "quarterly-program", _body)
 
 
 def _daily_scheduler_loop() -> None:
@@ -1543,6 +1829,17 @@ def _publish_twitter_impl(brand_slug: str, filename: str):
         brand_token(brand_slug, "TWITTER_ACCESS_TOKEN"),
         brand_token(brand_slug, "TWITTER_ACCESS_SECRET"),
     )
+    # Standing publish policy: X is MANUAL-upload by default (feedback_publish_method,
+    # May 2026 — "X → MANUAL upload, always"). Auto-posting requires the brand to
+    # explicitly opt in via TWITTER_AUTO_PUBLISH=true in brands/{slug}/.env.
+    if (brand_token(brand_slug, "TWITTER_AUTO_PUBLISH") or "").strip().lower() not in ("true", "1", "on"):
+        return jsonify({"success": True, "data": {
+            "platform": "twitter", "mode": "prepared", "reason": "manual_policy",
+            "text": text, "post_id": fields["post_id"],
+            "note": "X posts are manual by policy — copy this text and post it yourself. "
+                    "(Set TWITTER_AUTO_PUBLISH=true in the brand's .env to opt in to auto-posting.)",
+        }}), 200
+
     status = token_status(*keys)
     if not status.get("live"):
         return jsonify({"success": True, "data": {
