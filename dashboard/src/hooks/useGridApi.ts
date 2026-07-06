@@ -199,7 +199,9 @@ export function useApproveOutput() {
   const { activeBrand } = useBrandStore()
   return useMutation({
     mutationFn: (filename: string) =>
-      postJson("/api/outputs/approve", { brand_slug: activeBrand.slug, filename }),
+      isDemo()
+        ? Promise.resolve({ success: true })
+        : postJson("/api/outputs/approve", { brand_slug: activeBrand.slug, filename }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outputs", "pending"] }),
   })
 }
@@ -209,7 +211,9 @@ export function useRejectOutput() {
   const { activeBrand } = useBrandStore()
   return useMutation({
     mutationFn: ({ filename, reason }: { filename: string; reason?: string }) =>
-      postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename, reason: reason || "" }),
+      isDemo()
+        ? Promise.resolve({ success: true })
+        : postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename, reason: reason || "" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outputs", "pending"] }),
   })
 }

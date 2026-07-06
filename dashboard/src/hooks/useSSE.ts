@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from "react"
 import { useAppStore } from "@/store/appStore"
+import { isDemo } from "@/lib/demo"
 
 export interface SSEEvent {
   type: string
@@ -14,7 +15,7 @@ export function useSSE() {
   const sourceRef = useRef<EventSource | null>(null)
 
   const connect = useCallback(() => {
-    if (sourceRef.current) return
+    if (sourceRef.current || isDemo()) return
     const es = new EventSource("/api/events")
     sourceRef.current = es
 

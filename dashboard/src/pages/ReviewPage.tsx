@@ -145,6 +145,7 @@ export function ReviewPage() {
   const [showScript, setShowScript] = useState(false)
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null)
   const [note, setNote] = useState("")
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const pending = useMemo(() => (pendingData?.outputs ?? []).map(adaptPending), [pendingData])
   const approved = useMemo(
@@ -167,7 +168,7 @@ export function ReviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage])
 
-  useEffect(() => { setNote("") }, [selectedId])
+  useEffect(() => { setNote(""); setActionError(null) }, [selectedId])
 
   useEffect(() => {
     if ((!selectedId || !items.some((i) => i.id === selectedId)) && items.length > 0) {
@@ -188,14 +189,23 @@ export function ReviewPage() {
 
   const handleApprove = useCallback(() => {
     if (!selectedId || stage !== "pending") return
-    approveMut.mutate(selectedId)
-    navigateBy(1)
+    setActionError(null)
+    approveMut.mutate(selectedId, {
+      onSuccess: () => navigateBy(1),
+      onError: (e) => setActionError((e as Error)?.message || "Approve failed — still in Drafts"),
+    })
   }, [selectedId, stage, navigateBy, approveMut])
 
   const handleReject = useCallback(() => {
     if (!selectedId || stage !== "pending") return
-    rejectMut.mutate({ filename: selectedId, reason: note.trim() })
-    navigateBy(1)
+    setActionError(null)
+    rejectMut.mutate(
+      { filename: selectedId, reason: note.trim() },
+      {
+        onSuccess: () => navigateBy(1),
+        onError: (e) => setActionError((e as Error)?.message || "Reject failed — still in Drafts"),
+      },
+    )
   }, [selectedId, stage, navigateBy, rejectMut, note])
 
   const handlePublish = useCallback(() => {
@@ -468,6 +478,7 @@ export function ReviewPage() {
                       placeholder="Add a note (optional) — if you reject, this teaches the team what to fix next time"
                       className="w-full rounded-lg border border-border bg-white/[0.02] px-3 py-1.5 text-[12px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/40"
                     />
+                    {actionError && <div className="mt-2 text-[12px] text-destructive">{actionError}</div>}
                   </div>
                 )}
                 <div className="flex items-center justify-between px-6 py-4">
