@@ -118,8 +118,12 @@ export function AuthPage() {
     if (error) {
       setErr(error)
       setBusy(false)
+      return
     }
-    // success → Supabase redirects the whole page to Google
+    // success → Supabase redirects the whole page to Google. If that
+    // redirect doesn't actually happen (blocked, misconfigured), don't
+    // leave every button on the page stuck showing a spinner forever.
+    setTimeout(() => setBusy(false), 8000)
   }
 
   return (

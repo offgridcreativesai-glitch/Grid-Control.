@@ -21,6 +21,11 @@ export interface AppState {
   toggleCommand: () => void;
   setCommandOpen: (open: boolean) => void;
 
+  // Mobile nav drawer (LeftRail collapses into this below the sm breakpoint)
+  isMobileNavOpen: boolean;
+  toggleMobileNav: () => void;
+  setMobileNavOpen: (open: boolean) => void;
+
   // Platform filters
   selectedPlatforms: Platform[];
   togglePlatform: (platform: Platform) => void;
@@ -41,6 +46,11 @@ export const useAppStore = create<AppState>((set) => ({
   isCommandOpen: false,
   toggleCommand: () => set((state) => ({ isCommandOpen: !state.isCommandOpen })),
   setCommandOpen: (open) => set({ isCommandOpen: open }),
+
+  // Mobile nav drawer
+  isMobileNavOpen: false,
+  toggleMobileNav: () => set((state) => ({ isMobileNavOpen: !state.isMobileNavOpen })),
+  setMobileNavOpen: (open) => set({ isMobileNavOpen: open }),
 
   // Platforms
   selectedPlatforms: ["x", "instagram", "linkedin", "tiktok", "youtube"],

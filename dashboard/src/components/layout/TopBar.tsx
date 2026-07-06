@@ -1,16 +1,22 @@
-import { Search, Bell, MessageSquare } from "lucide-react";
+import { Search, Bell, MessageSquare, Menu } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { useBrandStore } from "@/store/brandStore";
 import { cn } from "@/lib/utils";
 
 export function TopBar() {
-  const { toggleCommand, toggleBrain, isBrainOpen } = useAppStore();
+  const { toggleCommand, toggleBrain, isBrainOpen, toggleMobileNav } = useAppStore();
   const { activeBrand } = useBrandStore();
 
   return (
     <header className="flex h-12 items-center justify-between border-b border-border bg-background px-4">
-      {/* Left: Brand pill */}
+      {/* Left: Menu toggle (mobile) + Brand pill */}
       <div className="flex items-center gap-3">
+        <button
+          onClick={toggleMobileNav}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary transition-colors sm:hidden"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
         <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           <span className="text-sm font-medium">{activeBrand.name}</span>
