@@ -27,6 +27,9 @@ from datetime import datetime, timezone
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _HOST = "https://graph.instagram.com/v21.0"
 
+sys.path.insert(0, _ROOT)
+from agents._lib import token_crypto  # noqa: E402 — decrypt brand tokens at rest
+
 try:
     import certifi
     _CTX = ssl.create_default_context(cafile=certifi.where())
@@ -44,7 +47,7 @@ def _load_env(slug: str):
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
-            env[k.strip()] = v.strip()
+            env[k.strip()] = token_crypto.decrypt(v.strip())
     return env
 
 

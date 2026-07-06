@@ -416,12 +416,16 @@ def _brand_env_path(slug: str) -> Path:
 
 
 def brand_env(slug: str) -> dict:
-    """Load a brand's private .env as a dict ({} if none/unreadable)."""
+    """Load a brand's private .env as a dict ({} if none/unreadable).
+    Values are transparently decrypted (agents._lib.token_crypto) — callers
+    never see the enc: prefix or ciphertext, only the usable token (or ""
+    if it couldn't be decrypted)."""
     p = _brand_env_path(slug)
     if not slug or not p.exists():
         return {}
     try:
-        return {k: (v or "") for k, v in _dotenv_values(p).items()}
+        from agents._lib import token_crypto
+        return {k: token_crypto.decrypt(v or "") for k, v in _dotenv_values(p).items()}
     except Exception:
         return {}
 
@@ -433,12 +437,16 @@ def brand_token(slug: str, env_key: str) -> str:
 
 
 def _write_brand_env_token(slug: str, env_key: str, value: str) -> None:
-    """Upsert key=value into brands/<slug>/.env (creates file/dir if needed)."""
+    """Upsert key=value into brands/<slug>/.env (creates file/dir if needed).
+    Encrypts at rest via agents._lib.token_crypto (no-op, plaintext, if
+    GRID_TOKEN_ENCRYPTION_KEY isn't configured — see that module's docstring)."""
+    from agents._lib import token_crypto
+    stored_value = token_crypto.encrypt(value)
     p = _brand_env_path(slug)
     p.parent.mkdir(parents=True, exist_ok=True)
     content = p.read_text(encoding="utf-8") if p.exists() else ""
     pattern = re.compile(rf"^{re.escape(env_key)}\s*=.*$", re.MULTILINE)
-    new_line = f"{env_key}={value}"
+    new_line = f"{env_key}={stored_value}"
     if pattern.search(content):
         new_content = pattern.sub(new_line, content)
     else:

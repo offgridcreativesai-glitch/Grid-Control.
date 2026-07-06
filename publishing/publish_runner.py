@@ -19,6 +19,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE))
+from agents._lib import token_crypto  # noqa: E402 — decrypt brand tokens at rest
 
 BRAND = os.getenv("ACTIVE_BRAND", "askgauravai")
 BRAND_DIR = BASE / "brands" / BRAND
@@ -32,7 +33,7 @@ def _load_env():
                 ln = ln.strip()
                 if ln and not ln.startswith("#") and "=" in ln:
                     k, v = ln.split("=", 1)
-                    os.environ[k.strip()] = v.strip().strip('"').strip("'")
+                    os.environ[k.strip()] = token_crypto.decrypt(v.strip().strip('"').strip("'"))
 
 
 def _log_read() -> dict:
