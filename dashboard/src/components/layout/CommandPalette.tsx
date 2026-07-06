@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import {
-  Home,
+  LayoutDashboard,
   CheckSquare,
   Bot,
   Calendar,
   BarChart3,
-  Settings,
-  Play,
+  BrainCircuit,
+  Plug,
+  SlidersHorizontal,
   FileText,
   Search,
 } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
-import { AGENTS } from "@/data/agents";
 import {
   CommandDialog,
   CommandEmpty,
@@ -23,12 +23,14 @@ import {
 } from "@/components/ui/command";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Command", description: "Dashboard overview" },
+  { path: "/command", icon: LayoutDashboard, label: "Command", description: "Dashboard overview" },
+  { path: "/team", icon: Bot, label: "Your team", description: "The agent crew" },
   { path: "/review", icon: CheckSquare, label: "Review", description: "Approval queue" },
-  { path: "/agents", icon: Bot, label: "Agents", description: "Agent control panel" },
   { path: "/calendar", icon: Calendar, label: "Calendar", description: "Content calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights", description: "Performance analytics" },
-  { path: "/system", icon: Settings, label: "System", description: "Settings & configuration" },
+  { path: "/memory", icon: BrainCircuit, label: "Memory", description: "What the team remembers" },
+  { path: "/connections", icon: Plug, label: "Connections", description: "Platform accounts" },
+  { path: "/settings", icon: SlidersHorizontal, label: "Settings", description: "Publishing & spend" },
 ];
 
 export function CommandPalette() {
@@ -37,12 +39,6 @@ export function CommandPalette() {
 
   const handleSelect = (path: string) => {
     navigate(path);
-    setCommandOpen(false);
-  };
-
-  const handleRunAgent = (agentId: number) => {
-    // In a real app, this would trigger the agent
-    console.log(`Running agent ${agentId}`);
     setCommandOpen(false);
   };
 
@@ -85,24 +81,6 @@ export function CommandPalette() {
             <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>Review pending drafts</span>
           </CommandItem>
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Run Agent">
-          {AGENTS.slice(0, 6).map((agent) => (
-            <CommandItem
-              key={agent.id}
-              value={`run ${agent.name}`}
-              onSelect={() => handleRunAgent(agent.id)}
-            >
-              <Play className="mr-2 h-4 w-4 text-muted-foreground" />
-              <span className="font-mono text-xs text-muted-foreground mr-2">
-                {String(agent.id).padStart(2, "0")}
-              </span>
-              <span>{agent.name}</span>
-            </CommandItem>
-          ))}
         </CommandGroup>
       </CommandList>
     </CommandDialog>
