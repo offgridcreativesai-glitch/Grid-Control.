@@ -35,6 +35,25 @@ type PipelineItem = {
   weight: "strategy" | "content"
 }
 
+/** Stakes + reversibility derived from the same real signal as `weight` — no
+ * fabricated data, just a plainer label on a fact we already know: a plan-level
+ * decision commits weeks of downstream work (high stakes, not easily undone);
+ * a single piece can still be rejected/re-requested any time before it's
+ * published (low stakes, reversible). */
+function stakesFor(item: PipelineItem): { stakes: "high" | "low"; reversible: boolean } {
+  return item.weight === "strategy"
+    ? { stakes: "high", reversible: false }
+    : { stakes: "low", reversible: true }
+}
+
+/** What approving this actually does, spelled out — the second half of the
+ * account-manager framing (framingFor gives the "why", this gives the "then what"). */
+function effectFor(item: PipelineItem): string {
+  return item.weight === "strategy"
+    ? "Approving locks this direction — the team builds this week's (and beyond) work against it. Rejecting sends it back for a different angle."
+    : "Approving moves it to Ready to publish. Rejecting removes it — nothing is lost, the team can draft a replacement."
+}
+
 // Backend slugs whose outputs steer the PLAN (weeks/months of downstream work)
 // rather than being one publishable piece. Used only for lane grouping — the
 // client still sees personas, never these slugs (THE SECRET holds).
@@ -125,6 +144,7 @@ export function ReviewPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showScript, setShowScript] = useState(false)
   const [publishResult, setPublishResult] = useState<PublishResult | null>(null)
+  const [note, setNote] = useState("")
 
   const pending = useMemo(() => (pendingData?.outputs ?? []).map(adaptPending), [pendingData])
   const approved = useMemo(
@@ -143,8 +163,11 @@ export function ReviewPage() {
     setSelectedId(items[0]?.id ?? null)
     setPublishResult(null)
     setShowScript(false)
+    setNote("")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage])
+
+  useEffect(() => { setNote("") }, [selectedId])
 
   useEffect(() => {
     if ((!selectedId || !items.some((i) => i.id === selectedId)) && items.length > 0) {
@@ -171,9 +194,9 @@ export function ReviewPage() {
 
   const handleReject = useCallback(() => {
     if (!selectedId || stage !== "pending") return
-    rejectMut.mutate(selectedId)
+    rejectMut.mutate({ filename: selectedId, reason: note.trim() })
     navigateBy(1)
-  }, [selectedId, stage, navigateBy, rejectMut])
+  }, [selectedId, stage, navigateBy, rejectMut, note])
 
   const handlePublish = useCallback(() => {
     if (!selected || stage !== "approved") return
@@ -288,6 +311,11 @@ export function ReviewPage() {
                       <PlatformIcon platform={it.platform} className="h-3.5 w-3.5" />
                     )}
                     <span className="text-[11.5px] text-muted-foreground">{it.draftedBy}</span>
+                    {stage === "pending" && stakesFor(it).stakes === "high" && (
+                      <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-primary/90">
+                        high stakes
+                      </span>
+                    )}
                     <StatusDot status={stage === "published" ? "success" : "queued"} className="ml-auto" />
                   </div>
                   {it.title && <p className="mb-0.5 line-clamp-1 text-[13.5px] font-medium text-foreground">{it.title}</p>}
@@ -347,9 +375,27 @@ export function ReviewPage() {
               <div className="flex-1 overflow-auto p-6">
                 <div className="mx-auto max-w-lg">
                   {stage === "pending" && (
-                    <p className="mb-4 rounded-xl border border-border bg-white/[0.02] px-4 py-3 text-[12.5px] leading-relaxed text-muted-foreground">
-                      {framingFor(selected)}
-                    </p>
+                    <div className="mb-4 space-y-2 rounded-xl border border-border bg-white/[0.02] px-4 py-3 text-[12.5px] leading-relaxed">
+                      <p>
+                        <span className="font-semibold uppercase tracking-wide text-[10.5px] text-muted-foreground">why · </span>
+                        <span className="text-muted-foreground">{framingFor(selected)}</span>
+                      </p>
+                      <p>
+                        <span className="font-semibold uppercase tracking-wide text-[10.5px] text-muted-foreground">if you approve · </span>
+                        <span className="text-muted-foreground">{effectFor(selected)}</span>
+                      </p>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide",
+                          stakesFor(selected).stakes === "high" ? "bg-primary/15 text-primary/90" : "bg-emerald/15 text-emerald",
+                        )}>
+                          {stakesFor(selected).stakes} stakes
+                        </span>
+                        <span className="text-[10.5px] text-muted-foreground">
+                          {stakesFor(selected).reversible ? "reversible — can be re-drafted" : "sets direction — not casually undone"}
+                        </span>
+                      </div>
+                    </div>
                   )}
                   {selected.weight === "strategy" ? (
                     /* Plan-level output — a document, not a social post mockup */
@@ -412,7 +458,19 @@ export function ReviewPage() {
               </div>
 
               {/* Action bar */}
-              <div className="flex items-center justify-between border-t border-border px-6 py-4">
+              <div className="border-t border-border">
+                {stage === "pending" && (
+                  <div className="px-6 pt-3">
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Add a note (optional) — if you reject, this teaches the team what to fix next time"
+                      className="w-full rounded-lg border border-border bg-white/[0.02] px-3 py-1.5 text-[12px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center justify-between px-6 py-4">
                 {stage === "pending" && (
                   <>
                     <div className="space-x-3 text-[11px] text-muted-foreground">
@@ -451,6 +509,7 @@ export function ReviewPage() {
                 {stage === "published" && (
                   <span className="text-[12.5px] text-muted-foreground">Live. Engagement is tracked automatically.</span>
                 )}
+                </div>
               </div>
             </div>
           )}

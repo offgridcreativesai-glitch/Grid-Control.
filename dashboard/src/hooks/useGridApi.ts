@@ -208,8 +208,8 @@ export function useRejectOutput() {
   const qc = useQueryClient()
   const { activeBrand } = useBrandStore()
   return useMutation({
-    mutationFn: (filename: string) =>
-      postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename }),
+    mutationFn: ({ filename, reason }: { filename: string; reason?: string }) =>
+      postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename, reason: reason || "" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outputs", "pending"] }),
   })
 }
