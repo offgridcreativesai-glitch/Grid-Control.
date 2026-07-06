@@ -45,7 +45,16 @@ except ImportError:
         pass
 
 app = Flask(__name__)
-CORS(app)
+
+# ── CORS allowlist (Jul 6 security fix) ───────────────────────────────────────
+# Was CORS(app) — any origin. A logged-in user's browser tab on ANY site could
+# call this API. Allowlist the real dashboard origins; extra ones can be added
+# via GRID_EXTRA_CORS_ORIGINS (comma-separated) without another code change.
+_CORS_ORIGINS = [
+    "https://v0-grid-control-dashboard.vercel.app",
+    "http://localhost:5280",
+] + [o.strip() for o in os.getenv("GRID_EXTRA_CORS_ORIGINS", "").split(",") if o.strip()]
+CORS(app, origins=_CORS_ORIGINS, supports_credentials=True)
 
 # SG3 (Phase I uploads): hard request-body ceiling so Werkzeug rejects oversized
 # bodies with 413 BEFORE the handler buffers them. 500 MB = the largest per-category
@@ -83,8 +92,10 @@ def rate_limit(max_requests: int = 30, window_seconds: int = 60):
     return decorator
 
 # ── Authentication ─────────────────────────────────────────────────────────────
-# All mutating / sensitive endpoints require X-Dashboard-Secret header.
-# Set DASHBOARD_SECRET in .env — frontend sends it with every request.
+# require_auth is Supabase JWT-only (Jul 6 — see its docstring). _DASHBOARD_SECRET
+# is kept only because routes/connections.py still uses it as an OAuth-state
+# signing fallback (a different purpose, not an auth bypass) — it is no longer
+# accepted anywhere as an alternative to a real login.
 _DASHBOARD_SECRET = os.getenv("DASHBOARD_SECRET", "").strip()
 
 def _safe_path(base: Path, user_input: str) -> Path | None:
@@ -120,21 +131,44 @@ def _get_current_user() -> dict | None:
 
 
 def require_auth(f):
-    """Decorator — accepts Supabase JWT (Authorization: Bearer) or legacy X-Dashboard-Secret."""
+    """Decorator — Supabase JWT only (Authorization: Bearer).
+
+    Jul 6 security fix: this used to also accept a static X-Dashboard-Secret
+    as a full-access bypass on EVERY route wearing this decorator (~80
+    endpoints, every brand, no per-user identity). That secret was ALSO baked
+    into the frontend build as VITE_DASHBOARD_SECRET and shipped in the public
+    JS bundle — anyone opening devtools on the deployed site could read it and
+    call any client-facing route as any brand. Removed entirely. The handful
+    of genuine server-to-server callers (scheduler, cron) now use their own
+    narrowly-scoped GRID_SCHEDULER_TOKEN / X-Grid-Service-Token instead — see
+    require_auth_or_service() below and _valid_service_token()."""
     from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Try JWT first
         user = _get_current_user()
         if user:
             request.user = user
             return f(*args, **kwargs)
-        # Fall back to legacy secret
-        if _DASHBOARD_SECRET:
-            token = request.headers.get("X-Dashboard-Secret", "")
-            if token == _DASHBOARD_SECRET:
-                request.user = None
-                return f(*args, **kwargs)
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+    return decorated
+
+
+def require_auth_or_service(f):
+    """Decorator for routes a real logged-in user AND a server-to-server
+    caller (cron, scheduler) both legitimately need to hit — e.g. triggering
+    a brand's daily pipeline. Accepts a Supabase JWT (sets request.user) OR
+    the scoped X-Grid-Service-Token (request.user stays None). Never accepts
+    the retired X-Dashboard-Secret."""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = _get_current_user()
+        if user:
+            request.user = user
+            return f(*args, **kwargs)
+        if _valid_service_token():
+            request.user = None
+            return f(*args, **kwargs)
         return jsonify({"success": False, "error": "Unauthorized"}), 401
     return decorated
 
@@ -199,7 +233,11 @@ def _authorize_brand(brand_slug: str):
         return None, (jsonify(success=False, error="Brand not found"), 404)
     user = getattr(request, "user", None)
     if user is None:
-        # require_auth already validated the legacy X-Dashboard-Secret = trusted operator
+        # Jul 6: request.user is None ONLY when require_auth_or_service granted
+        # access via the scoped X-Grid-Service-Token (scheduler/cron) — plain
+        # require_auth always sets a real user dict or 401s before this runs,
+        # so this branch is unreachable from any browser/client-facing path.
+        # The retired X-Dashboard-Secret used to also land here; it no longer can.
         return brand_id, None
     try:
         if _db.is_super_admin(user["id"]) or _db.check_brand_access(user["id"], brand_id):

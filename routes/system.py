@@ -12,19 +12,18 @@ bp = Blueprint("system", __name__)
 def sse_events():
     """Global SSE stream — client subscribes to get live agent activity updates.
 
-    EventSource cannot set Authorization headers, so auth is via ?token= (Supabase
-    JWT) or ?secret= (legacy dashboard secret). Deny-by-default.
+    EventSource cannot set Authorization headers, so auth is via ?token=
+    (Supabase JWT) only. Deny-by-default. (Jul 6: dropped the legacy
+    ?secret= dashboard-secret fallback — see require_auth's docstring in
+    core.py for why that secret is retired everywhere.)
     """
     token = request.args.get("token", "")
-    secret = request.args.get("secret", "")
     authed = False
     if token and _DB_AVAILABLE:
         try:
             authed = bool(_db.verify_jwt(token))
         except Exception:
             authed = False
-    if not authed and _DASHBOARD_SECRET and secret == _DASHBOARD_SECRET:
-        authed = True
     if not authed:
         return jsonify({"success": False, "error": "Unauthorized"}), 401
 
