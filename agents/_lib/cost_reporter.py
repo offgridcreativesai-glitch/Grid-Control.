@@ -52,7 +52,7 @@ def record(
         # daily cap self-updates from actual cost (best-effort; never raises).
         try:
             from agents._lib import paid_ops
-            paid_ops.record_spend(total_cost)
+            paid_ops.record_spend(total_cost, brand_slug=brand_slug or None)
         except Exception:
             pass
 

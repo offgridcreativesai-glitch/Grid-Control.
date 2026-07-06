@@ -328,7 +328,7 @@ class TrendResearcher:
         # or the daily cap is hit. Fail-closed (block) if the breaker can't load.
         try:
             from agents._lib import paid_ops
-            _ok, _reason = paid_ops.check(f"apify:{actor_id}")
+            _ok, _reason = paid_ops.check(f"apify:{actor_id}", brand_slug=self.brand_slug)
         except Exception as _e:
             _ok, _reason = False, f"paid_ops unavailable ({_e})"
         if not _ok:

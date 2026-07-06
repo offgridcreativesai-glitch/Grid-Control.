@@ -1043,7 +1043,7 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
         _is_free, paid_ops = False, None
         print(f"[GRID CONTROL] ⛔ paid-ops unavailable ({_po_imp}) — blocking paid launch (fail-closed)")
     if not _is_free:
-        _ok, _reason = (paid_ops.check(f"agent:{agent_slug_key}") if paid_ops else (False, "paid_ops import failed"))
+        _ok, _reason = (paid_ops.check(f"agent:{agent_slug_key}", brand_slug=brand_slug) if paid_ops else (False, "paid_ops import failed"))
         if not _ok:
             print(f"[GRID CONTROL] ⛔ paid-ops: {agent_name} NOT launched — {_reason}")
             _update_session_agent_status(brand_slug, agent_name, "blocked", f"paid-ops: {_reason}")
@@ -1335,7 +1335,7 @@ def run_weekly_program(brand_slug: str) -> None:
     # Coarse program-level pre-check (in ADDITION to each subprocess's own
     # per-agent paid_ops.check inside _run_agent_subprocess) — fail fast and log
     # clearly before spawning any threads at all.
-    ok, reason = paid_ops.check("agent:weekly-program")
+    ok, reason = paid_ops.check("agent:weekly-program", brand_slug=brand_slug)
     if not ok:
         print(f"[weekly-program] ⛔ {brand_slug} — {reason}")
         if _DB_AVAILABLE and db_run_id:
@@ -1451,7 +1451,7 @@ def _run_carousel_batch_for_week(brand_slug: str) -> None:
         topic = (post.get("topic") or "").strip()
         if not topic:
             continue
-        ok, reason = _agent_paid_ops_check_for_launch("carousel-designer")
+        ok, reason = _agent_paid_ops_check_for_launch("carousel-designer", brand_slug=brand_slug)
         if not ok:
             print(f"[weekly-program] ⛔ Carousel Designer NOT launched for '{topic}' — {reason}")
             break  # cap hit — stop launching more, don't spam-fail the rest
@@ -1471,7 +1471,7 @@ def _run_carousel_batch_for_week(brand_slug: str) -> None:
             print(f"[weekly-program] Carousel Designer timed out for '{topic}'")
 
 
-def _agent_paid_ops_check_for_launch(agent_slug_key: str) -> tuple[bool, str]:
+def _agent_paid_ops_check_for_launch(agent_slug_key: str, brand_slug: str | None = None) -> tuple[bool, str]:
     """Same pre-launch cost-gate check _run_agent_subprocess does internally —
     exposed here so _run_carousel_batch_for_week can stop launching more
     carousels the moment the cap is hit, instead of firing them all and letting
@@ -1481,7 +1481,7 @@ def _agent_paid_ops_check_for_launch(agent_slug_key: str) -> tuple[bool, str]:
         from agents._lib.model_gateway import is_pure_math
         if is_pure_math(agent_slug_key):
             return True, "pure-math, no cost gate"
-        return paid_ops.check(f"agent:{agent_slug_key}")
+        return paid_ops.check(f"agent:{agent_slug_key}", brand_slug=brand_slug)
     except Exception as e:
         return False, f"paid-ops unavailable ({e}) — fail-closed"
 
@@ -1515,7 +1515,7 @@ def _run_program_pipeline(
             _db.update_agent_run_status(db_run_id, "blocked")
         return
 
-    ok, reason = paid_ops.check(f"agent:{program_slug}")
+    ok, reason = paid_ops.check(f"agent:{program_slug}", brand_slug=brand_slug)
     if not ok:
         print(f"[{program_slug}] ⛔ {brand_slug} — {reason}")
         if _DB_AVAILABLE and db_run_id:
@@ -1673,7 +1673,21 @@ def _publish_instagram_impl(brand_slug: str, filename: str):
     except Exception as e:
         return jsonify({"success": False, "error": f"Slide hosting failed: {e}"}), 502
 
-    # 2. Decide: auto-publish vs prepare-only based on real token liveness.
+    # 2. Decide: auto-publish vs prepare-only. Per-brand publish policy (owner
+    # setting, default manual) is checked before token liveness — manual means
+    # never call the platform API even if the token works.
+    from agents._lib import publish_policy
+    if publish_policy.get_policy(brand_slug, "instagram") == "manual":
+        return jsonify({"success": True, "data": {
+            "platform": "instagram",
+            "mode": "prepared",
+            "reason": "manual_policy",
+            "slide_urls": slide_urls,
+            "caption": caption,
+            "post_id": post_id,
+            "note": "Instagram is set to manual in Settings — slides hosted + caption ready. Post it yourself, or switch to Assisted to auto-publish.",
+        }}), 200
+
     token = brand_token(brand_slug, "META_GRAPH_API_TOKEN")
     status = token_status(token)
     if not status.get("live"):
@@ -1787,6 +1801,14 @@ def _publish_linkedin_impl(brand_slug: str, filename: str):
     text = _compose_social_text(fields, prefer="body")
     if not text:
         return jsonify({"success": False, "error": "No text to post (empty body and caption)"}), 400
+
+    from agents._lib import publish_policy
+    if publish_policy.get_policy(brand_slug, "linkedin") == "manual":
+        return jsonify({"success": True, "data": {
+            "platform": "linkedin", "mode": "prepared", "reason": "manual_policy",
+            "text": text, "post_id": fields["post_id"],
+            "note": "LinkedIn is set to manual in Settings — text ready. Post it yourself, or switch to Assisted to auto-publish.",
+        }}), 200
 
     token = brand_token(brand_slug, "LINKEDIN_ACCESS_TOKEN")
     urn = brand_token(brand_slug, "LINKEDIN_URN")

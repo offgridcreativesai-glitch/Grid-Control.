@@ -412,6 +412,136 @@ def brand_file():
 
 # ── Cost Tracking ─────────────────────────────────────────────────────────────
 
+@bp.route("/api/brands/<brand_slug>/trust-dial", methods=["GET"])
+@require_auth
+def get_trust_dial(brand_slug: str):
+    """GRIDLOCK-PROGRAM-01JUL Stage 5. Returns this brand's per-agent trust-dial
+    overrides (agents/_lib/trust_dial.py). Any agent NOT present in the
+    response is implicitly 'consult' (the default) — the FE should treat a
+    missing key the same as an explicit 'consult'."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    from agents._lib import trust_dial
+    return jsonify({"success": True, "data": {
+        "levels": trust_dial.LEVELS,
+        "default_level": trust_dial.DEFAULT_LEVEL,
+        "settings": trust_dial.get_all(brand_slug),
+    }})
+
+
+@bp.route("/api/brands/<brand_slug>/trust-dial", methods=["POST"])
+@require_auth
+def set_trust_dial(brand_slug: str):
+    """Body: { agent_slug: str, level: "consult"|"automate"|"direct" }.
+    Building/reading this endpoint changes nothing by itself — only an
+    explicit call here moves an agent off the default 'consult' behavior.
+    Super-admin only (unlike most brand-settings routes): this controls
+    whether a human reviews an agent's output before it advances, so it's
+    held to the same bar as operator-mode Brain tools, not regular brand
+    membership."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    user = getattr(request, "user", None)
+    if not (_DB_AVAILABLE and user and _db.is_super_admin(user["id"])):
+        return jsonify({"success": False, "error": "Super-admin only"}), 403
+    body = request.get_json(silent=True) or {}
+    agent_slug = (body.get("agent_slug") or "").strip()
+    level = (body.get("level") or "").strip().lower()
+    if not agent_slug:
+        return jsonify({"success": False, "error": "agent_slug required"}), 400
+    from agents._lib import trust_dial
+    if not trust_dial.is_valid_level(level):
+        return jsonify({"success": False, "error": f"level must be one of {trust_dial.LEVELS}"}), 400
+    settings = trust_dial.set_level(brand_slug, agent_slug, level)
+    return jsonify({"success": True, "data": {"settings": settings}})
+
+
+@bp.route("/api/brands/<brand_slug>/publish-policy", methods=["GET"])
+@require_auth
+def get_publish_policy(brand_slug: str):
+    """Owner-facing (not super-admin gated, unlike trust-dial): per-platform
+    manual/assisted publish policy (agents/_lib/publish_policy.py). Any
+    platform NOT present in the response is implicitly 'manual' (the
+    default) — the FE should treat a missing key the same as explicit
+    'manual'. X/Twitter is always 'manual' regardless of settings, per the
+    standing publish-method policy — the FE should not offer it as editable."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    from agents._lib import publish_policy
+    return jsonify({"success": True, "data": {
+        "levels": publish_policy.LEVELS,
+        "default_level": publish_policy.DEFAULT_LEVEL,
+        "locked_manual": publish_policy.LOCKED_MANUAL_PLATFORMS,
+        "settings": publish_policy.get_all(brand_slug),
+    }})
+
+
+@bp.route("/api/brands/<brand_slug>/publish-policy", methods=["POST"])
+@require_auth
+def set_publish_policy(brand_slug: str):
+    """Body: { platform: str, level: "manual"|"assisted" }. This governs the
+    PUBLISH step only — the human approval gate (K1) that decides whether an
+    output reaches outputs/approved/ is unchanged either way. Owner-facing:
+    any authenticated brand member may set this, since it's a normal
+    publishing preference, not a higher-trust control like the agent
+    trust-dial above."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    platform = (body.get("platform") or "").strip().lower()
+    level = (body.get("level") or "").strip().lower()
+    if not platform:
+        return jsonify({"success": False, "error": "platform required"}), 400
+    from agents._lib import publish_policy
+    try:
+        settings = publish_policy.set_policy(brand_slug, platform, level)
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    return jsonify({"success": True, "data": {"settings": settings}})
+
+
+@bp.route("/api/brands/<brand_slug>/cost-cap", methods=["GET"])
+@require_auth
+def get_cost_cap(brand_slug: str):
+    """Owner-facing daily spend cap + today's real spend (agents/_lib/paid_ops.py
+    + cost_caps.py). Never fails open: if this brand has no override set, the
+    response reflects the global default cap, not 'uncapped'."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    from agents._lib import paid_ops, cost_caps
+    snap = paid_ops.status(brand_slug=brand_slug)
+    snap["is_override"] = cost_caps.get_override(brand_slug) is not None
+    return jsonify({"success": True, "data": snap})
+
+
+@bp.route("/api/brands/<brand_slug>/cost-cap", methods=["POST"])
+@require_auth
+def set_cost_cap(brand_slug: str):
+    """Body: { daily_usd_cap: number }. Sets this brand's own daily cap,
+    overriding the global default. Owner-facing — any authenticated brand
+    member may set this, since it's a normal spend-control preference, not a
+    higher-trust control."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    try:
+        daily_usd_cap = float(body.get("daily_usd_cap"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "daily_usd_cap must be a number"}), 400
+    from agents._lib import cost_caps
+    try:
+        settings = cost_caps.set_override(brand_slug, daily_usd_cap)
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    return jsonify({"success": True, "data": settings})
+
+
 @bp.route("/api/brands/<brand_slug>/costs", methods=["GET"])
 @require_auth
 def brand_costs(brand_slug: str):
