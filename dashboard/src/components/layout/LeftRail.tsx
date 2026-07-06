@@ -5,16 +5,11 @@ import {
   BarChart3,
   ChevronDown,
   LogOut,
-  ShieldCheck,
-  Building2,
-  TrendingUp,
-  Cpu,
   LayoutDashboard,
-  Compass,
-  Eye,
-  ArrowLeftRight,
   Plug,
   Bot,
+  BrainCircuit,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -28,35 +23,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const clientNavItems = [
-  { path: "/", icon: LayoutDashboard, label: "Cockpit" },
-  { path: "/agents", icon: Bot, label: "Agents" },
+// Single client-only navigation. No admin panel, no view toggle.
+const navItems = [
+  { path: "/command", icon: LayoutDashboard, label: "Home" },
+  { path: "/team", icon: Bot, label: "Your team" },
   { path: "/review", icon: CheckSquare, label: "Review" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
+  { path: "/memory", icon: BrainCircuit, label: "Memory" },
   { path: "/connections", icon: Plug, label: "Connections" },
-];
-
-const adminNavItems = [
-  { path: "/admin", icon: ShieldCheck, label: "Overview" },
-  { path: "/agents", icon: Bot, label: "Agents" },
-  { path: "/admin/clients", icon: Building2, label: "Clients" },
-  { path: "/admin/revenue", icon: TrendingUp, label: "Revenue" },
-  { path: "/admin/system", icon: Cpu, label: "System" },
+  { path: "/settings", icon: SlidersHorizontal, label: "Settings" },
 ];
 
 export function LeftRail() {
   const { activeBrand, brands, setActiveBrand } = useBrandStore();
-  const { user, signOut, isSuperAdmin, viewMode, setViewMode } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
-
-  const navItems = viewMode === "admin" ? adminNavItems : clientNavItems;
-
-  const handleViewSwitch = () => {
-    const next = viewMode === "admin" ? "client" : "admin";
-    setViewMode(next);
-    navigate(next === "admin" ? "/admin" : "/");
-  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -87,116 +69,41 @@ export function LeftRail() {
                   {brand.name}
                 </span>
                 {brand.primary && (
-                  <span className="ml-auto text-[10px] text-muted-foreground">
-                    primary
-                  </span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">primary</span>
                 )}
               </DropdownMenuItem>
             ))}
-            {isSuperAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-muted-foreground" onClick={() => navigate("/onboarding")}>
-                  <ChevronDown className="mr-2 h-3 w-3 rotate-[-90deg]" />
-                  New brand
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-muted-foreground" onClick={() => navigate("/onboarding")}>
+              <ChevronDown className="mr-2 h-3 w-3 rotate-[-90deg]" />
+              New brand
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* View mode indicator */}
-        {isSuperAdmin && (
-          <div className="mb-2 px-1">
-            <span className={cn(
-              "text-[9px] font-mono uppercase tracking-wider",
-              viewMode === "admin" ? "text-primary" : "text-muted-foreground"
-            )}>
-              {viewMode}
-            </span>
-          </div>
-        )}
-
         {/* Navigation */}
         <div className="flex flex-1 flex-col items-center gap-1">
-          {/* All Brands control tower — owner only, above the per-brand cockpit */}
-          {isSuperAdmin && viewMode === "client" && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <NavLink
-                    to="/brands"
-                    className={({ isActive }) =>
-                      cn(
-                        "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
-                        isActive
-                          ? "bg-primary/20 text-primary"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                      )
-                    }
-                  >
-                    <Compass className="h-5 w-5" />
-                  </NavLink>
-                </TooltipTrigger>
-                <TooltipContent side="right">All Brands</TooltipContent>
-              </Tooltip>
-              <div className="my-1 w-6 border-t border-border" />
-            </>
-          )}
           {navItems.map((item) => (
             <Tooltip key={item.path}>
               <TooltipTrigger asChild>
                 <NavLink
                   to={item.path}
-                  end={item.path === "/" || item.path === "/admin"}
+                  end={item.path === "/"}
                   className={({ isActive }) =>
                     cn(
                       "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
                       isActive
-                        ? viewMode === "admin"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-secondary text-foreground"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        ? "bg-secondary text-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                     )
                   }
                 >
                   <item.icon className="h-5 w-5" />
                 </NavLink>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                {item.label}
-              </TooltipContent>
+              <TooltipContent side="right">{item.label}</TooltipContent>
             </Tooltip>
           ))}
-
-          {/* "Enter as client" / "Back to admin" toggle — super admin only */}
-          {isSuperAdmin && (
-            <>
-              <div className="my-2 w-6 border-t border-border" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleViewSwitch}
-                    className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
-                      viewMode === "admin"
-                        ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        : "text-primary hover:bg-primary/10"
-                    )}
-                  >
-                    {viewMode === "admin" ? (
-                      <Eye className="h-5 w-5" />
-                    ) : (
-                      <ArrowLeftRight className="h-5 w-5" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  {viewMode === "admin" ? "Enter as client" : "Back to admin"}
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
         </div>
 
         {/* Sign out + Grid Control Logo */}
@@ -211,9 +118,7 @@ export function LeftRail() {
                   <LogOut className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                Sign out ({user.email})
-              </TooltipContent>
+              <TooltipContent side="right">Sign out ({user.email})</TooltipContent>
             </Tooltip>
           )}
           <Tooltip>
@@ -227,9 +132,7 @@ export function LeftRail() {
                 </div>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              GRID CONTROL
-            </TooltipContent>
+            <TooltipContent side="right">GRID CONTROL</TooltipContent>
           </Tooltip>
         </div>
       </nav>

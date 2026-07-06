@@ -109,6 +109,13 @@ class CreativeDirector:
         else:
             self.log("ℹ️  FAL_API_KEY not set — image prompts will be generated but not executed")
 
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Decides STEPPS lever priority + proof style.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
+
         self._total_input_tokens = 0
         self._total_output_tokens = 0
         self._fal_generations = 0
@@ -170,22 +177,25 @@ class CreativeDirector:
 
     def run_brand_safety_check(self, concept: str) -> dict:
         """4-point brand safety check per spec. Returns {passed: bool, flags: []}."""
-        prompt = f"""You are a brand safety reviewer for OffGrid Creatives AI.
+        brand_name = self.brand_profile.get("brand_name", "the brand")
+        mood = self.brand_profile.get("visual_aesthetic") or "Premium, on-brand visual direction."
+        platforms = ", ".join(self.brand_profile.get("platforms") or ["Instagram", "LinkedIn"])
+        prompt = f"""You are a brand safety reviewer for {brand_name}.
 
 Run a 4-point brand safety check on this creative concept:
 
 CONCEPT:
 {concept}
 
-BRAND: OffGrid Creatives AI — AI-powered Ad Intelligence Reports for D2C founders.
-MOOD: Dark, premium, data-driven. Electric green / amber accents on deep black.
-PLATFORMS: Instagram + LinkedIn
+BRAND: {brand_name}
+MOOD: {mood}
+PLATFORMS: {platforms}
 
 CHECK THESE 4 POINTS:
 1. COPYRIGHT RISK — Does the concept reference any trademarked audio, visual style, or brand?
 2. CULTURAL SENSITIVITY — Does it accidentally touch current news tragedies or sensitive topics?
 3. PLATFORM POLICY — Would this violate Meta TOS, Instagram guidelines, or LinkedIn policies?
-4. BRAND CONSISTENCY — Does this still represent OffGrid Creatives AI correctly?
+4. BRAND CONSISTENCY — Does this still represent {brand_name} correctly?
 
 Return a JSON object ONLY:
 {{
@@ -224,10 +234,15 @@ If all 4 checks pass, return passed: true and empty flags array."""
         C — Story format, sequential
         Metric: maximises Save + Share rate on Instagram + LinkedIn
         """
-        brand_name = self.brand_profile.get("brand_name", "OffGrid Creatives AI")
-        product = self.brand_profile.get("product", "AI Ad Intelligence Report")
-        audience = ", ".join(self.brand_profile.get("audience", ["D2C founders"]))
-        platforms = ", ".join(self.brand_profile.get("platforms", ["Instagram", "LinkedIn"]))
+        brand_name = self.brand_profile.get("brand_name", "the brand")
+        product = self.brand_profile.get("product") or self.brand_profile.get("product_name", "the product")
+        audience = ", ".join(self.brand_profile.get("audience") or ["the target audience"])
+        platforms = ", ".join(self.brand_profile.get("platforms") or ["Instagram", "LinkedIn"])
+        brand_palette = self.brand_profile.get("brand_palette")
+        if brand_palette:
+            visual_direction = ", ".join(f"{k}: {v}" for k, v in brand_palette.items())
+        else:
+            visual_direction = self.brand_profile.get("visual_aesthetic") or "Premium, on-brand visual direction — no fixed palette on file yet."
 
         # Sample first 3 scripts for context
         script_samples = []
@@ -250,14 +265,18 @@ If all 4 checks pass, return passed: true and empty flags array."""
         else:
             competitor_summary = "No competitor data available."
 
-        prompt = f"""You are the Creative Director for {brand_name}.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
+        archetype_block = directive_block(self.archetype, agent="creative-director")
+        prompt = _operating_framework(2) + f"""
+You are the Creative Director for {brand_name}.
 
 {_UNTRUSTED_POLICY}
-
+{archetype_block}
 PRODUCT: {product}
 AUDIENCE: {audience}
 PLATFORMS: {platforms}
-VISUAL DIRECTION: Dark (#0A0A0A / #0D1117), Electric green (#00C853) or Amber (#F5A623) accent, Inter Bold or Space Grotesk, data-driven aesthetic.
+VISUAL DIRECTION: {visual_direction}
 
 SCRIPTS TO DIRECT (sample):
 {json.dumps(script_samples, indent=2)}
@@ -285,7 +304,8 @@ For EACH variant provide:
   - narration_text: (ElevenLabs voiceover — 1-2 sentences, 15-20 words max)
   - hook_text: (3-5 words for thumbnail/text overlay)
   - brand_safety_concept: (brief concept description for safety check)
-- viral_option: (Bold Viral direction — must reference 2+ STEPPS levers)
+- viral_option: (Bold Viral direction — must reference 2+ STEPPS levers, drawn FIRST
+  from the STEP 0 archetype's priority levers; justify any lever outside that priority list)
   - stepps_levers: (which 2+ STEPPS levers: Social Currency / Triggers / Emotion / Public / Practical Value / Stories)
   - image_prompt: (detailed Ideogram prompt)
   - video_prompt: (detailed Runway/Kling prompt)

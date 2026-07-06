@@ -1,7 +1,11 @@
 /**
  * Central API fetch wrapper.
- * Injects Supabase JWT (Authorization: Bearer) on every request.
- * Falls back to X-Dashboard-Secret for backward compatibility.
+ * Injects Supabase JWT (Authorization: Bearer) on every request. JWT-only —
+ * no fallback secret. (Jul 6 security fix: this used to fall back to
+ * VITE_DASHBOARD_SECRET, which is a client-bundle env var — anything in a
+ * Vite build ships in the public JS, so that "secret" was readable by
+ * anyone with devtools open on the deployed site. Removed. Requests without
+ * a valid session now correctly 401 instead of silently using a god token.)
  *
  * Hardening: supabase.auth.getSession() can deadlock on the navigator LockManager
  * (a known supabase-js issue) — if it hangs, every request wedges and the UI freezes
@@ -10,8 +14,6 @@
  */
 
 import { supabase } from "./supabase"
-
-const DASHBOARD_SECRET = import.meta.env.VITE_DASHBOARD_SECRET ?? ""
 
 function tokenFromStorage(): string | null {
   try {
@@ -47,8 +49,6 @@ export async function apiFetch(input: string, init: RequestInit = {}): Promise<R
   const token = await getAccessToken()
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
-  } else if (DASHBOARD_SECRET) {
-    headers.set("X-Dashboard-Secret", DASHBOARD_SECRET)
   }
 
   return fetch(input, { ...init, headers })

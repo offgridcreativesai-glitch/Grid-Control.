@@ -86,3 +86,24 @@ brands/*/outputs/pending_approval/brand-book/*_RERENDER.pdf
 brands/*/channel_discovery_v7.json
 brands/*/website_intel_v7.json
 /.grid_state/
+
+# Claude Code plugin-marketplace skill packs (symlinked from .agents/skills/,
+# not GC product code — see gotcha_load_dotenv_override_defeats_inline_env.md
+# sibling memory for context on this worktree's git-tracking cleanup)
+.claude/skills/*
+!.claude/skills/agent-introspection-debugging
+!.claude/skills/eval-harness
+!.claude/skills/market-research
+!.claude/skills/deep-research
+!.claude/skills/brainmap
+!.claude/skills/grid-control-dashboard
+!.claude/skills/fal-ai-media
+!.claude/skills/verification-loop
+!.claude/skills/content-engine
+!.claude/skills/graphify
+!.claude/skills/strategic-compact
+.agents/
+
+# Original-resolution avatar source backups (processed versions live in
+# dashboard/public/agents/ and are committed there)
+dashboard/.agent-src-backup/

@@ -39,9 +39,13 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 try:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._agent_framework import operating_framework as _operating_framework
+    from agents._lib.brand_archetype import classify_brand, directive_block
 except ImportError:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+    from agents._lib._agent_framework import operating_framework as _operating_framework
+    from agents._lib.brand_archetype import classify_brand, directive_block
 MODEL = model_for("script-writer")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -249,6 +253,17 @@ class ScriptWriter:
         self.voice_profile = None
         self.winning_hooks: list = []   # BUILD C — top hook patterns from past performance
         self.dead_hooks: list    = []   # BUILD C — hook patterns that historically flopped
+        # Which physical production model this brand's content needs — a personal-brand
+        # founder-on-camera piece (talking head) vs. a product brand (photography/lifestyle,
+        # no founder face required). Defaults to founder_talking_head only for brands that
+        # don't specify (matches this pipeline's original single-brand assumption).
+        self.production_format = self.brand_profile.get("production_format", "founder_talking_head")
+        # STEP 0 — explicit business-model archetype classification. Decides which
+        # psychological levers (STEPPS priority, hook patterns, CTA distance) this
+        # brand's scripts reason with. Persisted to brands/{slug}/brand_archetype.json.
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')}, confidence: {self.archetype.get('confidence')})")
         self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', 'Unknown')}")
         self._load_voice_profile()
         self._load_performance_history()
@@ -295,6 +310,103 @@ class ScriptWriter:
             self.log(f"Performance history loaded: {len(self.winning_hooks)} winning hook patterns, {len(self.dead_hooks)} dead patterns")
         except Exception as e:
             self.log(f"WARNING: Could not load performance_history.json — {e}")
+
+    def _build_hard_constraints_block(self) -> str:
+        """Generic hard-constraints section — same pattern as content_planner.py's
+        _build_hard_constraints_block. CTA/naming/lived-history rules are included
+        ONLY when the brand_profile actually defines the corresponding field, so a
+        product brand with no founder-narrative content model gets none of them."""
+        lines = []
+
+        if self.brand_profile.get("week_1_cta_rule") or self.brand_profile.get("hire_signal_rule"):
+            lines.append("CTA RULES (READ THE BRAND CONTEXT — vary by week/freebie-build status):")
+            if self.brand_profile.get("week_1_cta_rule"):
+                lines.append(f"- Week 1: {self.brand_profile['week_1_cta_rule']}")
+            if self.brand_profile.get("freebie_strategy"):
+                lines.append(
+                    "- Freebie CTAs allowed ONLY IF brand_profile.freebie_strategy confirms the "
+                    "freebie is actually built. See brand_profile.freebie_strategy."
+                )
+            if self.brand_profile.get("hire_signal_rule"):
+                lines.append(f"- {self.brand_profile['hire_signal_rule']}")
+
+        naming_fields = ("lived_history_sources", "lived_history_NOT_allowed", "grid_control_naming_rule")
+        if any(self.brand_profile.get(f) for f in naming_fields):
+            lines.append("\nLIVED-HISTORY + NAMING RULES:")
+            if self.brand_profile.get("lived_history_NOT_allowed"):
+                lines.append(
+                    f"- NEVER name: {self.brand_profile['lived_history_NOT_allowed']}. "
+                    f"Reference only via the approved framing in brand_profile.lived_history_sources."
+                )
+            if self.brand_profile.get("grid_control_naming_rule"):
+                lines.append(f"- {self.brand_profile['grid_control_naming_rule']}")
+            if self.brand_profile.get("lived_history_sources"):
+                lines.append("- Use ONLY the lived-history sources in brand_profile.lived_history_sources.")
+
+        lines.append(
+            "\nNEVER use AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, "
+            "delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer."
+        )
+        if self.brand_profile.get("freebie_strategy"):
+            lines.append("NEVER promise a deliverable (PDF, framework, template) that doesn't exist yet — see brand_profile.freebie_strategy.")
+        if self.brand_profile.get("hire_signal_rule"):
+            lines.append("NEVER use hire-me language. The listener self-identifies through content depth.")
+
+        return "\n".join(lines)
+
+    def _build_production_instructions_json(self) -> str:
+        """Returns the fixed JSON literal for production_instructions, branched on
+        self.production_format. founder_talking_head = the original personal-brand
+        on-camera instructions (Gaurav records himself). product_lifestyle = product
+        photography/styling direction for a brand with no founder-on-camera content
+        model (e.g. an apparel brand). Handoff path always uses self.brand_slug —
+        never hardcode a specific brand's folder."""
+        if self.production_format == "product_lifestyle":
+            return f"""{{
+    "who_shoots": "Product/lifestyle shoot — no founder face required unless the script explicitly flags requires_human_face.",
+    "shot_types": {{
+      "packshot": "Clean product-only shot, neutral or brand-palette background, even studio lighting — for catalog/detail clarity.",
+      "lifestyle": "Product in real use/on-body/in-context, natural setting matching the brand's audience — for scroll-stop relatability.",
+      "detail": "Close-up on texture, material, or the specific feature the hook/beat_2 references.",
+      "flat_lay": "Overhead styled arrangement (only if the script calls for a multi-item or 'the drop' reveal)."
+    }},
+    "styling": "Match brand_profile.visual_aesthetic / brand_palette. Props and setting should reinforce the audience in brand_profile.audience — do not default to a generic studio look.",
+    "framing": "specify: packshot | lifestyle/on-body | flat-lay | detail/texture | UGC-style handheld",
+    "beat_direction": [
+      "Beat 1 — setup shot: establish the product in context, matching the hook's tension.",
+      "Beat 2 — core idea/proof shot: the detail or texture shot that proves the claim (material, fit, feature).",
+      "Beat 3 — payoff/twist shot: the hero shot — the image that gets saved/shared."
+    ],
+    "duration_target": "specify: static image | short ≤30s product reel | medium 30-60s",
+    "retake_rules": [
+      "Shoot each shot type (packshot/lifestyle/detail) at least twice under slightly different light.",
+      "Check focus on the exact detail beat_2 references before moving on — this is the proof shot.",
+      "Confirm color accuracy against brand_palette before wrapping — mismatched color kills the edit."
+    ],
+    "post_production_handoff": "After the shoot, drop the raw photos/video files in brands/{self.brand_slug}/raw_recordings/{{{{week_N}}}}/{{{{post_id}}}}/ and ping the Brand Manager. Creative Director runs ONLY after raw assets are uploaded — not before."
+  }}"""
+        return f"""{{
+    "who_records": "Founder records this script themselves. Do NOT use ElevenLabs or any synthetic voice. Brand voice = the real recorded voice.",
+    "gear": {{
+      "primary_camera": "iPhone 13 Pro Max (4K HDR talking-head) — set to 4K 30fps, exposure locked, focus on eyes",
+      "broll_camera": "GoPro Hero 7 Black (only if the script needs B-roll: hands, screen, behind-the-scenes)",
+      "audio": "Wireless mic on shirt collar, ~6 inches from mouth. Test playback before recording the take.",
+      "lighting": "Face the largest window. NO ring light. NO ceiling light directly overhead. Soft natural light only."
+    }},
+    "framing": "specify: talking-head close-up | mid-shot at desk | screen-record + voiceover | walk-and-talk | static + voiceover",
+    "beat_direction": [
+      "Beat 1 — setup: deliver as a calm reflection. Slow start. No raised energy. Pause for 1 sec after the last word.",
+      "Beat 2 — core idea/proof: lean slightly forward. This is the diagnostic moment. Specific numbers/specifics here.",
+      "Beat 3 — payoff/twist: voice drops half a tone. The principle lands quietly, not loud. This is the line they remember."
+    ],
+    "duration_target": "specify: short ≤30s | medium 30-60s | long-form 10-15 min (cut into 4 Reels + 2 YouTube Shorts later)",
+    "retake_rules": [
+      "If you stumble on a beat — restart that beat from the top, not the whole script. Editor can stitch.",
+      "Record 2 alternate hook takes (different inflection) — Reel cut decisions are made later.",
+      "Sound test BEFORE the take. One bad audio file = whole reshoot."
+    ],
+    "post_production_handoff": "After recording, drop the raw .mov + audio files in brands/{self.brand_slug}/raw_recordings/{{{{week_N}}}}/{{{{post_id}}}}/ and ping the Brand Manager. Creative Director runs ONLY after raw recordings are uploaded — not before."
+  }}"""
 
     def load_file(self, filename: str, label: str) -> dict:
         path = os.path.join(self.brands_dir, filename)
@@ -405,8 +517,12 @@ Apply -20% confidence penalty to any hook that matches a DEAD pattern.
 
         # Rule 10: Build citable reference so Claude sees exact valid paths + values
         citable_reference_block = _build_citable_reference(source_index, post) if source_index else ""
+        hard_constraints_block = self._build_hard_constraints_block()
+        production_instructions_block = self._build_production_instructions_json()
+        archetype_block = directive_block(self.archetype, agent="script-writer")
 
-        prompt = f"""You are the Script Writer for OffGrid Marketing OS.
+        prompt = _operating_framework(agent_class=2) + f"""
+You are the Script Writer for OffGrid Marketing OS.
 Write a complete script for one content piece using the BEAT structure.
 Check brand voice. Flag if human face or voice is required.
 
@@ -426,27 +542,21 @@ TREND SIGNALS:
 
 ---
 
-Run the AutoResearch Loop. Write 3 hook/script variants:
-
-VARIANT A — PAIN-FIRST HOOK
-Open with the specific pain the audience feels right now.
-Make them feel seen. Then present the solution.
-
-VARIANT B — RESULT-FIRST HOOK
-Open with the outcome/transformation. Lead with the win.
-Then explain how to get there.
-
-VARIANT C — CURIOSITY/PATTERN INTERRUPT
-Open with something unexpected, contrarian, or counterintuitive.
-Disrupts the scroll. Creates a gap the reader needs to close.
+{archetype_block}
+Run the AutoResearch Loop. Write 3 hook/script variants using the VARIANT FRAMES
+defined in STEP 0 above — they are specific to this brand's archetype, do NOT
+fall back to a generic pain/result/curiosity split.
 
 SELECTION METRIC:
-better = highest predicted save rate + DM inquiry rate for this specific post
+better = the metric STEP 0's consideration cycle optimizes for
+(e.g. same-session click for product, save + inbound DM for service,
+reply rate + shares for personal) for this specific post
 
 Select the winner. One-line reason.
 
-HOOK GENERATOR — generate 5 hooks. Pick the 5 BEST-FIT patterns from this expanded list of 12
-(adapted from Seedance 2.0 viral hook framework — proven for short-form retention curves):
+HOOK GENERATOR — generate 5 hooks. Start from the HOOK PATTERNS prioritized in
+STEP 0 for this archetype; you may swap in at most 1 pattern from the full list
+of 12 below if the post's topic demands it (say why in pattern_description):
 
 VISUAL/COGNITIVE INTERRUPTS (work for text + video):
 1. Pattern Interrupt — violates an expected pattern in the niche ("Stop using ChatGPT for [X]")
@@ -479,23 +589,17 @@ IMPORTANT RULES:
 - beat_1 sets up the tension or context
 - beat_2 delivers the core idea or proof point
 - beat_3 is the payoff, twist, or emotional close
-- CTA rules (READ THE BRAND CONTEXT — these vary by week and freebie-build status):
-    * Week 1 (week_number == 1): NO comment-gated CTAs ("comment WORD"), NO promised deliverables. Use OPEN-LOOP DIAGNOSTIC engagement only — examples: "drop your AI tool stack — I'll tell you where it's breaking", "what's your biggest AI question you can't get a straight answer to?". Listener gives data, no deliverable promised. See brand_profile.week_1_cta_rule.
-    * Week 2-4: NO freebie CTAs unless brand_profile.freebie_strategy says the freebie is built AND brand_profile.dm_automation_required.status == "BUILT". Use diagnostic open-loop CTAs same as Week 1 by default.
-    * Week 5+: Freebie CTAs allowed IF the freebie + DM automation are confirmed built. Format: "comment WORD and I'll send you [specific deliverable name]" — only if brand_profile.freebie_strategy.first_freebie_built is true.
-    * NEVER use hire-me CTAs ("DM to work with me", "I'm available", "taking on clients") — banned forever per brand_profile.hire_signal_rule.
+- CTA rules: the CTA DISTANCE from STEP 0 is the law — a SHORT-distance archetype
+  never asks for calls/DMs-to-qualify, a LONG-distance archetype never hard-sells,
+  a RELATIONSHIP archetype never pushes same-session conversion. On top of that,
+  apply any week/freebie/hire-signal rules in the HARD CONTENT CONSTRAINTS section
+  below (present only if this brand defines them).
 - script object must have ONLY keys: beat_1, beat_2, beat_3, cta, platform, format, topic, caption, hashtags, production_notes
 - If this piece requires a human face on camera, flag it clearly
 - Caption must end with a specific CTA aligned to the week-rule above (NOT generic "follow for more").
 
 🚨 HARD CONTENT CONSTRAINTS (read brand_profile, violations = REJECTED):
-- NEVER name "Third Gen Tribe", "TGT", "my T-shirt brand". The lived-history reference is "the brands I ran" (UNNAMED).
-- NEVER frame TGT as AI-built — it was agency-run, NOT Gaurav's AI build experience.
-- NEVER name "Grid Control" or specific multi-agent system in Week 1-4. Reference as "a multi-agent system I'm building" or "the back-end I'm building". Grid Control becomes nameable Week 5+ ONLY (see brand_profile.grid_control_naming_rule).
-- NEVER use AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer.
-- NEVER promise a deliverable (PDF, framework, template) that doesn't exist yet — see brand_profile.freebie_strategy.
-- NEVER use hire-me language. The listener self-identifies through content depth.
-- USE only the lived-history sources listed in brand_profile.lived_history_sources.
+{hard_constraints_block}
 
 ---
 
@@ -538,6 +642,7 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
     "variants_tested": 3,
     "winner": "Variant [A/B/C] — [one line reason]"
   }},
+  "brand_archetype": "{self.archetype.get('archetype', 'unknown')}",
   "data_provenance": [
     {{
       "claim": "example: hook 3 text — quotes a real audience pain from brand_profile",
@@ -553,11 +658,11 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
   "hook_block": {{
     "recommended_hook": 3,
     "hooks": [
-      {{"id": 1, "pattern": "Aspirational", "text": "", "pattern_description": "paints the dream outcome", "competitor_match": "", "confidence": 0.0}},
-      {{"id": 2, "pattern": "Pain Point", "text": "", "pattern_description": "calls out the exact frustration", "competitor_match": "", "confidence": 0.0}},
-      {{"id": 3, "pattern": "Exclusivity", "text": "", "pattern_description": "insider secret info angle", "competitor_match": "", "confidence": 0.0}},
-      {{"id": 4, "pattern": "Time/Money Claim", "text": "", "pattern_description": "quantified time or money result", "competitor_match": "", "confidence": 0.0}},
-      {{"id": 5, "pattern": "Curiosity Gap", "text": "", "pattern_description": "information gap they must close", "competitor_match": "", "confidence": 0.0}}
+      {{"id": 1, "pattern": "<pattern name — prioritize STEP 0 archetype patterns>", "text": "", "pattern_description": "", "competitor_match": "", "confidence": 0.0}},
+      {{"id": 2, "pattern": "", "text": "", "pattern_description": "", "competitor_match": "", "confidence": 0.0}},
+      {{"id": 3, "pattern": "", "text": "", "pattern_description": "", "competitor_match": "", "confidence": 0.0}},
+      {{"id": 4, "pattern": "", "text": "", "pattern_description": "", "competitor_match": "", "confidence": 0.0}},
+      {{"id": 5, "pattern": "", "text": "", "pattern_description": "", "competitor_match": "", "confidence": 0.0}}
     ]
   }},
   "script": {{
@@ -572,28 +677,7 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
     "hashtags": [],
     "production_notes": ""
   }},
-  "production_instructions_for_gaurav": {{
-    "who_records": "GAURAV — record this script yourself. Do NOT use ElevenLabs or any synthetic voice. Brand voice = your real recorded voice.",
-    "gear": {{
-      "primary_camera": "iPhone 13 Pro Max (4K HDR talking-head) — set to 4K 30fps, exposure locked, focus on eyes",
-      "broll_camera": "GoPro Hero 7 Black (only if the script needs B-roll: hands, screen, behind-the-scenes)",
-      "audio": "Wireless mic on shirt collar, ~6 inches from mouth. Test playback before recording the take.",
-      "lighting": "Face the largest window. NO ring light. NO ceiling light directly overhead. Soft natural light only."
-    }},
-    "framing": "specify: talking-head close-up | mid-shot at desk | screen-record + voiceover | walk-and-talk | static + voiceover",
-    "beat_direction": [
-      "Beat 1 — setup: deliver as a calm reflection. Slow start. No raised energy. Pause for 1 sec after the last word.",
-      "Beat 2 — core idea/proof: lean slightly forward. This is the diagnostic moment. Specific numbers/specifics here.",
-      "Beat 3 — payoff/twist: voice drops half a tone. The principle lands quietly, not loud. This is the line they remember."
-    ],
-    "duration_target": "specify: short ≤30s | medium 30-60s | long-form 10-15 min (cut into 4 Reels + 2 YouTube Shorts later)",
-    "retake_rules": [
-      "If you stumble on a beat — restart that beat from the top, not the whole script. Editor can stitch.",
-      "Record 2 alternate hook takes (different inflection) — Reel cut decisions are made later.",
-      "Sound test BEFORE the take. One bad audio file = whole reshoot."
-    ],
-    "post_production_handoff": "After recording, drop the raw .mov + audio files in brands/askgauravai/raw_recordings/{{week_N}}/{{post_id}}/ and ping the Brand Manager. Creative Director runs ONLY after raw recordings are uploaded — not before."
-  }}
+  "production_instructions": {production_instructions_block}
 }}"""
 
         # ── Rule 10: Claude call + validation-retry loop ────────────────────

@@ -167,7 +167,7 @@ def publish_generic():
 
 @bp.route("/api/pipeline/daily-run", methods=["POST"])
 @rate_limit(max_requests=2, window_seconds=60)
-@require_auth
+@require_auth_or_service
 def daily_pipeline_run():
     """
     Chain Trend Researcher → Data Analyst → Script Writer in a background thread.

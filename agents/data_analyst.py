@@ -181,7 +181,9 @@ class DataAnalyst:
         Metric: which report leads to highest probability of CEO Brain adjusting strategy
         """
 
-        prompt = f"""You are the Data Analyst for OffGrid Creatives AI Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Data Analyst for OffGrid Creatives AI Marketing OS.
 
 BRAND: {self.brand_profile.get('brand_name', 'OffGrid Creatives AI')}
 PRODUCT: {self.brand_profile.get('product', 'AI Ad Intelligence Report')}

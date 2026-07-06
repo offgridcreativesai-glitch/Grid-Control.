@@ -96,7 +96,9 @@ class FunnelSpecialist:
         brand = self.brand_profile
         price = brand.get("price", {})
 
-        prompt = f"""You are the Funnel Specialist for OffGrid Creatives AI Marketing OS.
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        prompt = _operating_framework(2) + f"""
+You are the Funnel Specialist for OffGrid Creatives AI Marketing OS.
 
 BRAND: {brand.get('brand_name', 'OffGrid Creatives AI')}
 PRODUCT: {brand.get('product', 'AI Ad Intelligence Report')}
@@ -187,11 +189,13 @@ Return ONLY valid JSON:
         self.log("Running AutoResearch Loop — 3 funnel variants via Claude Sonnet...")
         response = self.client.messages.create(
             model=MODEL,
-            max_tokens=6000,
+            max_tokens=16000,   # 3 full variants w/ verbatim scripts overflow 6k → truncated JSON
             messages=[{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
         )
         self._total_input_tokens += response.usage.input_tokens
         self._total_output_tokens += response.usage.output_tokens
+        if response.stop_reason == "max_tokens":
+            self.log("⚠️ hit max_tokens — JSON may be truncated; raise max_tokens further if parse fails")
         raw = response.content[0].text.strip()
         if "```" in raw:
             raw = raw.split("```")[1]

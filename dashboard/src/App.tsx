@@ -3,25 +3,23 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { BrandCockpitPage } from "@/pages/BrandCockpitPage"
-import { AllBrandsPage } from "@/pages/AllBrandsPage"
-import { ClientPortalPage } from "@/pages/ClientPortalPage"
+import { CommandCenterPage } from "@/pages/CommandCenterPage"
 import { ReviewPage } from "@/pages/ReviewPage"
 import { CalendarPage } from "@/pages/CalendarPage"
 import { InsightsPage } from "@/pages/InsightsPage"
 import { ConnectionsPage } from "@/pages/ConnectionsPage"
-import { AgentsPage } from "@/pages/AgentsPage"
+import { SettingsPage } from "@/pages/SettingsPage"
+import { CrewPage } from "@/pages/CrewPage"
+import { MemoryPage } from "@/pages/MemoryPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
-import { AdminOverviewPage } from "@/pages/AdminOverviewPage"
-import { AdminClientsPage } from "@/pages/AdminClientsPage"
-import { AdminRevenuePage } from "@/pages/AdminRevenuePage"
-import { AdminSystemPage } from "@/pages/AdminSystemPage"
+import { LandingPage } from "@/landing/LandingPage"
 import { useAppStore } from "@/store/appStore"
 import { useAuthStore } from "@/store/authStore"
 import { useBrandStore } from "@/store/brandStore"
 import { useBrands } from "@/hooks/useGridApi"
 import { useSSE } from "@/hooks/useSSE"
+import { seedDemo } from "@/lib/demo"
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -84,9 +82,22 @@ function ShortcutBindings() {
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, init } = useAuthStore()
-  useEffect(() => { init() }, [init])
+  // DEV-only demo bypass: set localStorage.gc_demo="1" to preview behind the gate.
+  // Gated on import.meta.env.DEV — never active in a production build.
+  const demo = import.meta.env.DEV && typeof window !== "undefined" && localStorage.getItem("gc_demo") === "1"
+  useEffect(() => {
+    if (demo) {
+      useAuthStore.setState({
+        user: { id: "demo", email: "demo@gridcontrol.app" } as never,
+        loading: false, isSuperAdmin: false, viewMode: "client",
+      })
+      seedDemo()
+    } else {
+      init()
+    }
+  }, [init, demo])
 
-  if (loading) {
+  if (loading && !demo) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-muted-foreground text-sm">Loading...</div>
@@ -103,17 +114,11 @@ function SSEProvider({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-function AdminGuard({ children }: { children: ReactNode }) {
-  const { isSuperAdmin } = useAuthStore()
-  if (!isSuperAdmin) return <Navigate to="/" replace />
-  return <>{children}</>
-}
-
 function OnboardingGuard({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { data, isLoading } = useBrands()
   const { setBrands, setActiveBrand } = useBrandStore()
-  const { isSuperAdmin } = useAuthStore()
+  const demo = import.meta.env.DEV && typeof window !== "undefined" && localStorage.getItem("gc_demo") === "1"
 
   useEffect(() => {
     if (data?.brands && data.brands.length > 0) {
@@ -127,13 +132,11 @@ function OnboardingGuard({ children }: { children: ReactNode }) {
     }
   }, [data, setBrands, setActiveBrand])
 
-  if (isSuperAdmin) return <>{children}</>
-
   // Don't redirect while still loading brands from API
   if (isLoading) return null
 
   const hasBrands = (data?.brands?.length ?? 0) > 0
-  if (!hasBrands && location.pathname !== "/onboarding") {
+  if (!demo && !hasBrands && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />
   }
 
@@ -145,40 +148,42 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signin" element={<AuthPage />} />
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/onboarding" element={<AuthGate><OnboardingPage /></AuthGate>} />
+            <Route path="/*" element={<GatedApp />} />
+          </Routes>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  )
+}
+
+function GatedApp() {
+  return (
           <AuthGate>
             <ShortcutBindings />
             <OnboardingGuard>
             <DashboardLayout>
               <Routes>
-                {/* Brand cockpit — the operator's home for a single brand */}
-                <Route path="/" element={<BrandCockpitPage />} />
-                <Route path="/agents" element={<AgentsPage />} />
-                <Route path="/agents/:id" element={<AgentsPage />} />
+                {/* Single client view — the command center IS the home */}
+                <Route path="/" element={<Navigate to="/command" replace />} />
+                <Route path="/command" element={<CommandCenterPage />} />
+                <Route path="/team" element={<CrewPage />} />
                 <Route path="/review" element={<ReviewPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/memory" element={<MemoryPage />} />
                 <Route path="/connections" element={<ConnectionsPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                {/* Restricted managed-client portal */}
-                <Route path="/portal" element={<ClientPortalPage />} />
-
-                {/* Owner control tower — super admin only */}
-                <Route path="/brands" element={<AdminGuard><AllBrandsPage /></AdminGuard>} />
-
-                {/* Admin routes — super admin only */}
-                <Route path="/admin" element={<AdminGuard><AdminOverviewPage /></AdminGuard>} />
-                <Route path="/admin/clients" element={<AdminGuard><AdminClientsPage /></AdminGuard>} />
-                <Route path="/admin/revenue" element={<AdminGuard><AdminRevenuePage /></AdminGuard>} />
-                <Route path="/admin/system" element={<AdminGuard><AdminSystemPage /></AdminGuard>} />
+                <Route path="/settings" element={<SettingsPage />} />
 
                 {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/command" replace />} />
               </Routes>
             </DashboardLayout>
             </OnboardingGuard>
           </AuthGate>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
   )
 }

@@ -223,15 +223,30 @@ def brain_execute_proposal():
         command = payload.get("command", "")
         if not command:
             return jsonify({"success": False, "error": "Empty command"}), 400
-        # Block obviously destructive commands
-        blocked = ["rm -rf /", "sudo ", "curl ", "wget ", " > /etc/", " > ~/.ssh/"]
-        if any(b in command for b in blocked):
-            return jsonify({"success": False, "error": "Command blocked by safety filter"}), 403
+        # Jul 6 security fix: shell=True + a substring blocklist was RCE one
+        # leaked secret away — the blocklist is trivially bypassed (e.g.
+        # "rm${IFS}-rf${IFS}/" or chaining "; anything" past it), and shell=True
+        # is what makes chaining/substitution/redirection possible at all.
+        # Parse into argv and run WITHOUT a shell — this removes the entire
+        # class of shell-metacharacter injection. Trade-off: pipes/&&/;
+        # chains no longer work through this endpoint; a single command with
+        # args still does (this is the operator-mode tool, not a public one —
+        # gated by super-admin + explicit operator-mode toggle above).
+        import shlex
+        try:
+            argv = shlex.split(command)
+        except ValueError as e:
+            return jsonify({"success": False, "error": f"Could not parse command: {e}"}), 400
+        if not argv:
+            return jsonify({"success": False, "error": "Empty command"}), 400
+        blocked_bins = {"sudo", "curl", "wget", "rm", "reboot", "shutdown", "mkfs", "dd"}
+        if argv[0] in blocked_bins:
+            return jsonify({"success": False, "error": f"'{argv[0]}' is blocked by the safety filter"}), 403
         try:
             import subprocess as _sp
             result = _sp.run(
-                command,
-                shell=True,
+                argv,
+                shell=False,
                 cwd=str(BASE_DIR),
                 capture_output=True,
                 text=True,
@@ -242,6 +257,8 @@ def brain_execute_proposal():
                 "result": (result.stdout + result.stderr)[:8000],
                 "return_code": result.returncode,
             })
+        except FileNotFoundError:
+            return jsonify({"success": False, "error": f"Command not found: {argv[0]}"}), 400
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 

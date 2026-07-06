@@ -19,3 +19,4 @@ playwright
 razorpay
 apscheduler
 litellm
+cryptography

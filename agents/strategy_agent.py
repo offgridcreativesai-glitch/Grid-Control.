@@ -20,6 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import anthropic
 from ceo_brain.orchestrator import CEOBrain
 from agents._lib import cost_reporter
+from agents._lib._langfuse_client import get_langfuse
+_LF = get_langfuse()  # Phase 1b · singleton; silent no-op when keys missing
 
 # Rule 10 — Source Citation Enforcement (Apr 26)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +42,7 @@ try:
 except ImportError:
     from agents._lib.model_gateway import model_for
     from agents._lib._untrusted import wrap as _untrusted_wrap, UNTRUSTED_POLICY as _UNTRUSTED_POLICY
+from agents._lib import phases as _phases
 MODEL = model_for("strategy-agent")
 BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
@@ -134,6 +137,12 @@ class StrategyAgent:
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "brands", self.brand_slug
         )
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Frames the whole 90-day strategy.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
         self.log(f"Ready. Brand: {self.brand_profile.get('brand_name', 'Unknown')}")
         self._total_input_tokens = 0
         self._total_output_tokens = 0
@@ -154,6 +163,63 @@ class StrategyAgent:
             data = json.load(f)
         self.log(f"Loaded trends_live.json (scraped at: {data.get('scraped_at', 'unknown')})")
         return data
+
+    def _build_hard_constraints_block(self) -> str:
+        """Generic hard-constraints section for the 90-day strategy — same pattern
+        as content_planner.py/script_writer.py. Volume is phase-driven via
+        agents/_lib/phases.py; platform priority reads brand_profile fields instead
+        of hardcoding a specific brand's channel mix; CTA/naming rule blocks are
+        included only when the brand_profile actually defines them."""
+        phase_plan = _phases.get_phase_plan(self.brand_profile.get("program_phase"))
+        vol = phase_plan["weekly_volume"]
+        lines = []
+
+        primary = self.brand_profile.get("primary_platform_phase_1")
+        secondary = self.brand_profile.get("secondary_platform_phase_1")
+        lines.append("PLATFORM PRIORITY:")
+        if primary:
+            lines.append(f"- PRIMARY: {primary}. (See brand_profile.primary_platform_phase_1.)")
+        if secondary:
+            lines.append(f"- SECONDARY (repurpose-only, NOT original content): {secondary}.")
+        if not primary and not secondary:
+            platforms = ", ".join(self.brand_profile.get("platforms") or ["Instagram"])
+            lines.append(f"- Platforms: {platforms}. (See brand_profile.platforms.)")
+
+        lines.append(
+            f"\nVOLUME ({phase_plan['label']} phase, per agents/_lib/phases.py): "
+            f"{vol.get('long_form', 0)} long-form piece(s)/week, {vol.get('social', 0)} social posts/week, "
+            f"{vol.get('creator_seeds', 0)} creator-seed touches/week. Do not inflate beyond this — quality over volume."
+        )
+
+        cta_fields = ("week_1_cta_rule", "freebie_strategy", "hire_signal_rule")
+        if any(self.brand_profile.get(f) for f in cta_fields):
+            lines.append("\nCTA RULES:")
+            if self.brand_profile.get("week_1_cta_rule"):
+                lines.append(f"- {self.brand_profile['week_1_cta_rule']}")
+            if self.brand_profile.get("hire_signal_rule"):
+                lines.append(f"- {self.brand_profile['hire_signal_rule']}")
+
+        if not self.brand_profile.get("budget_confirmed") and not self.brand_profile.get("ad_budget"):
+            lines.append("\n- DO NOT plan paid_amplification unless brand_profile confirms budget exists. Default to organic-only.")
+
+        naming_fields = ("lived_history_sources", "lived_history_NOT_allowed", "grid_control_naming_rule")
+        if any(self.brand_profile.get(f) for f in naming_fields):
+            lines.append("\nNAMING + LIVED HISTORY:")
+            if self.brand_profile.get("lived_history_NOT_allowed"):
+                lines.append(
+                    f"- NEVER name: {self.brand_profile['lived_history_NOT_allowed']}. "
+                    f"Reference only via the approved framing in brand_profile.lived_history_sources."
+                )
+            if self.brand_profile.get("grid_control_naming_rule"):
+                lines.append(f"- {self.brand_profile['grid_control_naming_rule']}")
+            if self.brand_profile.get("lived_history_sources"):
+                lines.append("- Use ONLY brand_profile.lived_history_sources for lived examples.")
+
+        if self.brand_profile.get("what_to_never_say"):
+            lines.append("\nNEVER-USE (from brand_profile.what_to_never_say):")
+            lines.append(f"- {self.brand_profile['what_to_never_say']}")
+
+        return "\n".join(lines)
 
     def save_strategy(self, strategy: dict):
         """Write strategy_90day.json to brand directory for downstream agents."""
@@ -231,12 +297,18 @@ class StrategyAgent:
         source_index = build_source_index(source_files)
         self.log(f"Rule 10: Source index built — {len(source_index)} citable keys across {len(source_files)} files")
 
-        prompt = f"""You are the Strategy Agent for OffGrid Marketing OS.
+        hard_constraints_block = self._build_hard_constraints_block()
+
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
+        archetype_block = directive_block(self.archetype, agent="strategy-agent")
+        prompt = _operating_framework(2) + f"""
+You are the Strategy Agent for OffGrid Marketing OS.
 Your job: produce a 90-day growth roadmap for this brand based on real scraped trend data.
-This is a beta SaaS product. The goal is the first 10 paying clients.
+The goal is the brand's north_star_metric (see brand_profile.north_star_metric).
 
 {_UNTRUSTED_POLICY}
-
+{archetype_block}
 BRAND CONTEXT:
 {brand_ctx}
 
@@ -250,7 +322,7 @@ Run the AutoResearch Loop. Evaluate 3 distinct strategic variants:
 VARIANT A — AGGRESSIVE GROWTH PLAY
 Pure volume strategy. Maximum content output, maximum reach.
 Go wide fast. Accept lower trust-building in exchange for speed.
-What does this look like for OffGrid specifically?
+What does this look like for this brand specifically?
 
 VARIANT B — TRUST-FIRST SLOW BURN
 Quality over quantity. Deep credibility building.
@@ -259,13 +331,13 @@ Slower to convert but higher LTV clients when it does.
 
 VARIANT C — HYBRID WITH CLEAR PHASE GATES
 Phase 1 (Days 1-30): Trust foundation
-Phase 2 (Days 31-60): Content volume ramp  
+Phase 2 (Days 31-60): Content volume ramp
 Phase 3 (Days 61-90): Paid amplification of best performers
 Each phase has a measurable gate before unlocking the next.
 
 SELECTION METRIC:
-better = which strategy maximises QUALIFIED FOUNDER DMs PER WEEK (the brand's north_star_metric)
-over 90 days, given current zero-budget constraints and a new brand with no social proof.
+better = which strategy maximises the brand's north_star_metric over 90 days, given current
+budget constraints and social-proof level.
 DO NOT optimize for follower count or generic reach. (See brand_profile.deprecated_metrics — follower-count benchmarks are explicitly OUT.)
 
 Select the winner. One-line reason.
@@ -273,35 +345,7 @@ Select the winner. One-line reason.
 ---
 
 🚨 HARD CONSTRAINTS — VIOLATIONS = STRATEGY REJECTED 🚨
-
-PLATFORM PRIORITY (Phase 1):
-- PRIMARY: Instagram + YouTube (parallel). NOT LinkedIn-primary. NOT Twitter-primary.
-- SECONDARY (repurpose-only, NOT original content): LinkedIn + Twitter/X.
-- See brand_profile.primary_platform_phase_1 and brand_profile.secondary_platform_phase_1.
-- Strategy MUST reflect: 1 long-form YouTube/week → cut into 4 IG Reels + 2 YouTube Shorts. PLUS 3 IG carousels/week (independent). LinkedIn + Twitter = repurpose ONLY.
-- DO NOT propose 4-5 LinkedIn posts/week as the top channel. That violates the brand's locked positioning.
-
-VOLUME (per brand_profile.weekly_volume_target):
-- Phase 1 weekly_output target: ~9 published units/week from 1 long-form recording session.
-- DO NOT inflate volume beyond this in Phase 1. Quality over volume.
-- Phase 2-3 ramps are allowed but stay grounded in 1-recording-session-per-week budget.
-
-CTA RULES (per brand_profile.week_1_cta_rule + freebie_strategy):
-- Phase 1 (Days 1-30): NO comment-gated CTAs ("comment WORD"), NO promised deliverables, NO freebies. ONLY open-loop diagnostic engagement ("drop your AI tool stack", "what's your AI question?").
-- Phase 1 build window (Days 8-28): freebie inventory + DM automation get built. Freebie CTAs unlock Day 29+.
-- Phase 2-3: Freebie CTAs allowed once freebies + DM automation are confirmed BUILT.
-- NEVER plan hire-me CTAs at any phase. Banned forever (brand_profile.hire_signal_rule).
-- NEVER plan paid_amplification in Phase 2 unless brand_profile says budget exists. ASKGauravAI is zero-budget; only organic.
-
-NAMING + LIVED HISTORY:
-- Phase 1 (Days 1-28): Grid Control SILENT. Reference as "a multi-agent system I'm building".
-- Phase 1 transition (Day 29 onward) + Phase 2: Grid Control nameable as proof point.
-- NEVER name "Third Gen Tribe" / "TGT" / "T-shirt brand". Reference as "the brands I ran" (UNNAMED).
-- NEVER frame TGT as AI-built (it was agency-run).
-- Use ONLY brand_profile.lived_history_sources for lived examples.
-
-NEVER-USE (from brand_profile.what_to_never_say):
-- AI buzzwords: leverage, synergize, ecosystem, cutting-edge, next-gen, delve, foster, moreover, 10x, unlock, transform, revolutionize, game-changer.
+{hard_constraints_block}
 
 ---
 
@@ -392,8 +436,31 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
   }}
 }}"""
 
+        # ── Phase 1a: Semantic memory recall (Voyage + pgvector) ─────────────
+        # Pull prior strategy facts on both scopes. Silent no-op if Voyage/DB missing.
+        try:
+            from agents._lib._mem0_client import get_semantic_memory
+            _sem = get_semantic_memory()
+            _q = f"90-day growth strategy for {self.brand_slug}"
+            _brand_facts = _sem.recall(scope="brand", agent="strategy-agent",
+                                       query=_q, brand_slug=self.brand_slug, k=5)
+            _gc_facts = _sem.recall(scope="grid_control", agent="strategy-agent",
+                                    query=_q, k=3)
+            _mem_block = ""
+            if _brand_facts:
+                _mem_block += "\n## Semantic Memory — prior strategy decisions for this brand\n"
+                _mem_block += "\n".join(f"- {h['content']}" for h in _brand_facts) + "\n"
+            if _gc_facts:
+                _mem_block += "\n## Semantic Memory — account-wide strategy patterns\n"
+                _mem_block += "\n".join(f"- {h['content']}" for h in _gc_facts) + "\n"
+            if _mem_block:
+                self.log(f"Semantic recall: {len(_brand_facts)} brand + {len(_gc_facts)} account facts injected")
+        except Exception as _e:
+            _mem_block = ""
+            self.log(f"Semantic recall skipped: {_e}")
+
         # ── Rule 10: Claude call + validation-retry loop ────────────────────
-        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + prompt}]
+        messages = [{"role": "user", "content": self.ceo.story_so_far_block() + _mem_block + prompt}]
         result = None
         validation_report = None
         attempt = 0
@@ -406,17 +473,26 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
             # Accumulate the streamed text, then read final usage + stop_reason from the
             # completed message object — preserves the existing token-counting + truncation-warn behaviour.
             raw_text = ""
-            with self.client.messages.stream(
-                model=MODEL,
-                max_tokens=24000,  # 90-day strategy + provenance entries + retry headroom
-                messages=messages,
-            ) as stream:
-                for text_chunk in stream.text_stream:
-                    raw_text += text_chunk
-                final_message = stream.get_final_message()
+            # Phase 1b: open a Langfuse GENERATION around the LLM call so usage/cost
+            # attaches to a generation (not the span root) — fixes $0.00 / None tokens.
+            with _LF.start_generation(name=f"strategy-agent.claude (attempt {attempt})", model=MODEL):
+                with self.client.messages.stream(
+                    model=MODEL,
+                    max_tokens=24000,  # 90-day strategy + provenance entries + retry headroom
+                    messages=messages,
+                ) as stream:
+                    for text_chunk in stream.text_stream:
+                        raw_text += text_chunk
+                    final_message = stream.get_final_message()
 
-            self._total_input_tokens += final_message.usage.input_tokens
-            self._total_output_tokens += final_message.usage.output_tokens
+                self._total_input_tokens += final_message.usage.input_tokens
+                self._total_output_tokens += final_message.usage.output_tokens
+                # feed Langfuse so it auto-computes cost from model registry
+                _LF.record_llm(
+                    model=MODEL,
+                    in_tokens=final_message.usage.input_tokens,
+                    out_tokens=final_message.usage.output_tokens,
+                )
 
             if final_message.stop_reason == "max_tokens":
                 self.log(f"WARNING: Claude hit max_tokens cap ({final_message.usage.output_tokens} out)")
@@ -464,12 +540,40 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
             result["provenance_validation"] = validation_report
 
         self.log(f"AutoResearch Loop complete. Winner: {result['loop_header']['winner']}")
+
+        # ── Phase 1a: Record this run's winning decision into brand semantic memory
+        try:
+            from agents._lib._mem0_client import get_semantic_memory
+            _winner = result.get("loop_header", {}).get("winner", "?")
+            _angle = result.get("strategy_90day", {}).get("strategic_angle", "")
+            _fact = (f"Winning strategy variant: {_winner}. "
+                     f"Strategic angle: {_angle}").strip()
+            if _angle:
+                get_semantic_memory().remember(
+                    scope="brand",
+                    agent="strategy-agent",
+                    content=_fact,
+                    brand_slug=self.brand_slug,
+                    metadata={"date": datetime.now(timezone.utc).date().isoformat()},
+                )
+                self.log(f"Semantic memory written: variant {_winner}")
+        except Exception as _e:
+            self.log(f"Semantic remember skipped: {_e}")
+
         return result
 
+    @_LF.observe(name="strategy-agent.run")
     def run(self):
         self.log("=" * 60)
         self.log("STRATEGY AGENT — 90-DAY ROADMAP STARTING")
         self.log("=" * 60)
+        # Phase 1b: stamp trace metadata so we can filter by brand/agent in UI
+        _LF.set_trace_meta(
+            agent="strategy-agent",
+            brand_slug=self.brand_slug,
+            tags=["phase-1b", "strategy"],
+            input={"brand_slug": self.brand_slug, "north_star": "10 paying beta clients in 90 days"},
+        )
 
         # Step 1 — Load real trend data (Rule 1 gate)
         self.log("STEP 1 — Loading trend data...")
@@ -522,6 +626,14 @@ OUTPUT: Return valid JSON only. No markdown. No commentary outside the JSON.
         self.log("Pending approval in Notion. Approve to unlock: content-planner")
         self.log("=" * 60)
         cost_reporter.record(MODEL, self._total_input_tokens, self._total_output_tokens)
+        # Phase 1b: trace output + flush so traces actually reach Langfuse
+        _LF.set_output({
+            "winning_variant": loop_result.get("winning_variant"),
+            "winner_label": loop_header.get("winner"),
+            "total_input_tokens": self._total_input_tokens,
+            "total_output_tokens": self._total_output_tokens,
+        })
+        _LF.flush()
         return save_result
 
 

@@ -14,6 +14,8 @@ interface AuthState {
   setViewMode: (mode: ViewMode) => void
   init: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  sendMagicLink: (email: string) => Promise<{ error: string | null }>
+  signInWithGoogle: () => Promise<{ error: string | null }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
@@ -68,6 +70,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error: error?.message ?? null }
+  },
+
+  sendMagicLink: async (email) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/command` },
+    })
+    return { error: error?.message ?? null }
+  },
+
+  signInWithGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/command` },
+    })
     return { error: error?.message ?? null }
   },
 

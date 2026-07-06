@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT))
 
 import anthropic
 from managed_agents.context_builder import build_context
+from agents._lib._agent_framework import operating_framework as _operating_framework
 
 REGISTRY_PATH = pathlib.Path(__file__).parent / "registry.json"
 BRANDS_DIR    = ROOT / "brands"
@@ -211,9 +212,9 @@ def run_agent_session(
     stores   = load_memory_stores(brand_slug)
     resources = build_resources(stores)
 
-    # Build full prompt: context + task
+    # Build full prompt: operating framework + brand context + task
     context     = build_context(brand_slug)
-    full_prompt = context + task_prompt
+    full_prompt = _operating_framework(2) + context + task_prompt
 
     _emit(run_id, f"data: {json.dumps({'type': 'start', 'agent': agent_name, 'brand': brand_slug})}\n\n")
 

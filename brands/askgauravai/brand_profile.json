@@ -31,6 +31,10 @@
     "gobi_automates",
     "garyvee"
   ],
+  "competitor_websites": [
+    {"handle": "gobi_automates", "url": "https://govindgoel.vercel.app/"},
+    {"handle": "garyvee", "url": "https://garyvaynerchuk.com"}
+  ],
   "brand_colors": [],
   "social_handles": {
     "instagram": "@askgauravai",

@@ -6,7 +6,7 @@ set -e
 cd /Users/gauravoffgrid/offgrid-marketing-os
 source .env 2>/dev/null || true
 
-DASHBOARD_SECRET="${DASHBOARD_SECRET:-}"
+GRID_SCHEDULER_TOKEN="${GRID_SCHEDULER_TOKEN:-}"
 BRAND_SLUG="${1:-askgauravai}"
 LOG_FILE="/tmp/grid_daily_pipeline_$(date +%Y%m%d).log"
 
@@ -22,7 +22,7 @@ fi
 # Trigger pipeline
 RESPONSE=$(curl -s -X POST http://localhost:5001/api/pipeline/daily-run \
     -H "Content-Type: application/json" \
-    -H "X-Dashboard-Secret: $DASHBOARD_SECRET" \
+    -H "X-Grid-Service-Token: $GRID_SCHEDULER_TOKEN" \
     -d "{\"brand_slug\": \"$BRAND_SLUG\"}")
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Pipeline trigger response: $RESPONSE" >> "$LOG_FILE"

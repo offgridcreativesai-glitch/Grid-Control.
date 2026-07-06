@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 18mm 16mm 16mm 16mm; background: #ffffff; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { background: #ffffff; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #1c1b1f; line-height: 1.5; font-size: 11px; margin: 0;
+    background: #ffffff;
+  }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  h2 { font-size: 16px; margin: 0; }
+  .mono { font-family: "SF Mono", "JetBrains Mono", Menlo, monospace; }
+  .accent { color: #ff5a3c; }
+  .muted { color: #6b6470; }
+
+  /* cover */
+  .cover { padding: 40px 0 10px; border-bottom: 3px solid #1c1b1f; margin-bottom: 22px; }
+  .kicker { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #ff5a3c; font-weight: 700; margin-bottom: 14px; }
+  .cover p { font-size: 13px; color: #444; max-width: 90%; margin: 10px 0 0; }
+  .cover .meta { margin-top: 18px; font-size: 10px; color: #888; }
+
+  .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: #ff5a3c; font-weight: 700; margin: 26px 0 10px; border-bottom: 1px solid #e6e3e8; padding-bottom: 5px; }
+
+  /* loop chips */
+  .loop { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 4px; }
+  .chip { background: #f4f2f5; border: 1px solid #e0dce4; border-radius: 20px; padding: 4px 11px; font-size: 10px; font-weight: 600; }
+  .chip .n { color: #ff5a3c; font-weight: 700; }
+
+  /* step cards */
+  .step { border: 1px solid #e6e3e8; border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; page-break-inside: avoid; }
+  .step-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; }
+  .step-num { font-family: "SF Mono", Menlo, monospace; font-size: 22px; font-weight: 700; color: #ff5a3c; line-height: 1; min-width: 34px; }
+  .step-title { font-size: 14px; font-weight: 700; }
+  .step-phase { margin-left: auto; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fff; background: #1c1b1f; padding: 3px 8px; border-radius: 4px; }
+  .step-phase.a { background: #ff5a3c; }
+  .what { margin: 4px 0 9px; }
+  .what b { color: #000; }
+  .eg { background: #fbf6f4; border-left: 3px solid #ff5a3c; padding: 7px 11px; border-radius: 0 6px 6px 0; font-size: 10.5px; margin: 8px 0; }
+  .eg .lbl { font-weight: 700; color: #ff5a3c; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; }
+
+  .gc { background: #f6f7f9; border: 1px solid #e3e6ea; border-radius: 7px; padding: 9px 11px; margin-top: 8px; }
+  .gc .lbl { font-weight: 700; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #3a6ea5; margin-bottom: 5px; }
+  .gc table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .gc td { padding: 2px 6px 2px 0; vertical-align: top; }
+  .gc td.k { color: #6b6470; white-space: nowrap; width: 92px; }
+  .gate { display: inline-block; margin-top: 7px; font-size: 9.5px; font-weight: 700; color: #b06a00; background: #fff4dc; border: 1px solid #f0d699; border-radius: 4px; padding: 2px 8px; }
+
+  .pill { display:inline-block; font-family:"SF Mono",Menlo,monospace; font-size:9px; background:#eceaef; border-radius:4px; padding:1px 6px; margin-right:3px; }
+
+  .note { background:#1c1b1f; color:#f0ece6; border-radius:10px; padding:16px 18px; margin:14px 0; font-size:11px; }
+  .note h3 { margin:0 0 6px; color:#ff8a72; font-size:13px; }
+  .note .mono { color:#d8b478; }
+
+  table.summary { width:100%; border-collapse:collapse; font-size:10px; margin-top:8px; }
+  table.summary th { text-align:left; background:#1c1b1f; color:#fff; padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+  table.summary td { padding:5px 8px; border-bottom:1px solid #ececec; vertical-align:top; }
+  table.summary tr:nth-child(even) td { background:#faf9fb; }
+  .foot { margin-top:24px; padding-top:10px; border-top:1px solid #e0dce4; font-size:9px; color:#999; }
+  .pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="kicker">Grid Control · System Flow</div>
+  <h1>How Grid Control runs <span class="accent">AskGauravAI</span></h1>
+  <p>The end-to-end flow we're adopting — from onboarding the brand, to content, to turning that
+  content into leads and paying clients. Every step shows what happens for AskGauravAI and exactly
+  which agent, model, dashboard screen, and approval gate is involved.</p>
+  <div class="meta mono">Sample brand: @askgauravai · ICP: D2C founders, ecom owners, agencies running Meta ads ·
+  Products: Reporting Project ₹2.5–7k → Grid Control ₹30–50k · Generated 9 Jun 2026 · Internal (admin view)</div>
+</div>
+
+<div class="section-title">The big picture — two loops, one brain</div>
+<p>An agency really runs <b>two</b> connected loops. Grid Control runs both for AskGauravAI, and a
+single persistent <b>Brain</b> (per-brand memory) keeps the story continuous so nothing restarts cold.</p>
+<p style="margin:6px 0 2px;"><b class="accent">Loop B — Delivery</b> (make the brand grow): research → strategy → content → publish → engage → report → optimize.</p>
+<div class="loop">
+  <span class="chip"><span class="n">1</span> Onboard</span>
+  <span class="chip"><span class="n">2</span> Connect</span>
+  <span class="chip"><span class="n">3</span> Research</span>
+  <span class="chip"><span class="n">4</span> Strategy</span>
+  <span class="chip"><span class="n">5</span> Plan</span>
+  <span class="chip"><span class="n">6</span> Script</span>
+  <span class="chip"><span class="n">7</span> Create</span>
+  <span class="chip"><span class="n">8</span> Soul-check</span>
+  <span class="chip"><span class="n">9</span> Approve</span>
+  <span class="chip"><span class="n">10</span> Publish</span>
+  <span class="chip"><span class="n">11</span> Engage</span>
+</div>
+<p style="margin:10px 0 2px;"><b class="accent">Loop A — Growth</b> (turn the audience into money): that engagement becomes DMs → leads → an audit → a sales call → a client.</p>
+<div class="loop">
+  <span class="chip"><span class="n">12</span> Capture leads</span>
+  <span class="chip"><span class="n">13</span> Nurture</span>
+  <span class="chip"><span class="n">14</span> Audit → Sell</span>
+  <span class="chip"><span class="n">15</span> Report &amp; Optimize</span>
+  <span class="chip">↻ Brain learns</span>
+</div>
+
+<div class="note">
+  <h3>The one thing that makes this different</h3>
+  Every morning the <b>Chief of Staff</b> (ceo-brain) hands you a single brief: <i>"Here's what the
+  team did overnight, here's what needs your yes/no, here's the one decision only you can make."</i>
+  You don't operate a cockpit — you approve and direct. Research shows <span class="mono">68%</span>
+  of clients churn from <i>lack of proactive guidance</i>; this brief is that fix, built in.
+</div>
+
+<div class="section-title pagebreak">Loop B — Delivery, step by step</div>
+
+<!-- STEP 1 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">01</span><span class="step-title">Onboard the brand</span><span class="step-phase">Setup</span></div>
+  <div class="what">You answer a short brand questionnaire once. Grid Control writes it into the
+  brand's permanent profile — positioning, ICP, tone, what to never say, products, competitors. This
+  becomes the source of truth every agent reads and <b>never reinvents</b>.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Parent personal brand, founder-on-camera,
+  GaryVee pillar model. Tone = direct, founder-to-founder, "show the receipts," zero-assumption.
+  Never: hype/guru tone, fake stats, dunking on people. Intro content teases the umbrella, doesn't name sub-products yet.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Screen</td><td>Onboarding wizard → <span class="pill">brand_profile.json</span></td></tr>
+      <tr><td class="k">Agent</td><td>ceo-brain (sets up the brand + memory Brain)</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Opus 4.8 · xhigh</span></td></tr>
+      <tr><td class="k">Output</td><td>Brand profile + empty narrative thread ("story so far")</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">02</span><span class="step-title">Connect the accounts</span><span class="step-phase">Setup</span></div>
+  <div class="what">Connect each platform once. No agent runs for the brand until its accounts are live —
+  this is a hard rule (real data only, no guessing).</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Instagram @askgauravai connected and
+  post-capable (LinkedIn / YouTube / X added as they go live). Starting from 0 posts — clean slate.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Screen</td><td>Connections — live status per platform, never shows tokens</td></tr>
+      <tr><td class="k">Stored</td><td><span class="pill">brands/askgauravai/.env</span> (private, per-brand)</td></tr>
+      <tr><td class="k">Model</td><td>none — plumbing</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">03</span><span class="step-title">Research the market — on a schedule, cached</span><span class="step-phase">Delivery</span></div>
+  <div class="what">The system scrapes real trends + competitors <b>weekly</b> and caches them. Then it
+  generates many posts from that one cache — instead of re-scraping for every post (which was ~80% of
+  the wasted cost). Trends are classified Fad / Micro-trend / Structural Shift, scored against the brand.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Scrapes competitors manthanjethwani,
+  seanpurvis.ai, gobi_automates, garyvee + AI-marketing trends. A daily math-only check flags
+  PIVOT / TRACK / STAY (e.g. "AI ad-fatigue spiking — ride it?").</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agents</td><td>trend-researcher (scrape+cluster) · trend-sentinel (daily decision)</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Sonnet 4.6</span> · sentinel = <span class="mono">pure-math ₹0</span></td></tr>
+      <tr><td class="k">Runs via</td><td>24×7 scheduler (no Mac needed) → <span class="pill">trends_live.json</span></td></tr>
+      <tr><td class="k">Screen</td><td>Insights / daily brief</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">04</span><span class="step-title">Set the strategy &amp; recon competitors</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Builds the 90-day roadmap and a real competitor database from actual scraped profiles —
+  never assumed. Decides the angle, the funnel stage focus, the psychological pillars.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Phase 1 = Awareness + Proof. Goal = Reach +
+  Followers. Wedge = founder building AI systems in public + real intelligence + done-for-you execution.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>strategy-agent → <span class="pill">competitors_db.json</span></td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Opus 4.8 · high</span></td></tr>
+      <tr><td class="k">Screen</td><td>The Team → Head of Strategy</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">05</span><span class="step-title">Plan the calendar</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Turns strategy into a 30-day calendar — narrative arcs, trust-building slots, fatigue
+  rules, callbacks. Every post mapped to a funnel stage and platform. GaryVee model: one pillar →
+  many derivatives.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;One founder-on-camera pillar (YouTube/long-form)
+  → cut into Reels, a carousel, a LinkedIn post, an X thread — each platform-native, not copy-paste.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>content-planner → <span class="pill">content_calendar.json</span></td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Sonnet 4.6</span></td></tr>
+      <tr><td class="k">Screen</td><td>Content (calendar + pipeline)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">06</span><span class="step-title">Write the scripts &amp; copy</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Writes hooks, scripts, captions, CTAs. Uses a hook taxonomy + virality framework,
+  produces 3 variations from 3 different angles, runs a voice check, and flags when the founder's face
+  or voice is required.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Reel script "Why your CPM doubled in 2 weeks"
+  — flagged <i>"founder voice required."</i> Caption in Gaurav's direct, no-fluff voice.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>script-writer (3 variants, picks winner)</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Opus 4.8 · high</span></td></tr>
+      <tr><td class="k">Screen</td><td>Content → pipeline (Drafting)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">07</span><span class="step-title">Create the visuals</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Produces the actual assets — carousels (editorial HTML→image), AI video/image, voiceover.
+  Always makes one safe on-brand option + one viral option. The founder records to camera where flagged.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;7-slide carousel "3 Meta ad mistakes quietly
+  burning your budget" rendered to AskGauravAI's template; Reel cover frame generated; founder films the talking head.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agents</td><td>creative-director (video/image) · carousel-designer</td></tr>
+      <tr><td class="k">Model</td><td>CD <span class="mono">Opus 4.8 · medium</span> · carousel <span class="mono">Sonnet 4.6</span> · media via <span class="mono">FAL</span></td></tr>
+      <tr><td class="k">Screen</td><td>The Team → Creative Director</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 8 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">08</span><span class="step-title">Soul-check (brand safety)</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Every finished piece is checked against the brand's soul + "never say" list before it
+  ever reaches you. Off-brand or risky content is blocked, not surfaced.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Kills anything hype/guru-toned, any
+  unverifiable stat, any dunk on a named competitor — all violations of AskGauravAI's rules.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>brand-guardian</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Opus 4.8 · high</span></td></tr>
+      <tr><td class="k">Output</td><td>pass → pending_approval · fail → blocked/</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 9 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">09</span><span class="step-title">You approve</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Finished drafts land in your daily brief with a real preview. One tap: Approve /
+  Change / Publish. Chat drives intent ("make the hook punchier"); buttons guard the action.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;"Needs you · 3 items" — the carousel, the
+  reel script, the LinkedIn post. You approve 2, ask for a punchier hook on 1.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Screen</td><td>Command Center → "Needs you" hero</td></tr>
+      <tr><td class="k">Flow</td><td><span class="pill">pending_approval/</span> → <span class="pill">approved/</span></td></tr>
+    </table>
+    <span class="gate">⚑ Human gate — nothing publishes without your yes</span>
+  </div>
+</div>
+
+<!-- STEP 10 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">10</span><span class="step-title">Publish</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Approved content posts to the right platform at the right time, automatically, from
+  the cloud scheduler — no laptop needed to be awake.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Carousel + reel post to Instagram
+  @askgauravai at the planned IST slot; same pillar's derivatives go to LinkedIn / X / YouTube.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Engine</td><td>per-platform publishers + publish_runner</td></tr>
+      <tr><td class="k">Runs via</td><td>24×7 Railway scheduler</td></tr>
+      <tr><td class="k">Screen</td><td>Content (Scheduled → Published)</td></tr>
+    </table>
+    <span class="gate">⚑ Only approved items are eligible to publish</span>
+  </div>
+</div>
+
+<!-- STEP 11 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">11</span><span class="step-title">Engage the community</span><span class="step-phase">Delivery</span></div>
+  <div class="what">Reads comments, DMs and mentions; drafts replies in your voice. "The comment is the
+  content" — proactive engagement is a growth channel, not chore-work. Replies wait for your OK.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Someone comments "how does the report
+  work?" → a value-first reply is drafted, plus a soft nudge toward a DM conversation.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>community-manager</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Sonnet 4.6</span></td></tr>
+      <tr><td class="k">Screen</td><td>Growth → Community</td></tr>
+    </table>
+    <span class="gate">⚑ Replies need your approval · platform rate-limits respected</span>
+  </div>
+</div>
+
+<div class="section-title pagebreak">Loop A — Growth: turning audience into clients</div>
+<p>This is where content becomes money. The same engagement from Loop B feeds a funnel that ends in a
+paying client for one of AskGauravAI's two products.</p>
+
+<!-- STEP 12 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">12</span><span class="step-title">Capture &amp; qualify leads</span><span class="step-phase a">Growth</span></div>
+  <div class="what">Two ways in: <b>inbound</b> (people DM/comment with intent) and <b>outbound</b>
+  (the system hunts ICP-matching prospects, scores them, and DMs value-first — never a pitch). DMs
+  convert better than link-traffic for service brands.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Outbound: finds D2C founders running Meta
+  ads, scores ICP fit 1–10, opens with a specific observation about their account — not a sales line.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agent</td><td>dm-customer-hunter (+ prospect-researcher, outreach-writer)</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Sonnet 4.6</span></td></tr>
+      <tr><td class="k">Screen</td><td>Growth → Lead Pipeline (scored prospects)</td></tr>
+    </table>
+    <span class="gate">⚑ Every DM approved before sending · strict platform limits</span>
+  </div>
+</div>
+
+<!-- STEP 13 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">13</span><span class="step-title">Nurture toward a call</span><span class="step-phase a">Growth</span></div>
+  <div class="what">The lead magnet is a <b>diagnostic</b> (a scorecard/mini-audit) — the highest-converting
+  magnet in 2026 because it surfaces a real problem and positions you as the fixer. Opt-in → landing
+  page → 5–7 email nurture → booked call. Hot leads contacted fast.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;"Free 5-point Meta-ads intelligence check"
+  → email sequence that shows real data thinking → invites a call. This <b>is</b> a teaser of the paid Reporting Project.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agents</td><td>funnel-specialist (journey + pages) · email-marketing-agent (sequences)</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Sonnet 4.6</span></td></tr>
+      <tr><td class="k">Screen</td><td>Growth → Funnel &amp; Email</td></tr>
+    </table>
+    <span class="gate">⚑ Emails approved before send</span>
+  </div>
+</div>
+
+<!-- STEP 14 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">14</span><span class="step-title">Audit → sell (the ascension)</span><span class="step-phase a">Growth</span></div>
+  <div class="what">Audit-led selling is the highest-converting motion. The cheap, productized
+  <b>Reporting Project</b> is the foot-in-the-door audit → delivers a real, data-backed quick win →
+  builds trust → ascends into the <b>Grid Control</b> done-for-you retainer. (Closing the call stays human — you.)</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Reporting Project at <span class="mono">₹2.5–7k</span>
+  proves the intelligence is real → client upgrades to Grid Control execution at <span class="mono">₹30–50k</span>.
+  And that new client becomes a brand the system runs — back into Loop B.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agents</td><td>strategy-agent + data-analyst generate the audit · ad-strategist when paid budget is confirmed</td></tr>
+      <tr><td class="k">Model</td><td><span class="mono">Opus 4.8 · high</span></td></tr>
+      <tr><td class="k">Human</td><td>you run the call &amp; close (the Centaur model — agents do logistics, you do the relationship)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 15 -->
+<div class="step">
+  <div class="step-head"><span class="step-num">15</span><span class="step-title">Report, optimize &amp; the Brain learns</span><span class="step-phase">Both loops</span></div>
+  <div class="what">Pulls real metrics (saves, save-rate, reach, engagement, sentiment), finds what's
+  working vs dead, and feeds it back. Reporting has a cadence: weekly pulse → monthly report+video →
+  live quarterly review. Every winning pattern is written to the Brain so next month continues, not restarts.</div>
+  <div class="eg"><span class="lbl">AskGauravAI</span> &nbsp;Spots that "show-the-receipts" carousels
+  out-save talking-head reels 3× → next calendar weights toward carousels. Written to memory permanently.</div>
+  <div class="gc">
+    <div class="lbl">Inside Grid Control</div>
+    <table>
+      <tr><td class="k">Agents</td><td>data-analyst · performance-tracker (<span class="mono">pure-math ₹0</span>) → Brain</td></tr>
+      <tr><td class="k">Model</td><td>analyst <span class="mono">Sonnet 4.6</span></td></tr>
+      <tr><td class="k">Screen</td><td>Insights (KPIs + Cost &amp; Tokens) · Memory &amp; Brain</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="note">
+  <h3>What you actually do vs what the system does</h3>
+  The system handles ~80% of the logistics — research, drafting, scheduling, assembly, reporting.
+  <b class="mono">You</b> do the four things only a human should: set the vision, pick the winning
+  angle, approve before anything goes out, and run the sales call. Everything else is the team.
+</div>
+
+<div class="section-title pagebreak">One-glance map: every step → agent → model → screen</div>
+<table class="summary">
+  <tr><th>#</th><th>Step</th><th>Loop</th><th>Agent(s)</th><th>Model</th><th>Dashboard screen</th></tr>
+  <tr><td>1</td><td>Onboard the brand</td><td>Setup</td><td>ceo-brain</td><td class="mono">Opus 4.8 xhigh</td><td>Onboarding wizard</td></tr>
+  <tr><td>2</td><td>Connect accounts</td><td>Setup</td><td>—</td><td class="mono">none</td><td>Connections</td></tr>
+  <tr><td>3</td><td>Research (cached)</td><td>B</td><td>trend-researcher, trend-sentinel</td><td class="mono">Sonnet 4.6 / ₹0</td><td>Insights</td></tr>
+  <tr><td>4</td><td>Strategy + competitors</td><td>B</td><td>strategy-agent</td><td class="mono">Opus 4.8 high</td><td>The Team</td></tr>
+  <tr><td>5</td><td>Plan calendar</td><td>B</td><td>content-planner</td><td class="mono">Sonnet 4.6</td><td>Content</td></tr>
+  <tr><td>6</td><td>Scripts &amp; copy</td><td>B</td><td>script-writer</td><td class="mono">Opus 4.8 high</td><td>Content</td></tr>
+  <tr><td>7</td><td>Create visuals</td><td>B</td><td>creative-director, carousel-designer</td><td class="mono">Opus 4.8 med / Sonnet / FAL</td><td>The Team</td></tr>
+  <tr><td>8</td><td>Soul-check</td><td>B</td><td>brand-guardian</td><td class="mono">Opus 4.8 high</td><td>(internal)</td></tr>
+  <tr><td>9</td><td>You approve</td><td>B</td><td>you</td><td class="mono">—</td><td>Command Center</td></tr>
+  <tr><td>10</td><td>Publish</td><td>B</td><td>publishers + scheduler</td><td class="mono">none</td><td>Content</td></tr>
+  <tr><td>11</td><td>Engage community</td><td>B</td><td>community-manager</td><td class="mono">Sonnet 4.6</td><td>Growth</td></tr>
+  <tr><td>12</td><td>Capture/qualify leads</td><td>A</td><td>dm-customer-hunter</td><td class="mono">Sonnet 4.6</td><td>Growth</td></tr>
+  <tr><td>13</td><td>Nurture to a call</td><td>A</td><td>funnel-specialist, email-marketing</td><td class="mono">Sonnet 4.6</td><td>Growth</td></tr>
+  <tr><td>14</td><td>Audit → sell</td><td>A</td><td>strategy, data-analyst, ad-strategist + you</td><td class="mono">Opus 4.8 high</td><td>The Team</td></tr>
+  <tr><td>15</td><td>Report, optimize, learn</td><td>Both</td><td>data-analyst, performance-tracker</td><td class="mono">Sonnet 4.6 / ₹0</td><td>Insights · Memory</td></tr>
+</table>
+
+<div class="foot">
+  Grid Control — AskGauravAI system flow · Internal admin reference · 9 Jun 2026. Model routing reflects
+  the locked post-rebuild plan (Opus 4.8 for creative/decisions, Sonnet 4.6 floor, pure-math at ₹0).
+  Companion to docs/AGENCY_WORKFLOW_RESEARCH.md and docs/DASHBOARD_V2_BUILD_PLAN.md.
+</div>
+
+</body>
+</html>

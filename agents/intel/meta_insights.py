@@ -145,6 +145,8 @@ if __name__ == "__main__":
     # Standalone probe: ACTIVE_BRAND=askgauravai python3 agents/meta_insights.py
     from pathlib import Path
 
+    from agents._lib import token_crypto
+
     slug = os.getenv("ACTIVE_BRAND", "askgauravai")
     env_path = Path(__file__).resolve().parent.parent.parent / "brands" / slug / ".env"
     benv: dict[str, str] = {}
@@ -153,7 +155,7 @@ if __name__ == "__main__":
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
-                benv[k.strip()] = v.strip()
+                benv[k.strip()] = token_crypto.decrypt(v.strip())
     result = fetch_instagram_insights(benv)
     # Print connection + metric KEYS and error notes only — never raw token.
     print(f"connected   : {result['connected']}")

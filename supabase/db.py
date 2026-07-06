@@ -286,6 +286,25 @@ def list_subscribers(brand_id: str, limit: int = 500) -> list:
 
 # ── Agent Runs ────────────────────────────────────────────────────────────────
 
+def get_brand_agent_runs(brand_id: str, since_iso: str | None = None, limit: int = 50) -> list[dict]:
+    """Recent runs for ONE brand (newest first). Feeds the client Week view."""
+    try:
+        q = (
+            _svc().table("agent_runs")
+            .select("agent_slug, status, started_at, completed_at")
+            .eq("brand_id", brand_id)
+            .order("started_at", desc=True)
+            .limit(limit)
+        )
+        if since_iso:
+            q = q.gte("started_at", since_iso)
+        res = q.execute()
+        return res.data or []
+    except Exception as e:
+        print(f"[db] get_brand_agent_runs error: {e}")
+        return []
+
+
 def get_agent_run(run_id: str) -> dict | None:
     try:
         res = _svc().table("agent_runs").select("*").eq("id", run_id).single().execute()

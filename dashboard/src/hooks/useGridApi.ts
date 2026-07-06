@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/api"
 import { useBrandStore } from "@/store/brandStore"
+import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED, DEMO_WEEK } from "@/lib/demo"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,7 @@ export function useAgentStatus() {
     queryKey: ["agents", "status", activeBrand.slug],
     enabled: !!activeBrand.slug,
     queryFn: async () => {
+      if (isDemo()) return { agents: DEMO_AGENT_STATUS }
       // Endpoint returns { success, data: [...] } with camelCase `lastRun` and
       // session status "running"/"done"/"idle". Normalize to AgentStatus shape.
       const resp = await getJson<{ success: boolean; data: Array<Record<string, unknown>> }>(
@@ -159,6 +161,7 @@ export function usePendingOutputs() {
   return useQuery({
     queryKey: ["outputs", "pending", activeBrand.slug],
     queryFn: async () => {
+      if (isDemo()) return { outputs: DEMO_PENDING }
       // API returns { success, data: [{agentName, filename, timestamp, preview, ...}] }
       // Adapt to our PendingOutput shape so consumers don't need to know.
       const raw = await getJson<{ success: boolean; data: any[] }>(
@@ -205,9 +208,138 @@ export function useRejectOutput() {
   const qc = useQueryClient()
   const { activeBrand } = useBrandStore()
   return useMutation({
-    mutationFn: (filename: string) =>
-      postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename }),
+    mutationFn: ({ filename, reason }: { filename: string; reason?: string }) =>
+      postJson("/api/outputs/reject", { brand_slug: activeBrand.slug, filename, reason: reason || "" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outputs", "pending"] }),
+  })
+}
+
+// ── Week view (operating rhythm · Fable 5 UX pass) ────────────────────────────
+
+export interface WeekRun {
+  agent_slug: string
+  status: string
+  started_at: string
+  completed_at?: string | null
+}
+
+export interface WeekData {
+  ran: WeekRun[]
+  waiting: { count: number; by_agent: Record<string, number> }
+  next: { pipeline: string; day_of_week?: string | null; hour?: number | null; minute?: number | null }[]
+}
+
+export function useWeek() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["week", activeBrand.slug],
+    queryFn: async () => {
+      if (isDemo()) return DEMO_WEEK
+      const raw = await getJson<{ success: boolean; data: WeekData }>(
+        `/api/week?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      )
+      return raw.data
+    },
+    enabled: !!activeBrand.slug,
+    refetchInterval: 60_000,
+  })
+}
+
+// ── Trust dial (GRIDLOCK-PROGRAM-01JUL Stage 5) ────────────────────────────────
+
+export type TrustLevel = "consult" | "automate" | "direct"
+
+export interface TrustDialData {
+  levels: TrustLevel[]
+  default_level: TrustLevel
+  settings: Record<string, TrustLevel>   // agent_slug -> level; missing key = default
+}
+
+export function useTrustDial() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["trust-dial", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: TrustDialData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/trust-dial`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 30_000,
+  })
+}
+
+export function useSetTrustDial() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { agent_slug: string; level: TrustLevel }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/trust-dial`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["trust-dial", activeBrand.slug] }),
+  })
+}
+
+// ── Publish policy — per-platform manual/assisted, owner-facing ────────────────
+
+export type PublishLevel = "manual" | "assisted"
+
+export interface PublishPolicyData {
+  levels: PublishLevel[]
+  default_level: PublishLevel
+  locked_manual: string[]                    // platforms that can't be changed (e.g. "twitter")
+  settings: Record<string, PublishLevel>     // platform -> level; missing key = default (manual)
+}
+
+export function usePublishPolicy() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["publish-policy", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: PublishPolicyData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 30_000,
+  })
+}
+
+export function useSetPublishPolicy() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { platform: string; level: PublishLevel }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["publish-policy", activeBrand.slug] }),
+  })
+}
+
+// ── Cost cap — per-brand daily spend cap, owner-facing ──────────────────────────
+
+export interface CostCapData {
+  enabled: boolean
+  spent_today_usd: number
+  daily_cap_usd: number
+  remaining_usd: number
+  date: string
+  is_override: boolean   // false = showing the global default, not a brand-specific cap
+}
+
+export function useCostCap() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["cost-cap", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: CostCapData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 15_000,
+  })
+}
+
+export function useSetCostCap() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { daily_usd_cap: number }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cost-cap", activeBrand.slug] }),
   })
 }
 
@@ -232,10 +364,12 @@ export function usePerformanceHistory() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["performance", "history", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ history: any }>(
+    queryFn: async () => {
+      if (isDemo()) return { history: DEMO_PERF_HISTORY }
+      return getJson<{ history: any }>(
         `/api/performance/history?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ),
+      )
+    },
     enabled: !!activeBrand.slug,
     staleTime: 30_000,
   })
@@ -271,10 +405,12 @@ export function usePublishedPosts() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["published", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ success: boolean; data: PublishedPost[] }>(
+    queryFn: async () => {
+      if (isDemo()) return { success: true, data: DEMO_PUBLISHED }
+      return getJson<{ success: boolean; data: PublishedPost[] }>(
         `/api/published?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ),
+      )
+    },
     enabled: !!activeBrand.slug,
     refetchInterval: 30_000,
   })
@@ -318,10 +454,13 @@ export function useDigest() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["digest", activeBrand.slug],
-    queryFn: () =>
-      getJson<{ success: boolean; data: DigestData }>(
+    queryFn: async () => {
+      if (isDemo()) return DEMO_DIGEST
+      const r = await getJson<{ success: boolean; data: DigestData }>(
         `/api/digest?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
-      ).then((r) => r.data),
+      )
+      return r.data
+    },
     enabled: !!activeBrand.slug,
     staleTime: 30_000,
   })

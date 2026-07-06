@@ -36,6 +36,7 @@ import requests
 
 APIFY_BASE = "https://api.apify.com/v2"
 HASHTAG_ACTOR = "apify~instagram-hashtag-scraper"
+GMAPS_ACTOR = "compass~crawler-google-places"  # maintained Google Maps Scraper on Apify
 
 
 def _icp_hashtags(brand_profile: dict) -> list[str]:
@@ -112,6 +113,67 @@ def discover_via_hashtags(hashtags: list[str], limit: int = 50) -> tuple[list[di
     return prospects, [f"apify: {len(prospects)} unique owner(s) from {len(hashtags)} hashtag(s)"]
 
 
+def _gmaps_config(brand_profile: dict) -> tuple[list[str], str | None]:
+    """Local-biz prospecting config from brand_profile. Empty list ⇒ feature OFF.
+    Any onboarded brand whose ICP is local businesses sets these; default = off."""
+    queries = brand_profile.get("gmaps_queries") or brand_profile.get("local_biz_queries")
+    if not isinstance(queries, list) or not queries:
+        return [], None
+    location = brand_profile.get("gmaps_location") or brand_profile.get("local_biz_location")
+    return [str(q) for q in queries][:5], (str(location) if location else None)
+
+
+def discover_via_google_maps(queries: list[str], location: str | None,
+                             limit: int = 40) -> tuple[list[dict], list[str]]:
+    """Apify Google Maps scrape → local businesses as prospects. The intent signal
+    is their category + whether they have a website (no site = ad/web opportunity)."""
+    if not queries:
+        return [], ["no gmaps_queries in brand_profile — Google Maps discovery skipped."]
+    per_search = max(5, limit // max(1, len(queries)))
+    body: dict = {
+        "searchStringsArray": queries,
+        "maxCrawledPlacesPerSearch": per_search,
+        "language": "en",
+        "skipClosedPlaces": True,
+    }
+    if location:
+        body["locationQuery"] = location
+    items, err = _apify_run_sync(GMAPS_ACTOR, body, limit=limit, max_wait_s=210)
+    if err:
+        return [], [f"apify google-maps scrape: {err}"]
+
+    seen: set[str] = set()
+    prospects: list[dict] = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        name = it.get("title") or it.get("name")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        category = it.get("categoryName") or it.get("category") or ""
+        address = it.get("address") or ", ".join(
+            x for x in [it.get("street"), it.get("city")] if x) or ""
+        website = it.get("website")
+        phone = it.get("phone") or it.get("phoneUnformatted")
+        site_note = f"website {website}" if website else "NO website (web/ads opportunity)"
+        signal = f"Local business — {category} at {address}. {site_note}.".strip()
+        prospects.append({
+            "platform":      "google_maps",
+            "handle":        str(name),
+            "profile_url":   website or it.get("url"),
+            "bio":           f"{category} · {address}" if category or address else None,
+            "signal_text":   signal[:400],
+            "signal_source": it.get("url"),
+            "source":        "apify:google-maps-scraper",
+            "contact":       {"website": website, "phone": phone},  # for outreach context
+        })
+    return prospects, [
+        f"apify google-maps: {len(prospects)} business(es) from {len(queries)} query(ies)"
+        + (f" near {location}" if location else "")
+    ]
+
+
 def _normalize_file_prospect(platform_default: str, item) -> dict | None:
     if not isinstance(item, dict):
         return None
@@ -168,6 +230,16 @@ def collect_prospects(brand_profile: dict, brand_dir: str | Path) -> dict:
         prospects, notes = discover_via_hashtags(_icp_hashtags(brand_profile))
         notes = file_notes + notes
         source = "apify_hashtags"
+
+    # Additive local-biz source: append Google Maps prospects when the brand opts in
+    # (gmaps_queries in brand_profile). Brand-agnostic — off by default.
+    gmaps_queries, gmaps_location = _gmaps_config(brand_profile)
+    if gmaps_queries:
+        maps_prospects, maps_notes = discover_via_google_maps(gmaps_queries, gmaps_location)
+        if maps_prospects:
+            prospects = prospects + maps_prospects
+            source = f"{source}+google_maps" if prospects else "google_maps"
+        notes = notes + maps_notes
 
     # Dedupe on (platform, handle)
     seen: set[tuple] = set()

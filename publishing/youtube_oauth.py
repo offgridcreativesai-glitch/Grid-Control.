@@ -23,6 +23,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import googleapiclient.discovery
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+from agents._lib import token_crypto  # noqa: E402 — encrypt-at-rest, same as core.py's brand .env writer
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube.readonly",
@@ -35,9 +37,10 @@ def _brand_env_path(slug: str) -> Path:
 
 
 def _write_env(path: Path, key: str, value: str) -> None:
+    stored_value = token_crypto.encrypt(value)
     content = path.read_text(encoding="utf-8") if path.exists() else ""
     pattern = re.compile(rf"^{re.escape(key)}\s*=.*$", re.MULTILINE)
-    line = f"{key}={value}"
+    line = f"{key}={stored_value}"
     if pattern.search(content):
         content = pattern.sub(line, content)
     else:
@@ -56,7 +59,7 @@ def main() -> int:
         print(f"ERROR: {env_path} not found.")
         return 1
 
-    env = dotenv_values(env_path)
+    env = {k: token_crypto.decrypt(v or "") for k, v in dotenv_values(env_path).items()}
     client_id = (env.get("YOUTUBE_CLIENT_ID") or "").strip()
     client_secret = (env.get("YOUTUBE_CLIENT_SECRET") or "").strip()
     if not client_id or not client_secret:

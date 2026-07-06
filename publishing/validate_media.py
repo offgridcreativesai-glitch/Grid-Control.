@@ -4,6 +4,7 @@ import os, sys
 from pathlib import Path
 BASE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE))
+from agents._lib import token_crypto
 BRAND = "askgauravai"; BRAND_DIR = BASE / "brands" / BRAND
 
 # load env (brand overlays global)
@@ -12,7 +13,7 @@ for p in (BASE/".env", BRAND_DIR/".env"):
         for ln in p.read_text().splitlines():
             ln=ln.strip()
             if ln and not ln.startswith("#") and "=" in ln:
-                k,v=ln.split("=",1); os.environ[k.strip()]=v.strip().strip('"').strip("'")
+                k,v=ln.split("=",1); os.environ[k.strip()]=token_crypto.decrypt(v.strip().strip('"').strip("'"))
 g=os.getenv
 slide = "brands/askgauravai/visuals/carousels/20260603_post1_intro/slide_01.png"
 reel  = str(BRAND_DIR/"outputs/approved/Creative Director/reels/20260604_142050_askgauravai_insta_and_yt_reel__reel.mp4")

@@ -17,6 +17,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from . import phases as _phases
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATE_TTL_SECONDS = 3600  # 1 hour
 
@@ -120,6 +122,7 @@ def build_brand_state(slug: str) -> dict:
             "name": bp.get("brand_name") or bp.get("name") or slug,
             "handle": bp.get("instagram_handle") or bp.get("handle") or "",
             "phase": _truncate(bp.get("phase"), 200),
+            "program_phase": _phases.normalize_phase(bp.get("program_phase")),
             "industry": _truncate(bp.get("industry"), 100),
             "business_type": _truncate(bp.get("business_type"), 100),
             "founder": _truncate(bp.get("founder_identity"), 300),

@@ -153,6 +153,12 @@ class CarouselDesigner:
         # CEOBrain reads ACTIVE_BRAND env at construction; ensure it matches
         os.environ["ACTIVE_BRAND"] = brand_slug
         self.ceo = CEOBrain()
+        # STEP 0 — business-model archetype (shared reasoning layer, see
+        # agents/_lib/brand_archetype.py). Decides hook style + CTA distance per slide.
+        from agents._lib.brand_archetype import classify_brand
+        self.archetype = classify_brand(self.brand_slug, self.brand_profile)
+        self.log(f"Brand archetype: {self.archetype.get('archetype')} "
+                 f"(source: {self.archetype.get('source')})")
 
     def log(self, msg: str):
         print(f"[CarouselDesigner:{self.brand_slug}] {msg}")
@@ -213,8 +219,12 @@ class CarouselDesigner:
             "brand_brief": self.brand_profile.get("brand_brief"),
         }
 
-        prompt = f"""You are designing a {slide_count}-slide carousel for {self.handle} on {platform}.
-
+        from agents._lib._agent_framework import operating_framework as _operating_framework
+        from agents._lib.brand_archetype import directive_block
+        archetype_block = directive_block(self.archetype, agent="carousel-designer")
+        prompt = _operating_framework(2) + f"""
+You are designing a {slide_count}-slide carousel for {self.handle} on {platform}.
+{archetype_block}
 BRAND CONTEXT:
 {json.dumps(brand_context, indent=2)}
 {voice_block}
@@ -237,8 +247,8 @@ STRUCTURE (strict):
 RULES:
 - Every slide must respect what_to_never_say (no jargon, no banned phrases).
 - LANGUAGE — STATIC IMAGES = plain conversational ENGLISH ONLY. NO Hinglish, NO Hindi words ('yaar', 'matlab', 'samjho', 'nahi', 'hai', etc), NO Hindi connectors. Voice DNA's Hinglish rule applies ONLY to spoken/video content, NEVER carousel slides. Reads clean to a global feed.
-- Slide 1 must hook in the first 1-2 seconds of viewing.
-- Last slide must give a transferable principle or open-loop, NEVER a hire-me CTA.
+- Slide 1 must hook in the first 1-2 seconds of viewing, using a hook pattern from STEP 0's priority list.
+- Last slide's CTA must obey STEP 0's CTA DISTANCE (shop-link for product, save/DM-a-question for service, reply/relationship for personal). Never a hire-me CTA.
 - Caption (post_caption field) ALSO English-only. Save the Hinglish for video voice-over.
 
 Return ONLY valid JSON, no markdown fences:

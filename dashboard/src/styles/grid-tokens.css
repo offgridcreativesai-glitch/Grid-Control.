@@ -1,0 +1,63 @@
+/* ============================================================
+   GRID CONTROL — Design Token System (single source of truth)
+   Benchmark: helloelva.com (warmth · whitespace · restraint = premium)
+   Two surfaces: LIGHT (public landing) · DARK cockpit (logged-in app)
+   Rule: Lava is scarce (CTA / active / approve only). NO GOLD. EVER.
+   ============================================================ */
+:root{
+  /* — type families — */
+  --gc-disp:'Bricolage Grotesque',sans-serif;
+  --gc-serif:'Instrument Serif',serif;
+  --gc-ui:'Geist',system-ui,sans-serif;
+
+  /* — type scale (fluid) — */
+  --gc-fs-mega:clamp(56px,9vw,140px);
+  --gc-fs-h1:clamp(44px,7vw,104px);
+  --gc-fs-h2:clamp(32px,4.4vw,60px);
+  --gc-fs-h3:clamp(22px,2.4vw,30px);
+  --gc-fs-lead:clamp(20px,2.3vw,28px);
+  --gc-fs-body:17px;
+  --gc-fs-sm:14px;
+  --gc-fs-cap:12.5px;
+
+  /* — spacing scale — */
+  --gc-1:4px; --gc-2:8px; --gc-3:12px; --gc-4:16px; --gc-5:24px;
+  --gc-6:32px; --gc-7:48px; --gc-8:72px; --gc-9:112px; --gc-10:160px;
+
+  /* — radius (soft, helloelva-round) — */
+  --gc-r-sm:10px; --gc-r-md:18px; --gc-r-lg:28px; --gc-r-xl:40px; --gc-r-pill:999px;
+
+  /* — motion — */
+  --gc-ease:cubic-bezier(.2,.7,.2,1);
+  --gc-ease-soft:cubic-bezier(.16,1,.3,1);
+  --gc-dur-1:.25s; --gc-dur-2:.5s; --gc-dur-3:.9s; --gc-dur-4:1.3s;
+
+  /* — LIGHT surface (landing) — */
+  --gc-cream:#F2EEE6;
+  --gc-paper:#FBF9F4;
+  --gc-ink:#161310;
+  --gc-ink-2:#6E665A;
+  --gc-line:rgba(22,19,16,.10);
+  --gc-lava:#FF4D00;
+  --gc-lava-soft:#FF6A2B;
+  --gc-emerald:#0A5E4E;
+  --gc-teal:#103F46;
+  --gc-elev-1:0 18px 50px -34px rgba(22,19,16,.30);
+  --gc-elev-2:0 30px 80px -40px rgba(22,19,16,.40);
+}
+
+/* — DARK cockpit surface (logged-in app: penguin/YouTube-deck energy) — */
+.gc-cockpit{
+  --gc-cream:#0C0E0D;       /* deep near-black base */
+  --gc-paper:#14181A;        /* raised panel */
+  --gc-panel-2:#1B2123;      /* secondary panel */
+  --gc-ink:#F2EEE6;          /* warm off-white text */
+  --gc-ink-2:#8C9491;        /* muted */
+  --gc-line:rgba(242,238,230,.10);
+  --gc-lava:#FF4D00;
+  --gc-lava-soft:#FF6A2B;
+  --gc-emerald:#16A07E;      /* lifted for dark legibility */
+  --gc-teal:#2A6E66;
+  --gc-elev-1:0 20px 60px -30px rgba(0,0,0,.7);
+  --gc-elev-2:0 40px 100px -40px rgba(0,0,0,.8);
+}

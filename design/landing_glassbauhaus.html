@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grid Control — Landing (Glass Bauhaus · light)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#E9E1D0;            /* swapped per variant: Ash #F2F1EE · Ice #F5F8FA · Champagne #E9E1D0 */
+  --ink:#16140F; --mut:#5E635E; --dim:#8A8D86;
+  --lava:#FF4D00; --emerald:#16A07E; --teal:#2A8E80; --blue:#2E6BFF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--base);font-family:'Geist',system-ui,sans-serif;color:var(--ink)}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(9%,-7%) scale(1.22)}100%{transform:translate(0,0) scale(1)}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1.18)}50%{transform:translate(-10%,9%) scale(1)}100%{transform:translate(0,0) scale(1.18)}}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);z-index:0;pointer-events:none}
+.rise{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+/* tiles */
+.tile{position:relative;border-radius:26px;overflow:hidden;
+  box-shadow:0 26px 60px -34px rgba(30,28,40,.40), 0 2px 6px -3px rgba(30,28,40,.18);
+  transition:transform .55s cubic-bezier(.16,1,.3,1), box-shadow .55s}
+.tile:hover{transform:translateY(-7px);box-shadow:0 40px 80px -38px rgba(30,28,40,.48)}
+.tile.dark::after,.tile.solid::after{content:"";position:absolute;inset:0;border-radius:26px;border:1px solid rgba(255,255,255,.10);pointer-events:none}
+.tile.solid::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 25% 0%,rgba(255,255,255,.20),transparent 58%);pointer-events:none;mix-blend-mode:soft-light}
+.frost{background:rgba(255,255,255,.55);backdrop-filter:blur(20px) saturate(1.15);-webkit-backdrop-filter:blur(20px) saturate(1.15);border:1px solid rgba(255,255,255,.7)}
+.eyebrow{font-size:12.5px;letter-spacing:.2em;text-transform:uppercase}
+.h-display{font-family:'Bricolage Grotesque';font-weight:800;letter-spacing:-.045em;line-height:.92}
+.serif{font-family:'Instrument Serif';font-style:italic;font-weight:400}
+.pill{display:inline-flex;align-items:center;gap:9px;border-radius:999px}
+.btn-lava{background:var(--lava);color:#fff;font-weight:600;border-radius:999px;box-shadow:0 14px 34px -10px rgba(255,77,0,.55)}
+.visor{display:flex;justify-content:space-around;align-items:center;padding:0 4px}
+.visor span{width:3px;height:3px;border-radius:50%;background:#0A0C0B}
+</style></head>
+<body>
+<div id="wrap" style="position:relative;min-height:100vh;overflow:hidden">
+  <canvas id="net" style="position:absolute;inset:0;z-index:0"></canvas>
+  <div class="blob" style="width:560px;height:560px;background:var(--blue);opacity:.16;top:40px;left:-80px;animation:drift 19s ease-in-out infinite"></div>
+  <div class="blob" style="width:460px;height:460px;background:var(--lava);opacity:.13;top:-60px;right:140px;animation:drift2 22s ease-in-out infinite"></div>
+  <div class="blob" style="width:500px;height:500px;background:var(--emerald);opacity:.13;bottom:-60px;right:-80px;animation:drift 25s ease-in-out infinite"></div>
+
+  <div style="position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 26px">
+    <!-- nav -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 4px">
+      <div class="h-display" style="font-weight:800;font-size:22px;letter-spacing:-.02em">GRID<span style="color:var(--lava)">/</span>CONTROL</div>
+      <div style="display:flex;align-items:center;gap:26px;font-size:14px;color:var(--mut)">
+        <span>Work</span><span>The team</span>
+        <span class="pill" style="padding:10px 22px;background:#16140F;color:#F2F1EE">Sign in</span>
+      </div>
+    </div>
+
+    <!-- BENTO -->
+    <div style="display:grid;grid-template-columns:1.7fr 1fr;grid-auto-rows:auto;gap:16px;padding:8px 0 16px">
+
+      <!-- HERO -->
+      <div class="tile solid rise" style="grid-row:span 2;padding:52px 48px;background:linear-gradient(150deg,#2E6BFF 0%,#1E3FC4 60%,#16267A 100%);color:#fff;animation-delay:.05s">
+        <div class="eyebrow" style="color:rgba(255,255,255,.72)">A marketing team, on call</div>
+        <h1 class="h-display" style="font-size:clamp(48px,6.4vw,86px);margin:22px 0 0">A whole<br>marketing<br>team. One <span class="serif" style="display:inline-block;background:var(--lava);color:#fff;padding:0 16px;border-radius:14px;transform:rotate(-2deg);box-shadow:0 12px 30px -10px rgba(255,77,0,.6)">yes</span>.</h1>
+        <p style="font-family:'Instrument Serif';font-style:italic;font-size:clamp(18px,1.7vw,23px);line-height:1.45;color:rgba(255,255,255,.88);max-width:34ch;margin-top:30px">Nine specialists plan it, write it, design it. You stay in one chat and approve the good stuff. That's the whole job.</p>
+      </div>
+
+      <!-- STAT -->
+      <div class="tile solid rise" style="padding:36px 40px;background:linear-gradient(160deg,#FF5A12,#E23C00);animation-delay:.16s">
+        <div class="h-display" style="font-size:128px;color:#fff;line-height:.8">9</div>
+        <div class="h-display" style="font-weight:700;font-size:30px;color:#fff;letter-spacing:-.03em;margin-top:14px">specialists.<br>zero meetings.</div>
+      </div>
+
+      <!-- CTA -->
+      <div class="tile solid rise" style="padding:36px 40px;display:flex;align-items:flex-end;background:linear-gradient(160deg,#1ED0A1,#0E8E70);animation-delay:.26s">
+        <div class="h-display" style="font-weight:700;font-size:34px;color:#fff;letter-spacing:-.03em">Get your<br>team →</div>
+      </div>
+
+      <!-- YOU POINT (light frost) -->
+      <div class="tile frost rise" style="padding:40px 44px;animation-delay:.34s">
+        <div class="h-display" style="font-weight:700;font-size:34px;letter-spacing:-.03em">You point.<br>The team delivers.</div>
+        <p style="font-size:15px;line-height:1.6;color:var(--mut);max-width:42ch;margin-top:18px">No dashboards to learn. No briefs to fill. You talk to one chief of staff — the crew does the rest.</p>
+      </div>
+
+      <!-- COMMAND CARD (dark anchor) -->
+      <div class="tile dark rise" style="padding:30px 34px;background:#101211;color:#EDEAE2;animation-delay:.42s">
+        <div class="eyebrow" style="color:#7E857F;margin-bottom:18px">The only screen you need</div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:38px;height:38px;border-radius:11px;background:rgba(255,77,0,.16);border:1px solid rgba(255,77,0,.5);flex:0 0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px -5px var(--lava)">
+            <div class="visor" style="width:20px;height:7px;border-radius:4px;background:var(--lava)"><span></span><span></span></div>
+          </div>
+          <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;font-size:14.5px;line-height:1.5">Morning — Lumen finished your carousel and Riveter has 3 hooks. Both ready for your yes.</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;padding-left:50px">
+          <span class="btn-lava" style="padding:10px 22px;font-size:14px">Approve</span>
+          <span class="pill" style="padding:10px 20px;font-size:14px;color:#9AA19D;border:1px solid rgba(255,255,255,.14)">Changes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROSTER BAR (dark anchor) -->
+    <div class="tile dark rise" style="padding:18px;background:#101211;animation-delay:.5s;margin-bottom:60px">
+      <div id="roster" style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- work -->
+    <div class="eyebrow" style="color:var(--dim);padding:8px 4px 16px">The work they ship</div>
+    <div id="work" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding-bottom:48px"></div>
+
+    <!-- FINAL CTA (dark block, bottom anchor) -->
+    <div class="tile dark rise" style="padding:66px 30px;text-align:center;background:linear-gradient(160deg,#15171A,#0C0D0F);color:#F2EEE6;margin-bottom:40px">
+      <h2 class="h-display" style="font-weight:700;font-size:clamp(30px,4.6vw,50px);max-width:16ch;margin:0 auto 26px">The team does the work. You keep the <span class="serif" style="color:var(--lava)">final word</span>.</h2>
+      <span class="btn-lava" style="padding:15px 32px;font-size:15px;display:inline-block">Get your command deck</span>
+    </div>
+
+    <!-- footer -->
+    <div style="border-top:.5px solid rgba(22,20,15,.14);padding:24px 4px 50px;display:flex;justify-content:space-between;font-size:13px;color:var(--dim)">
+      <span class="h-display" style="font-weight:800;font-size:15px;color:var(--ink)">GRID<span style="color:var(--lava)">/</span>CONTROL</span>
+      <span>A team you direct. Work you approve.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+ var crew=[['Cadence','#2A8E80'],['Riveter','#1F6F63'],['Lumen','#FF4D00'],['Gauge','#2A6E66'],['Echo','#16A07E'],['Sentry','#155E50'],['Finch','#2E6BFF']];
+ document.getElementById('roster').innerHTML=crew.map(function(m){return (
+   '<div class="pill" style="flex:1 1 0;min-width:120px;justify-content:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 14px">'
+   +'<div style="width:30px;height:30px;border-radius:9px;background:'+m[1]+'26;border:1px solid '+m[1]+'66;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px -5px '+m[1]+'">'
+   +'<div class="visor" style="width:16px;height:6px;border-radius:4px;background:'+m[1]+'"><span></span><span></span></div></div>'
+   +'<span style="font-family:Bricolage Grotesque;font-weight:600;font-size:14px;margin-left:9px;color:#EDEAE2">'+m[0]+'</span></div>'
+ );}).join('');
+
+ var work=[['Launch carousel','Creative · Copy','#FF4D00'],['Competitor teardown','Research','#16A07E'],['Week-1 hooks','Copy · Voice','#2A8E80']];
+ document.getElementById('work').innerHTML=work.map(function(w){return (
+   '<div class="tile frost" style="padding:0">'
+   +'<div style="height:150px;background:radial-gradient(130% 130% at 28% 18%,'+w[2]+','+w[2]+'22)"></div>'
+   +'<div style="padding:16px 18px"><div style="font-family:Bricolage Grotesque;font-weight:600;font-size:16px">'+w[0]+'</div>'
+   +'<div style="font-size:12.5px;color:#6E726C;margin-top:3px">'+w[1]+'</div></div></div>'
+ );}).join('');
+
+ // LIVING PARTICLE CONSTELLATION — drifting nodes + links (the "team/network")
+ var cv=document.getElementById('net'),ctx=cv.getContext('2d'),wrap=document.getElementById('wrap');
+ var DPR=Math.min(devicePixelRatio||1,2),W,H,pts=[];
+ var cols=['46,107,255','255,77,0','22,160,126','42,142,128'];
+ function size(){W=wrap.clientWidth;H=wrap.clientHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
+ size();addEventListener('resize',size);
+ var N=Math.round(Math.min(90,W*H/16000));
+ for(var i=0;i<N;i++){pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.8+1.1,c:cols[i%cols.length]});}
+ function frame(){
+   ctx.clearRect(0,0,W,H);
+   for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx;p.y+=p.vy;
+     if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;}
+   for(var i=0;i<pts.length;i++){for(var j=i+1;j<pts.length;j++){
+     var a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+     if(d<132){ctx.strokeStyle='rgba('+a.c+','+(0.16*(1-d/132)).toFixed(3)+')';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+   }}
+   for(var i=0;i<pts.length;i++){var p=pts[i];ctx.fillStyle='rgba('+p.c+',.5)';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill();}
+   requestAnimationFrame(frame);
+ }
+ frame();
+})();
+</script>
+</body></html>

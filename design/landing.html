@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Control — a team for your marketing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F2EEE6; --paper:#FBF9F4; --ink:#1A1714; --ink2:#6E665A;
+  --lava:#FF4D00; --emerald:#0A5E4E; --line:rgba(26,23,20,.10);
+  --disp:'Bricolage Grotesque',sans-serif; --serif:'Instrument Serif',serif; --ui:'Geist',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:0 40px}
+a{color:inherit;text-decoration:none}
+
+nav{position:sticky;top:0;z-index:50;background:rgba(242,238,230,.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:74px}
+.mark{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.mark b{color:var(--lava);font-weight:600}
+.navr{display:flex;align-items:center;gap:26px;font-size:14.5px;color:var(--ink2)}
+.navr a:hover{color:var(--ink)}
+.btn{font-family:var(--ui);font-weight:500;font-size:14.5px;border:none;cursor:pointer;border-radius:999px;padding:11px 22px;transition:transform .18s ease,background .2s ease}
+.btn-lava{background:var(--lava);color:#fff}
+.btn-lava:hover{transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:rgba(26,23,20,.04)}
+
+.hero{padding:128px 0 96px}
+.kick{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--emerald);font-weight:500;margin-bottom:34px;display:flex;align-items:center;gap:12px}
+.kick:before{content:"";width:30px;height:1px;background:var(--emerald);opacity:.5}
+h1{font-family:var(--disp);font-weight:500;font-size:clamp(46px,7.4vw,92px);line-height:.98;letter-spacing:-.03em}
+h1 .l2{color:var(--ink)}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--lava);letter-spacing:-.01em}
+.sub{font-family:var(--serif);font-size:clamp(20px,2.5vw,27px);line-height:1.42;color:#3a342c;max-width:620px;margin:38px 0 46px}
+.cta{display:flex;align-items:center;gap:20px}
+.cta .link{font-size:15px;color:var(--ink2);display:flex;align-items:center;gap:7px}
+.cta .link:hover{color:var(--ink)}
+.cta .link span{transition:transform .2s}.cta .link:hover span{transform:translateX(3px)}
+
+section.block{padding:104px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:42px}
+.lead{font-family:var(--disp);font-weight:500;font-size:clamp(30px,4vw,46px);line-height:1.05;letter-spacing:-.02em;max-width:760px}
+.lead em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--emerald)}
+
+.team{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden;margin-top:54px}
+.member{background:var(--paper);padding:30px 28px;display:flex;align-items:center;gap:18px;transition:background .2s}
+.member:hover{background:#fff}
+.av{width:50px;height:50px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;position:relative}
+.visor{width:26px;height:8px;border-radius:5px;display:flex;align-items:center;justify-content:space-around;padding:0 4px}
+.visor i{width:3px;height:3px;border-radius:50%;background:rgba(0,0,0,.55)}
+.m-name{font-family:var(--disp);font-weight:500;font-size:16px}
+.m-role{font-size:13px;color:var(--ink2);margin-top:1px}
+.lead-tag{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--lava);font-weight:500;margin-top:4px}
+
+.steps{margin-top:30px}
+.step{display:grid;grid-template-columns:96px 1fr;gap:40px;padding:34px 0;border-top:1px solid var(--line);align-items:start}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step .num{font-family:var(--serif);font-size:46px;line-height:1;color:var(--lava)}
+.step h3{font-family:var(--disp);font-weight:500;font-size:23px;letter-spacing:-.01em;margin-bottom:8px}
+.step p{font-size:16px;color:var(--ink2);max-width:560px;line-height:1.6}
+
+.closing{text-align:center;padding:128px 0}
+.closing h2{font-family:var(--disp);font-weight:500;font-size:clamp(34px,5vw,60px);line-height:1.02;letter-spacing:-.025em;max-width:780px;margin:0 auto 34px}
+.closing h2 em{font-family:var(--serif);font-style:italic;color:var(--lava)}
+.closing .cta{justify-content:center}
+
+footer{border-top:1px solid var(--line);padding:38px 0}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:var(--ink2)}
+
+.rise{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rise.in{opacity:1;transform:none}
+@media(max-width:820px){
+  .wrap{padding:0 24px}.team{grid-template-columns:1fr}.step{grid-template-columns:64px 1fr;gap:22px}
+  .navr a:not(.btn){display:none}.hero{padding:90px 0 70px}
+}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="mark">grid<b>·</b>control</div>
+  <div class="navr">
+    <a href="#team">The team</a>
+    <a href="#how">How it works</a>
+    <a href="#" class="btn btn-ghost">Sign in</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="kick rise">A team for your marketing</div>
+  <h1 class="rise">You direct.<br><span class="l2">They make it.</span><br>You say <em>yes</em>.</h1>
+  <p class="sub rise">One person to talk to — and a whole crew behind them, planning, writing and designing your marketing, then bringing every piece to you for the final word.</p>
+  <div class="cta rise">
+    <button class="btn btn-lava">Meet your team</button>
+    <a href="#how" class="link">See how it works <span>→</span></a>
+  </div>
+</div></header>
+
+<section class="block" id="team"><div class="wrap">
+  <div class="eyebrow rise">The crew on your side</div>
+  <div class="lead rise">Nine specialists. <em>One</em> you ever have to talk to.</div>
+  <div class="team rise" id="teamgrid"></div>
+</div></section>
+
+<section class="block" id="how"><div class="wrap">
+  <div class="eyebrow rise">How it works</div>
+  <div class="lead rise">Tell them the goal. Watch it get made. <em>Approve</em> what ships.</div>
+  <div class="steps" id="steps"></div>
+</div></section>
+
+<section class="closing"><div class="wrap rise">
+  <h2>The team does the work.<br>You keep the <em>final word</em>.</h2>
+  <div class="cta">
+    <button class="btn btn-lava">Get your command deck</button>
+    <a href="#" class="link">Talk to us <span>→</span></a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="mark" style="font-size:16px">grid<b>·</b>control</div>
+  <div>A team you direct. Work you approve.</div>
+</div></footer>
+
+<script>
+const team=[
+ {n:'Atlas',r:'Chief of Staff',c:'#FF4D00',bg:'#FBE7DE',lead:true},
+ {n:'Scout',r:'Strategist',c:'#0A5E4E',bg:'#E1EFE9'},
+ {n:'Cadence',r:'Planner',c:'#0A5E4E',bg:'#E1EFE9'},
+ {n:'Riveter',r:'Writer',c:'#1F6F63',bg:'#E4EFEC'},
+ {n:'Lumen',r:'Creative',c:'#FF4D00',bg:'#FBE7DE'},
+ {n:'Gauge',r:'Analyst',c:'#2A6E66',bg:'#E5EEEC'},
+ {n:'Echo',r:'Community',c:'#0A5E4E',bg:'#E1EFE9'},
+ {n:'Sentry',r:'Brand Guardian',c:'#1F6F63',bg:'#E4EFEC'},
+ {n:'Finch',r:'Researcher',c:'#2A6E66',bg:'#E5EEEC'}
+];
+document.getElementById('teamgrid').innerHTML=team.map(m=>`
+<div class="member">
+ <div class="av" style="background:${m.bg}">
+   <div class="visor" style="background:${m.c}"><i></i><i></i></div>
+ </div>
+ <div>
+   <div class="m-name">${m.n}</div>
+   <div class="m-role">${m.r}</div>
+   ${m.lead?'<div class="lead-tag">Talks to you</div>':''}
+ </div>
+</div>`).join('');
+const steps=[
+ ['01','You set the goal','One conversation with Atlas, your Chief of Staff. Plain words, no briefs to fill in.'],
+ ['02','The crew gets to work','Scout plans, Riveter writes, Lumen designs. The work takes shape behind the scenes.'],
+ ['03','It comes to you','Every piece arrives with the name of who made it. Approve it, or send a note back.'],
+ ['04','It goes live','Approved work ships across your channels. Nothing posts without your yes.']
+];
+document.getElementById('steps').innerHTML=steps.map(s=>`
+<div class="step">
+ <div class="num">${s[0]}</div>
+ <div><h3>${s[1]}</h3><p>${s[2]}</p></div>
+</div>`).join('');
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{el.style.transitionDelay=(Math.min(i,6)*60)+'ms';io.observe(el)});
+</script>
+</body>
+</html>
