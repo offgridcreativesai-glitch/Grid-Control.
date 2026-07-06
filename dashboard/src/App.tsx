@@ -8,6 +8,7 @@ import { ReviewPage } from "@/pages/ReviewPage"
 import { CalendarPage } from "@/pages/CalendarPage"
 import { InsightsPage } from "@/pages/InsightsPage"
 import { ConnectionsPage } from "@/pages/ConnectionsPage"
+import { SettingsPage } from "@/pages/SettingsPage"
 import { CrewPage } from "@/pages/CrewPage"
 import { MemoryPage } from "@/pages/MemoryPage"
 import { AuthPage } from "@/pages/AuthPage"
@@ -176,6 +177,7 @@ function GatedApp() {
                 <Route path="/insights" element={<InsightsPage />} />
                 <Route path="/memory" element={<MemoryPage />} />
                 <Route path="/connections" element={<ConnectionsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/command" replace />} />

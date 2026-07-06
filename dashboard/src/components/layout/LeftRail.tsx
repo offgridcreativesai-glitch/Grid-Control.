@@ -9,6 +9,7 @@ import {
   Plug,
   Bot,
   BrainCircuit,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -31,6 +32,7 @@ const navItems = [
   { path: "/insights", icon: BarChart3, label: "Insights" },
   { path: "/memory", icon: BrainCircuit, label: "Memory" },
   { path: "/connections", icon: Plug, label: "Connections" },
+  { path: "/settings", icon: SlidersHorizontal, label: "Settings" },
 ];
 
 export function LeftRail() {

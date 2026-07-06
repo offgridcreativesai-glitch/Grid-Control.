@@ -277,6 +277,72 @@ export function useSetTrustDial() {
   })
 }
 
+// ── Publish policy — per-platform manual/assisted, owner-facing ────────────────
+
+export type PublishLevel = "manual" | "assisted"
+
+export interface PublishPolicyData {
+  levels: PublishLevel[]
+  default_level: PublishLevel
+  locked_manual: string[]                    // platforms that can't be changed (e.g. "twitter")
+  settings: Record<string, PublishLevel>     // platform -> level; missing key = default (manual)
+}
+
+export function usePublishPolicy() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["publish-policy", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: PublishPolicyData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 30_000,
+  })
+}
+
+export function useSetPublishPolicy() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { platform: string; level: PublishLevel }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["publish-policy", activeBrand.slug] }),
+  })
+}
+
+// ── Cost cap — per-brand daily spend cap, owner-facing ──────────────────────────
+
+export interface CostCapData {
+  enabled: boolean
+  spent_today_usd: number
+  daily_cap_usd: number
+  remaining_usd: number
+  date: string
+  is_override: boolean   // false = showing the global default, not a brand-specific cap
+}
+
+export function useCostCap() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["cost-cap", activeBrand.slug],
+    queryFn: () => getJson<{ success: boolean; data: CostCapData }>(
+      `/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`,
+    ).then((r) => r.data),
+    enabled: !!activeBrand.slug,
+    staleTime: 15_000,
+  })
+}
+
+export function useSetCostCap() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { daily_usd_cap: number }) =>
+      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`, vars),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cost-cap", activeBrand.slug] }),
+  })
+}
+
 // ── Brand dashboard (profile + trends + session) ──────────────────────────────
 
 export function useBrandDashboard() {
