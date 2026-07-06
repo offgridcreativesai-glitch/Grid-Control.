@@ -296,6 +296,23 @@ export const DEMO_CONNECTIONS = [
   { platform: "tiktok", handle: "", env_key: "TT", has_token: false, connected: false, account: "" },
 ]
 
+// ── Settings page: publish policy + cost cap ──
+export const DEMO_PUBLISH_POLICY = {
+  levels: ["manual", "assisted"] as ("manual" | "assisted")[],
+  default_level: "manual" as const,
+  locked_manual: ["twitter"],
+  settings: { instagram: "manual", linkedin: "manual" } as Record<string, "manual" | "assisted">,
+}
+
+export const DEMO_COST_CAP = {
+  enabled: true,
+  spent_today_usd: 2.4,
+  daily_cap_usd: 15,
+  remaining_usd: 12.6,
+  date: new Date(now).toISOString().slice(0, 10),
+  is_override: false,
+}
+
 // ── Week view (operating rhythm) ──
 export const DEMO_WEEK = {
   ran: [

@@ -5,7 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/api"
 import { useBrandStore } from "@/store/brandStore"
-import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED, DEMO_WEEK } from "@/lib/demo"
+import { isDemo, DEMO_PENDING, DEMO_AGENT_STATUS, DEMO_DIGEST, DEMO_PERF_HISTORY, DEMO_PUBLISHED, DEMO_WEEK, DEMO_PUBLISH_POLICY, DEMO_COST_CAP } from "@/lib/demo"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -296,9 +296,12 @@ export function usePublishPolicy() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["publish-policy", activeBrand.slug],
-    queryFn: () => getJson<{ success: boolean; data: PublishPolicyData }>(
-      `/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`,
-    ).then((r) => r.data),
+    queryFn: () =>
+      isDemo()
+        ? Promise.resolve(DEMO_PUBLISH_POLICY as PublishPolicyData)
+        : getJson<{ success: boolean; data: PublishPolicyData }>(
+            `/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`,
+          ).then((r) => r.data),
     enabled: !!activeBrand.slug,
     staleTime: 30_000,
   })
@@ -309,7 +312,9 @@ export function useSetPublishPolicy() {
   const { activeBrand } = useBrandStore()
   return useMutation({
     mutationFn: (vars: { platform: string; level: PublishLevel }) =>
-      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`, vars),
+      isDemo()
+        ? Promise.resolve({ success: true })
+        : postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/publish-policy`, vars),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["publish-policy", activeBrand.slug] }),
   })
 }
@@ -329,9 +334,12 @@ export function useCostCap() {
   const { activeBrand } = useBrandStore()
   return useQuery({
     queryKey: ["cost-cap", activeBrand.slug],
-    queryFn: () => getJson<{ success: boolean; data: CostCapData }>(
-      `/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`,
-    ).then((r) => r.data),
+    queryFn: () =>
+      isDemo()
+        ? Promise.resolve(DEMO_COST_CAP as CostCapData)
+        : getJson<{ success: boolean; data: CostCapData }>(
+            `/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`,
+          ).then((r) => r.data),
     enabled: !!activeBrand.slug,
     staleTime: 15_000,
   })
@@ -342,7 +350,9 @@ export function useSetCostCap() {
   const { activeBrand } = useBrandStore()
   return useMutation({
     mutationFn: (vars: { daily_usd_cap: number }) =>
-      postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`, vars),
+      isDemo()
+        ? Promise.resolve({ success: true })
+        : postJson(`/api/brands/${encodeURIComponent(activeBrand.slug)}/cost-cap`, vars),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cost-cap", activeBrand.slug] }),
   })
 }
@@ -544,12 +554,17 @@ export function usePublish() {
   const qc = useQueryClient()
   const { activeBrand } = useBrandStore()
   return useMutation({
-    mutationFn: ({ platform, filename }: { platform: string; filename: string }) =>
-      postJson<{ success: boolean; data?: PublishResult; error?: string }>("/api/publish", {
-        brand_slug: activeBrand.slug,
-        platform,
-        filename,
-      }),
+    mutationFn: ({ platform, filename }: { platform: string; filename: string }): Promise<{ success: boolean; data?: PublishResult; error?: string }> =>
+      isDemo()
+        ? Promise.resolve({
+            success: true,
+            data: { mode: "prepared", platform, reason: "Demo mode — nothing actually publishes." },
+          })
+        : postJson<{ success: boolean; data?: PublishResult; error?: string }>("/api/publish", {
+            brand_slug: activeBrand.slug,
+            platform,
+            filename,
+          }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["published"] })
     },
