@@ -1,5 +1,14 @@
 # OffGrid Marketing OS — Project Intelligence
 
+## 🚫 RULE ZERO — ASK, NEVER GUESS (infra / OAuth / connections / setup / anything external)
+
+For ANY decision about infrastructure, OAuth/Meta/Google apps, platform connections, deploys, domains, accounts, or environment setup: **you do NOT decide, assume, or "figure it out" on your own. You ASK Gaurav and wait.** A confident "yes"/"done" you can't verify is a LIE to him and has burned this project many times (the Instagram-OAuth loop: same bug re-fixed across ≥3 sessions because prior decisions were re-guessed instead of read).
+
+- If a fact isn't in `docs/CONNECTIONS_SETUP.md` or a memory, it is UNKNOWN — say "I don't know, tell me" and ask. Do not reconstruct it from inference.
+- Never say "yes", "done", "fixed", or "it works" unless you personally verified it this session with a tool. State what you verified and how.
+- When Gaurav has told you something before, treat `docs/CONNECTIONS_SETUP.md` as the authority; if it's silent, ASK — do not assume you remember.
+- **`docs/CONNECTIONS_SETUP.md`** is the single always-consult source of truth for every platform's app, account, IDs, redirect URIs, setup state, and locked decisions. READ it before touching any connection; UPDATE it after any connection change.
+
 > Reference docs (load on demand, not auto):
 > - `docs/CLAUDE_HISTORY.md` — session-by-session build chronology
 > - `docs/CLAUDE_FILE_STRUCTURE.md` — full file tree
