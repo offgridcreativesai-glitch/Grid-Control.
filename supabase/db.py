@@ -90,11 +90,13 @@ def create_brand_with_owner(slug: str, name: str, profile_dict: dict, owner_user
         brand = upsert_brand(slug, name, profile_dict)
         if not brand:
             return None
-        _svc().table("brand_members").insert({
+        # Idempotent: re-onboarding an existing brand must not 500 on a duplicate
+        # membership row. Upsert on (brand_id, user_id) — same key add_brand_member uses.
+        _svc().table("brand_members").upsert({
             "brand_id": brand["id"],
             "user_id": owner_user_id,
             "role": "admin",
-        }).execute()
+        }, on_conflict="brand_id,user_id").execute()
         return brand
     except Exception as e:
         print(f"[db] create_brand_with_owner error: {e}")
