@@ -38,7 +38,18 @@ except Exception:                                    # pragma: no cover
 
 
 def _load_env(slug: str):
-    """Overlay the brand's private .env (token lives there, not global)."""
+    """Brand platform tokens — Supabase-authoritative via core.brand_env (the durable
+    token store), falling back to the local brands/<slug>/.env. Reading the file
+    directly would MISS tokens written by an OAuth callback that landed on the deployed
+    (Railway) backend — those live only in Supabase on this machine."""
+    try:
+        from core import brand_env
+        env = brand_env(slug)
+        if env:
+            return env
+    except Exception:
+        pass
+    # standalone / Supabase-unavailable fallback: read the local file directly
     path = os.path.join(_ROOT, "brands", slug, ".env")
     env = {}
     if os.path.exists(path):

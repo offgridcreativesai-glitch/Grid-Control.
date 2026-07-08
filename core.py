@@ -2875,6 +2875,21 @@ def _run_brand_book_generate(brand_slug: str, mode: str = "onboarding") -> None:
         import sys
         if str(BASE_DIR) not in sys.path:
             sys.path.insert(0, str(BASE_DIR))
+        # Intel pipeline — produce the 3 files brand_book_v7 assembles from. Without
+        # this the assembly step crashes on a missing brand_self_v7.json. Order matters:
+        # brand_self (own IG stats) → competitor_intel (writes its own file) →
+        # channel_score (reads competitor_intel_v7, writes channel_scores_v7).
+        base = BRANDS_DIR / brand_slug
+        from agents.intel import brand_self as _bs, competitor_intel as _ci, channel_score as _cs
+        self_data = _bs.collect(brand_slug)
+        if isinstance(self_data, dict) and self_data.get("_error"):
+            raise RuntimeError(f"brand_self failed: {self_data['_error']}")
+        (base / "brand_self_v7.json").write_text(
+            json.dumps(self_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        _ci.run(brand_slug)  # writes competitor_intel_v7.json (paid Apify)
+        scores = _cs.score(brand_slug)
+        (base / "channel_scores_v7.json").write_text(
+            json.dumps(scores, indent=2, ensure_ascii=False), encoding="utf-8")
         from agents.brand_book_v7 import generate as _generate_brand_book
         result = _generate_brand_book(brand_slug, render_pdf=True)
         # generate() returns the report DICT; the written-file path is in _output_path.
