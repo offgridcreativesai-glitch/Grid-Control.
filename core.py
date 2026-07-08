@@ -416,16 +416,36 @@ def _brand_env_path(slug: str) -> Path:
 
 
 def brand_env(slug: str) -> dict:
-    """Load a brand's private .env as a dict ({} if none/unreadable).
-    Values are transparently decrypted (agents._lib.token_crypto) — callers
-    never see the enc: prefix or ciphertext, only the usable token (or ""
-    if it couldn't be decrypted)."""
+    """Load a brand's platform secrets as a dict ({} if none/unreadable).
+
+    Supabase (brand_connections) is the authoritative source of truth — it is
+    shared between the local app and the deployed (Railway) backend, so tokens
+    saved by an OAuth callback that lands on Railway are readable here. The
+    local brands/<slug>/.env file is a fallback/cache used when Supabase is
+    unreachable or hasn't got a given key. Values are transparently decrypted
+    (agents._lib.token_crypto) — callers never see the enc: prefix or
+    ciphertext, only the usable token (or "" if it couldn't be decrypted)."""
+    if not slug:
+        return {}
+    merged: dict = {}
+    # base layer: local file (offline / Supabase-down fallback)
     p = _brand_env_path(slug)
-    if not slug or not p.exists():
+    if p.exists():
+        try:
+            merged.update(_dotenv_values(p))
+        except Exception:
+            pass
+    # authoritative layer: Supabase overrides the file for any key it holds
+    if _DB_AVAILABLE:
+        try:
+            merged.update(_db.get_brand_secrets(slug))
+        except Exception:
+            pass
+    if not merged:
         return {}
     try:
         from agents._lib import token_crypto
-        return {k: token_crypto.decrypt(v or "") for k, v in _dotenv_values(p).items()}
+        return {k: token_crypto.decrypt(v or "") for k, v in merged.items()}
     except Exception:
         return {}
 
@@ -452,6 +472,14 @@ def _write_brand_env_token(slug: str, env_key: str, value: str) -> None:
     else:
         new_content = content.rstrip("\n") + ("\n" if content else "") + new_line + "\n"
     p.write_text(new_content, encoding="utf-8")
+    # Mirror to Supabase (durable, shared source of truth). The file write above
+    # stays as the local fallback; brand_env() reads Supabase authoritatively.
+    # Stored ciphertext is identical in both places (same GRID_TOKEN_ENCRYPTION_KEY).
+    if _DB_AVAILABLE:
+        try:
+            _db.save_brand_secret(slug, env_key, stored_value)
+        except Exception as e:
+            print(f"[GRID CONTROL] ⚠️  brand_connections upsert failed for {slug}/{env_key}: {e}")
 
 # Locked roster — exactly 9 agents in pipeline order
 AGENTS = [

@@ -249,6 +249,54 @@ def get_brand(slug: str) -> dict | None:
         return None
 
 
+# ── Brand platform connections (durable token store) ─────────────────────────
+# KV mirror of brands/<slug>/.env in Supabase, so OAuth callbacks that land on
+# the deployed backend persist tokens where the local app + agents can read
+# them. Values are stored exactly as core.py hands them over (already
+# token_crypto-encrypted, enc:... prefix) — this layer is crypto-agnostic.
+
+def _brand_id_for_slug(slug: str) -> str | None:
+    row = get_brand(slug)
+    return row.get("id") if row else None
+
+
+def get_brand_secrets(slug: str) -> dict:
+    """Return {env_key: stored_value} for a brand (values still encrypted, as
+    stored). {} if the brand/table/row is absent or Supabase is unreachable —
+    callers must treat this as 'no Supabase data', never as authoritative empty."""
+    try:
+        bid = _brand_id_for_slug(slug)
+        if not bid:
+            return {}
+        res = (
+            _svc().table("brand_connections")
+            .select("env_key,value").eq("brand_id", bid).execute()
+        )
+        return {r["env_key"]: r["value"] for r in (res.data or [])}
+    except Exception as e:
+        print(f"[db] get_brand_secrets error: {e}")
+        return {}
+
+
+def save_brand_secret(slug: str, env_key: str, stored_value: str) -> bool:
+    """Upsert one env_key=stored_value for a brand (value pre-encrypted by caller).
+    Idempotent on (brand_id, env_key). Returns True on success. Never raises —
+    the local .env file write is the fallback if this fails."""
+    try:
+        bid = _brand_id_for_slug(slug)
+        if not bid:
+            print(f"[db] save_brand_secret: no brand row for slug={slug!r}, skipping Supabase")
+            return False
+        _svc().table("brand_connections").upsert(
+            {"brand_id": bid, "env_key": env_key, "value": stored_value, "updated_at": _now()},
+            on_conflict="brand_id,env_key",
+        ).execute()
+        return True
+    except Exception as e:
+        print(f"[db] save_brand_secret error: {e}")
+        return False
+
+
 # ── Subscribers (Phase F4 lead-magnet funnel) ───────────────────────────────────
 
 def add_subscriber(brand_id: str, email: str, name: str | None = None,
