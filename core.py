@@ -2897,6 +2897,7 @@ def _run_brand_book_generate(brand_slug: str, mode: str = "onboarding") -> None:
         _update_brand_profile_fields(brand_slug, {
             "brand_book_status":      "pending_review",
             "brand_book_latest_path": latest_path,
+            "brand_book_error":       None,  # clear any stale error from a prior failed run
         })
     except Exception as e:
         _update_brand_profile_fields(brand_slug, {

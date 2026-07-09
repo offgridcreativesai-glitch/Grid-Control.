@@ -375,10 +375,11 @@ def generate(slug: str, render_pdf: bool = True) -> dict:
     header = (f"LOOP: [brand-book] — report {VERSION} / GOAL onboarding-audit sign-off / "
               f"METRIC eval-v7-pass / EVAL {'PASS' if ev['passed'] else 'FAIL'}")
     json_path = out_dir / f"{ts}_brand_book_{VERSION}.json"
-    json_path.write_text(
-        header + "\n---\n" + json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     report["_output_path"] = str(json_path)  # consumed by the Phase-H gate plumbing
 
+    # Render the PDF BEFORE persisting the JSON so _pdf_path/_output_path end up IN the
+    # written file — the /brand-book/pdf route reads _pdf_path from it. Writing the JSON
+    # first left _pdf_path=None on disk → "PDF not available" even though it rendered fine.
     if render_pdf:
         pdf = out_dir / f"{ts}_brand_book_{VERSION}.pdf"
         try:
@@ -386,6 +387,9 @@ def generate(slug: str, render_pdf: bool = True) -> dict:
         except Exception as e:
             import traceback
             report["_pdf_error"] = f"{e}\n{traceback.format_exc()[:800]}"
+
+    json_path.write_text(
+        header + "\n---\n" + json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return report
 
 
