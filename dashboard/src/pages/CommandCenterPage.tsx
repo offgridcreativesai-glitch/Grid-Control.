@@ -434,7 +434,13 @@ export function CommandCenterPage() {
   const { activeBrand } = useBrandStore()
   const liveAgents = useLiveAgents()
   const { data: pendingData } = usePendingOutputs()
-  const pending = useMemo(() => pendingData?.outputs ?? [], [pendingData])
+  // Exclude the brand-book from the generic approval feed — it has its own dedicated
+  // review surface (BrandReportCard). Leaving it in made it render as a raw text dump
+  // ("brand-book Output") alongside the proper report card.
+  const pending = useMemo(
+    () => (pendingData?.outputs ?? []).filter((o) => o.agent_slug !== "brand-book"),
+    [pendingData],
+  )
 
   const [thread, setThread] = useState<Msg[]>([])
   const [draft, setDraft] = useState("")

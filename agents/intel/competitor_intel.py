@@ -41,6 +41,17 @@ ACTOR_IG       = "apify~instagram-scraper"
 ACTOR_META_ADS = "brilliant_gum~facebook-ads-library-scraper"
 ACTOR_YOUTUBE  = "streamers~youtube-channel-scraper"
 
+# Meta Ad Library is queried per-country. We don't know each competitor's target
+# market, so search a wide, India-first set (most fed competitors are India D2C) plus
+# major international markets — US-only silently returned "no ads" for India brands.
+META_AD_COUNTRIES = ["IN", "US", "GB", "AE"]
+
+import re as _re
+
+def _norm_name(s: str) -> str:
+    """Normalize a page/brand name for fuzzy matching: lowercase, alphanumerics only."""
+    return _re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
 # Apify items that are error stubs, never counted as real posts
 _ERR_KEYS = ("error", "errorDescription")
 _ERR_VALUES = ("no_items", "not_found", "not_available", "private")
@@ -160,22 +171,29 @@ class CompetitorIntel:
         }
 
     # Meta Ad Library — the AD-LONGEVITY money signal
-    def meta_ads(self, search_term: str, page_match: str, countries=("US",)) -> dict:
+    def meta_ads(self, search_term: str, page_match: str, countries=None) -> dict:
+        countries = list(countries) if countries else list(META_AD_COUNTRIES)
         items = self.api.run(ACTOR_META_ADS, {
             "searchTerms": [search_term],
-            "countries": list(countries),
+            "countries": countries,
             "adActiveStatus": "ACTIVE",
             "maxAds": 30,
             "resolveSnapshotUrls": True,
         })
         ads = [it for it in items if isinstance(it, dict) and it.get("adArchiveId")]
-        # keep only ads from the competitor's OWN page (fuzzy match) — the rest are
-        # category ads that merely mention the term
-        pm = page_match.lower().replace(" ", "")
-        own = [a for a in ads if pm in (a.get("pageName", "").lower().replace(" ", ""))]
+        # Keep only ads from the competitor's OWN page. Bidirectional normalized match
+        # (strip case/spaces/punctuation) so "owr.life"↔"OWR" and "Bluorng"↔"BLUORNG
+        # Official" still match — the old exact substring silently dropped real ads.
+        pm = _norm_name(page_match)
+        own = [a for a in ads if pm and _norm_name(a.get("pageName", ""))
+               and (pm in _norm_name(a.get("pageName", "")) or _norm_name(a.get("pageName", "")) in pm)]
         if not own:
-            return {"status": "not_advertising",
-                    "note": f"no ACTIVE Meta ads found under a page matching '{page_match}'",
+            # Absence in the SEARCHED markets — NOT proof they don't advertise. Never
+            # assert "not advertising" as fact (that was a false negative in the report).
+            return {"status": "none_found",
+                    "note": (f"no ACTIVE ads found for a page matching '{page_match}' in the searched "
+                             f"markets ({', '.join(countries)}) — they may advertise in other geos"),
+                    "countries_searched": countries,
                     "category_ads_mentioning_term": len(ads)}
         days = [a.get("daysRunning", 0) or 0 for a in own]
         platforms = sorted({p for a in own for p in (a.get("publisherPlatforms") or [])})
@@ -195,6 +213,7 @@ class CompetitorIntel:
             })
         return {
             "status": "advertising",
+            "countries_searched": countries,
             "active_ads": len(own),
             "max_days_running": max(days) if days else 0,
             "avg_days_running": _avg(days),

@@ -41,8 +41,12 @@ export function FirstRunGate() {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [err, setErr] = useState("")
 
-  // Only the pre-report gate lives here. Once a report exists, later pieces take over.
-  if (!slug || status !== "none") return null
+  // Only the pre-report gate lives here. Show it ONLY when a CLEAN, authenticated
+  // response positively confirms the brand has no report yet. On a loading / errored /
+  // 401 / 403 poll, `status` falls back to "none" (line above) — we must NOT flash the
+  // verify-accounts gate back in that case (that was the chat "glitch": an intermittent
+  // auth failure on the /brand-book poll re-showed this card over the finished report).
+  if (!slug || bb?.success !== true || status !== "none") return null
 
   const invalid = results.filter((r) => r.status === "not_found")
   const checked = results.filter((r) => r.status !== "skipped")
