@@ -171,6 +171,7 @@ def _facts(brand, benchmark, scores, profile, signals) -> str:
                      for c in scores["channels"]],
         "triage": signals["triage"],
         "channels_absent": [c["channel"] for c in scores.get("channels_absent", [])],
+        "website_positioning": signals.get("website", {}),
     }, ensure_ascii=False, indent=2)
 
 
@@ -264,7 +265,9 @@ def _generate(brand, benchmark, scores, profile, signals) -> tuple[dict, dict]:
         "comment-keyword→DM funnel, reverse-engineered with real examples) → what the ROLE MODEL proves about "
         "the destination → the brand's own concrete playbook → a 90-day roadmap → and CLOSE with the FOUNDATION "
         "(the prescriptive sign-off WHAT: purpose, positioning, value prop, pillars + their proofs, ICP, north "
-        "star, voice DNA). Make every line actionable.",
+        "star, voice DNA). Weave website_positioning — each brand's storefront platform and price "
+        "band — into where_you_stand and the how-competitors-win read (how rivals position and price "
+        "vs this brand's own site). Make every line actionable.",
         "HARD STYLE RULE — never use these phrases or close variants (auto-rejected if any appear): "
         + "; ".join(_FILLER) + ".",
         _SCHEMA,

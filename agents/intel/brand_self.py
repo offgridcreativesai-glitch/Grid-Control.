@@ -174,6 +174,16 @@ def collect(slug: str) -> dict:
     for p in posts:
         fmt[p["media_type"]] = fmt.get(p["media_type"], 0) + 1
 
+    # Own website — real positioning signals (free HTTP, no Apify).
+    from agents.intel.website import scrape_website
+    _site_url = ""
+    try:
+        _bp = json.load(open(os.path.join(_ROOT, "brands", slug, "brand_profile.json")))
+        _site_url = (_bp.get("website") or _bp.get("website_url") or _bp.get("url") or "").strip()
+    except Exception:
+        pass
+    website = scrape_website(_site_url) if _site_url else {"status": "none", "note": "no website on file"}
+
     return {
         "brand_slug": slug,
         "collected_at": datetime.now(timezone.utc).isoformat(),
@@ -205,7 +215,7 @@ def collect(slug: str) -> dict:
             "linkedin": "not_active",
             "youtube": "not_active",
             "x": "not_active",
-            "website": "none",
+            "website": website,
         },
     }
 

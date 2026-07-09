@@ -290,7 +290,11 @@ def run(slug: str) -> dict:
         print(f"    {ads.get('status')} | active={ads.get('active_ads')} max_days={ads.get('max_days_running')}")
         print("  youtube…");     yt = ci.youtube(c["yt"])
         print(f"    {yt.get('status')} | subs={yt.get('subscribers')} avg_views={yt.get('avg_views')}")
-        result["competitors"][h] = {"instagram": ig, "meta_ads": ads, "youtube": yt}
+        from agents.intel.website import scrape_website, resolve_competitor_url
+        site_url = resolve_competitor_url(c["handle"], c.get("website"))
+        print("  website…");      web = scrape_website(site_url)
+        print(f"    {web.get('status')} | platform={web.get('platform')} | {(web.get('title') or '')[:50]}")
+        result["competitors"][h] = {"instagram": ig, "meta_ads": ads, "youtube": yt, "website": web}
     out_path = os.path.join(_ROOT, "brands", slug, "competitor_intel_v7.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)

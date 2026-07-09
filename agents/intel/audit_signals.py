@@ -156,6 +156,32 @@ def triage(scores: dict, identity_sig: dict) -> dict:
     return {"quick_wins": quick_wins, "strategic_shifts": strategic, "later": later}
 
 
+def website(brand: dict, intel: dict) -> dict:
+    """Website positioning signals — own site vs competitors (platform, tagline,
+    positioning line, price band). Feeds the narrative so the report compares where
+    each brand sells and how it's priced, not just its social presence."""
+    def _sig(w: dict) -> dict | None:
+        if not isinstance(w, dict) or w.get("status") != "ok":
+            return None
+        tagline = next((h for h in (w.get("h1") or []) if h and "root" not in h.lower()
+                        and "{" not in h), "")
+        return {
+            "url": w.get("url"),
+            "platform": w.get("platform"),
+            "tagline": tagline[:120],
+            "positioning": (w.get("description") or w.get("og_title") or w.get("title") or "")[:220],
+            "price_signals": (w.get("price_signals") or [])[:5],
+        }
+    own = _sig(((brand.get("other_channels") or {}).get("website") or {}))
+    comps = {}
+    for h, c in (intel.get("competitors") or {}).items():
+        s = _sig(c.get("website"))
+        if s:
+            comps[h] = s
+    return {"own": own, "competitors": comps,
+            "note": "homepage signals (title/meta/H1/price) — free HTTP, no headless render"}
+
+
 def build(brand: dict, intel: dict, scores: dict, profile: dict) -> dict:
     competitors, role_model = _split_tiers(scores)
     ident = identity(profile, brand)
@@ -165,4 +191,5 @@ def build(brand: dict, intel: dict, scores: dict, profile: dict) -> dict:
         "identity": ident,
         "audience": audience(profile, brand),
         "triage": triage(scores, ident),
+        "website": website(brand, intel),
     }
