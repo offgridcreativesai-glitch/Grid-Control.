@@ -311,6 +311,54 @@ def performance_history():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@bp.route("/api/analysis/latest", methods=["GET"])
+@require_auth
+def analysis_latest():
+    """The Data Analyst's latest CONCLUSION (not just raw metrics) for the cockpit.
+    Reads the newest Data Analyst weekly report (approved first, else pending), strips the
+    LOOP header, and returns the winning analysis: the lead insight, confidence, ranked
+    next actions, and any anomalies. Honest-empty when no analysis has run yet."""
+    brand_slug = request.args.get("brand_slug", "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+
+    brand_dir = BRANDS_DIR / brand_slug
+    candidates = []
+    for sub in ("outputs/approved", "outputs/pending_approval/Data Analyst",
+                "outputs/pending_approval/data-analyst"):
+        d = brand_dir / sub
+        if d.exists():
+            candidates += [p for p in d.rglob("*weekly_report.json") if p.is_file()]
+    if not candidates:
+        return jsonify({"success": True, "data": {"exists": False}})
+
+    latest = max(candidates, key=lambda p: p.stat().st_mtime)
+    try:
+        raw = latest.read_text(errors="replace")
+        body = raw.split("\n---\n", 1)[1].strip() if "\n---\n" in raw else raw
+        report = json.loads(body)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"could not parse analysis: {e}"}), 500
+
+    win = report.get("winning_analysis") or {}
+    actions = win.get("next_actions") or []
+    actions = sorted(
+        [a for a in actions if isinstance(a, dict) and a.get("action")],
+        key=lambda a: a.get("priority", 99),
+    )
+    return jsonify({"success": True, "data": {
+        "exists": True,
+        "report_week": report.get("report_week", ""),
+        "generated_at": report.get("generated_at", ""),
+        "lead_insight": win.get("lead_insight", ""),
+        "confidence": (win.get("confidence") or "").lower(),
+        "next_actions": actions,
+        "anomalies": win.get("anomalies_detected") or [],
+        "repurposing": win.get("repurposing_candidates") or [],
+        "data_quality_note": report.get("data_quality_note", ""),
+    }})
+
+
 # ── BUILD D — CROSS-AGENT CONTRADICTION DETECTOR ─────────────────────────────
 
 @bp.route("/api/contradictions/check", methods=["POST", "GET"])

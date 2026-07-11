@@ -17,7 +17,7 @@ import type { Platform } from "@/store/appStore"
 import { StatusDot } from "@/components/ui/status-dot"
 import { PlatformIcon } from "@/components/ui/platform-icon"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { usePerformanceHistory, useDigest } from "@/hooks/useGridApi"
+import { usePerformanceHistory, useDigest, useLatestAnalysis } from "@/hooks/useGridApi"
 import { useBrandStore } from "@/store/brandStore"
 
 const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"]
@@ -61,6 +61,7 @@ export function InsightsPage() {
 
   const { data: perfData } = usePerformanceHistory()
   const { data: digest } = useDigest()
+  const { data: analysis } = useLatestAnalysis()
   const history = (perfData?.history ?? {}) as Record<string, unknown>
 
   const posts: PerfPost[] = Array.isArray(history.posts) ? (history.posts as PerfPost[]) : []
@@ -165,6 +166,49 @@ export function InsightsPage() {
                 {digest?.verdict_reason || "Your team's current read on the brand."}
               </p>
             </div>
+          </Panel>
+        )}
+
+        {/* Analyst's conclusion — what the numbers MEAN + what to do (not just charts) */}
+        {analysis?.exists && analysis.lead_insight && (
+          <Panel className="p-5">
+            <div className="mb-2 flex items-center gap-2">
+              <h3 className="text-[14px] font-semibold text-foreground">What your analyst concluded</h3>
+              {analysis.confidence && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize"
+                  style={{
+                    background:
+                      analysis.confidence === "high" ? "rgba(22,160,126,0.12)"
+                      : analysis.confidence === "low" ? "rgba(240,160,48,0.12)"
+                      : "rgba(46,107,255,0.12)",
+                    color:
+                      analysis.confidence === "high" ? "var(--emerald)"
+                      : analysis.confidence === "low" ? "var(--status-queued)"
+                      : "var(--blue)",
+                  }}
+                >
+                  {analysis.confidence} confidence
+                </span>
+              )}
+            </div>
+            <p className="text-[14px] leading-relaxed text-foreground/90">{analysis.lead_insight}</p>
+            {(analysis.next_actions?.length ?? 0) > 0 && (
+              <div className="mt-4 space-y-2.5">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Do next</p>
+                {analysis.next_actions!.map((a, i) => (
+                  <div key={i} className="flex gap-3">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-semibold text-foreground">
+                      {a.priority ?? i + 1}
+                    </span>
+                    <div>
+                      <p className="text-[13.5px] text-foreground/90">{a.action}</p>
+                      {a.reason && <p className="text-[12.5px] text-muted-foreground">{a.reason}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Panel>
         )}
 

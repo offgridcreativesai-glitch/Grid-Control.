@@ -672,3 +672,37 @@ export function useSetAssetTags() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["creative-library", activeBrand.slug] }),
   })
 }
+
+// ── Latest analysis (the Data Analyst's conclusion, not just raw metrics) ────────
+
+export interface AnalysisAction {
+  action: string
+  reason?: string
+  expected_outcome?: string
+  priority?: number
+}
+
+export interface LatestAnalysis {
+  exists: boolean
+  report_week?: string
+  generated_at?: string
+  lead_insight?: string
+  confidence?: "high" | "medium" | "low" | ""
+  next_actions?: AnalysisAction[]
+  anomalies?: string[]
+  repurposing?: string[]
+  data_quality_note?: string
+}
+
+export function useLatestAnalysis() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["analysis", "latest", activeBrand.slug],
+    enabled: !!activeBrand.slug,
+    queryFn: () =>
+      getJson<{ success: boolean; data: LatestAnalysis }>(
+        `/api/analysis/latest?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      ).then((r) => r.data),
+    staleTime: 30_000,
+  })
+}

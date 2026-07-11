@@ -15,6 +15,8 @@ Patterns adopted and WHY each maps to an existing OffGrid ground rule:
   - Output discipline (no preamble, schema-only)          ← our terse-response + no-JSON-in-chat
   - Guardrails (defer to brand_profile + Brand Guardian,  ← our SOUL check + THE SECRET
     never name internal infra, English only)                (Fable 5 layered safety scaffolding)
+  - No AI-slop (em-dashes, AI-tell words, hedging,         ← blader/humanizer "signs of AI writing"
+    significance inflation, negative parallelisms)           (adopted Jul 11 2026)
 
 Class-1 pure-math decision agents (trend_sentinel, performance_tracker) do NOT call Claude and
 get an empty framework. Keep this block SHORT — it ships on every Class-2 API call.
@@ -56,6 +58,19 @@ the structured result in the exact schema requested — nothing wrapped around i
 GUARDRAILS: defer to brand_profile and Brand Guardian SOUL rules on anything voice- or claim-related.
 Never name internal infrastructure (model names, agent slugs, Grid Control internals) in any
 client-facing copy. English only.
+
+NO AI-SLOP (client-facing copy must read like a person wrote it, not a machine). Hard rules distilled
+from the "signs of AI writing" patterns:
+- NO em/en dashes (— –) or " -- " asides. Use a period, comma, colon, or parentheses instead.
+- Ban AI-tell words: delve, tapestry, testament, realm, landscape, beacon, underscore, boasts, robust,
+  seamless, elevate, unlock, harness, foster, pivotal, crucial, vibrant, bustling, "navigate the".
+- No "it's not just X, it's Y" negative parallelisms; no rule-of-three padding ("fast, simple, and powerful").
+- No significance inflation ("stands as a testament", "plays a vital role", "in today's ever-evolving").
+- No vague attributions ("experts say", "studies show", "widely regarded"); cite a real source or cut it.
+- Don't dodge "is/are" with elaborate constructions; say it plainly. Prefer active voice, concrete nouns.
+- No hedging pileups ("it's worth noting", "generally", "in many cases"), no generic upbeat conclusions,
+  no signposting ("in this section", "let's dive in"), no sycophancy, no emojis in body copy, no Title Case Headings.
+- Vary sentence length so the writing has a pulse. One idea per sentence.
 """
 
 
