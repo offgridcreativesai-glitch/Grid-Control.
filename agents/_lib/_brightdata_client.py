@@ -30,6 +30,7 @@ import urllib.parse
 import urllib.request
 
 _BASE = "https://api.brightdata.com/datasets/v3"
+_SERP_ENDPOINT = "https://api.brightdata.com/request"   # SERP / Web-Unlocker Direct API
 
 try:
     import certifi
@@ -143,6 +144,62 @@ class BrightDataClient:
         return self.trigger_and_wait("instagram_posts", inputs,
                                      extra_params={"type": "discover_new", "discover_by": "url"},
                                      timeout=timeout)
+
+
+    # ── SERP (Google search) — mention/listening feed ───────────
+    def serp_search(self, query: str, num: int = 20, timeout: int = 45) -> dict:
+        """Google SERP via the Bright Data Direct API (parsed JSON). Zone from
+        BRIGHTDATA_SERP_ZONE, auth via the same account token. Returns
+        {ok, results:[{title, link, snippet, source}], news:[...]} or {ok:False, error}.
+        Never raises."""
+        if not self.enabled:
+            return {"ok": False, "error": "BRIGHTDATA_API_TOKEN not set"}
+        zone = (os.getenv("BRIGHTDATA_SERP_ZONE") or "").strip()
+        if not zone:
+            return {"ok": False, "error": "BRIGHTDATA_SERP_ZONE not set"}
+        gurl = "https://www.google.com/search?" + urllib.parse.urlencode({"q": query, "num": num})
+        body = json.dumps({"zone": zone, "url": gurl, "format": "json", "data_format": "parsed"}).encode("utf-8")
+        res = self._req("POST", _SERP_ENDPOINT, body=body, timeout=timeout)
+        if not res["ok"]:
+            return {"ok": False, "error": f"serp failed ({res['status']}): {res['error']}"}
+        try:
+            payload = json.loads(res["body"])
+        except Exception:
+            return {"ok": False, "error": f"serp non-JSON: {res['body'][:160]}"}
+        # The Direct API wraps the SERP in an envelope: the parsed results live in `body`
+        # (a JSON string). Unwrap it, then read organic/news off the inner object.
+        serp = payload.get("body", payload)
+        if isinstance(serp, str):
+            try:
+                serp = json.loads(serp)
+            except Exception:
+                serp = {}
+        if not isinstance(serp, dict):
+            serp = {}
+        # BD parsed SERP: organic/news lists (shapes vary slightly — map defensively)
+        def _norm(items):
+            out = []
+            for it in (items or []):
+                if not isinstance(it, dict):
+                    continue
+                link = it.get("link") or it.get("url") or ""
+                out.append({
+                    "title": (it.get("title") or "").strip(),
+                    "link": link,
+                    "snippet": (it.get("description") or it.get("snippet") or "").strip(),
+                    "source": (it.get("source") or it.get("display_link") or _domain(link)),
+                    "date": it.get("date") or it.get("published") or "",
+                })
+            return out
+        return {"ok": True, "results": _norm(serp.get("organic")),
+                "news": _norm(serp.get("news")), "top_keys": sorted(list(serp.keys()))[:20]}
+
+
+def _domain(url: str) -> str:
+    try:
+        return urllib.parse.urlparse(url).netloc.replace("www.", "")
+    except Exception:
+        return ""
 
 
 _singleton: BrightDataClient | None = None

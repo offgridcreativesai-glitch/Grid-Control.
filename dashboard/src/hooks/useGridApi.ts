@@ -706,3 +706,49 @@ export function useLatestAnalysis() {
     staleTime: 30_000,
   })
 }
+
+// ── Social listening (gap #4 — what the internet is saying about the brand) ──────
+
+export interface Mention {
+  title: string
+  link: string
+  snippet: string
+  source: string
+  source_type: "social" | "forum" | "review" | "news" | "web" | "own"
+  sentiment: "positive" | "neutral" | "negative"
+}
+
+export interface SocialListening {
+  status: "ok" | "none" | "blocked" | "no_provider" | "no_brand_identity" | "not_run"
+  note?: string
+  collected_at?: string
+  total_mentions?: number
+  by_sentiment?: { positive: number; neutral: number; negative: number }
+  by_source_type?: Record<string, number>
+  mentions?: Mention[]
+}
+
+export function useListening() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["listening", activeBrand.slug],
+    enabled: !!activeBrand.slug,
+    queryFn: () =>
+      getJson<{ success: boolean; data: SocialListening }>(
+        `/api/listening?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      ).then((r) => r.data),
+    staleTime: 60_000,
+  })
+}
+
+export function useRunListening() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: () =>
+      postJson<{ success: boolean; data: SocialListening }>("/api/listening/run", {
+        brand_slug: activeBrand.slug,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["listening", activeBrand.slug] }),
+  })
+}

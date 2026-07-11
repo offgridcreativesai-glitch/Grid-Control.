@@ -17,7 +17,7 @@ import type { Platform } from "@/store/appStore"
 import { StatusDot } from "@/components/ui/status-dot"
 import { PlatformIcon } from "@/components/ui/platform-icon"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { usePerformanceHistory, useDigest, useLatestAnalysis } from "@/hooks/useGridApi"
+import { usePerformanceHistory, useDigest, useLatestAnalysis, useListening, useRunListening } from "@/hooks/useGridApi"
 import { useBrandStore } from "@/store/brandStore"
 
 const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"]
@@ -54,6 +54,15 @@ function Panel({ className = "", children }: { className?: string; children: Rea
   return <div className={"glass-panel rounded-2xl " + className}>{children}</div>
 }
 
+function SentPill({ tone, bg, label, n }: { tone: string; bg: string; label: string; n: number }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px]" style={{ background: bg, color: tone }}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: tone }} />
+      {label} {n}
+    </span>
+  )
+}
+
 export function InsightsPage() {
   const { activeBrand } = useBrandStore()
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | "all">("all")
@@ -62,6 +71,8 @@ export function InsightsPage() {
   const { data: perfData } = usePerformanceHistory()
   const { data: digest } = useDigest()
   const { data: analysis } = useLatestAnalysis()
+  const { data: listening } = useListening()
+  const runListening = useRunListening()
   const history = (perfData?.history ?? {}) as Record<string, unknown>
 
   const posts: PerfPost[] = Array.isArray(history.posts) ? (history.posts as PerfPost[]) : []
@@ -211,6 +222,53 @@ export function InsightsPage() {
             )}
           </Panel>
         )}
+
+        {/* What people are saying — social listening (real web mentions + sentiment) */}
+        <Panel className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[14px] font-semibold text-foreground">What people are saying</h3>
+            <button
+              onClick={() => runListening.mutate()}
+              disabled={runListening.isPending}
+              className="rounded-full border border-border px-3 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              {runListening.isPending ? "Listening…" : "Refresh"}
+            </button>
+          </div>
+          {listening?.status === "ok" && (listening.total_mentions ?? 0) > 0 ? (
+            <>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <SentPill tone="var(--emerald)" bg="rgba(22,160,126,0.12)" label="Positive" n={listening.by_sentiment?.positive ?? 0} />
+                <SentPill tone="var(--muted-foreground)" bg="rgba(120,120,120,0.12)" label="Neutral" n={listening.by_sentiment?.neutral ?? 0} />
+                <SentPill tone="var(--destructive)" bg="rgba(220,60,60,0.12)" label="Negative" n={listening.by_sentiment?.negative ?? 0} />
+                <span className="ml-auto text-[11px] text-muted-foreground">
+                  {listening.total_mentions} mentions · {Object.entries(listening.by_source_type ?? {}).map(([k, v]) => `${v} ${k}`).join(" · ")}
+                </span>
+              </div>
+              <ul className="divide-y divide-border">
+                {(listening.mentions ?? []).slice(0, 8).map((m, i) => (
+                  <li key={i} className="flex items-start gap-3 py-2.5">
+                    <span
+                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: m.sentiment === "positive" ? "var(--emerald)" : m.sentiment === "negative" ? "var(--destructive)" : "var(--muted-foreground)" }}
+                    />
+                    <div className="min-w-0">
+                      <a href={m.link} target="_blank" rel="noreferrer" className="line-clamp-1 text-[13px] text-foreground/90 hover:text-primary">
+                        {m.title || m.link}
+                      </a>
+                      <p className="text-[11.5px] text-muted-foreground capitalize">{m.source} · {m.source_type}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-[12.5px] text-muted-foreground">
+              {runListening.data?.data?.note ||
+                "No listening data yet. Hit Refresh to scan the web for what people are saying about your brand."}
+            </p>
+          )}
+        </Panel>
 
         {/* Platform filter */}
         <Tabs value={selectedPlatform} onValueChange={(v) => setSelectedPlatform(v as Platform | "all")}>

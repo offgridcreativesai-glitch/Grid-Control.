@@ -359,6 +359,55 @@ def analysis_latest():
     }})
 
 
+@bp.route("/api/listening", methods=["GET"])
+@require_auth
+def listening_get():
+    """Cached social-listening result for the brand (what the internet is saying)."""
+    brand_slug = request.args.get("brand_slug", "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    p = BRANDS_DIR / brand_slug / "social_listening.json"
+    if not p.exists():
+        return jsonify({"success": True, "data": {"status": "none"}})
+    try:
+        return jsonify({"success": True, "data": json.loads(p.read_text())})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/api/listening/run", methods=["POST"])
+@require_auth
+@require_brand_access
+def listening_run():
+    """Run social listening now (real Bright Data SERP search). Cost-gated by GRID_PAID_OPS
+    inside the module — returns a 'blocked' status if paid ops are off. Runs as a subprocess
+    (never imports agents into the API process)."""
+    body = request.get_json(silent=True) or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    script = BASE_DIR / "agents" / "intel" / "social_listening.py"
+    env = os.environ.copy()
+    env["ACTIVE_BRAND"] = brand_slug
+    env.update({k: v for k, v in brand_env(brand_slug).items() if v})
+    try:
+        res = subprocess.run([sys.executable, str(script), brand_slug], env=env,
+                             capture_output=True, text=True, timeout=120, cwd=str(BASE_DIR))
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "listening run timed out (>2min)"}), 504
+    p = BRANDS_DIR / brand_slug / "social_listening.json"
+    if p.exists():
+        try:
+            return jsonify({"success": True, "data": json.loads(p.read_text())})
+        except Exception:
+            pass
+    # No file written → surface the module's honest status (blocked / no_provider / no identity).
+    return jsonify({"success": True, "data": {
+        "status": "not_run",
+        "note": (res.stdout or res.stderr or "").strip()[-300:],
+    }})
+
+
 # ── BUILD D — CROSS-AGENT CONTRADICTION DETECTOR ─────────────────────────────
 
 @bp.route("/api/contradictions/check", methods=["POST", "GET"])
