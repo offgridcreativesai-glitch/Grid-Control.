@@ -152,6 +152,40 @@ def _posts(token: str, limit: int = 25) -> list:
     return posts
 
 
+def _activity(posts: list) -> dict:
+    """Posting-cadence read from REAL post timestamps. Surfaces DORMANCY so the audit can
+    reframe itself: a brand that's gone dark for months needs a REACTIVATION plan (rebuild
+    trust + consistency) first, not a growth plan. This is the 'business context that changes
+    the meaning of the data' a human strategist would notice before anything else.
+    Zero-assumption: status 'unknown' when timestamps are missing — never guesses."""
+    ts = []
+    for p in posts:
+        t = p.get("timestamp")
+        if not t:
+            continue
+        try:
+            ts.append(datetime.fromisoformat(str(t).replace("Z", "+00:00")))
+        except Exception:
+            continue
+    if not ts:
+        return {"status": "unknown", "note": "no post timestamps to read cadence from"}
+    ts.sort()
+    now = datetime.now(timezone.utc)
+    last, first = ts[-1], ts[0]
+    days_since = (now - last).days
+    span_days = max((last - first).days, 1)
+    cadence = round(len(ts) / (span_days / 30.4), 1) if span_days else None
+    status = "active" if days_since <= 30 else "slowing" if days_since <= 90 else "dormant"
+    return {
+        "status": status,                                   # active | slowing | dormant | unknown
+        "last_post_date": last.date().isoformat(),
+        "days_since_last_post": days_since,
+        "months_since_last_post": round(days_since / 30.4, 1),
+        "sampled_span_days": span_days,
+        "cadence_per_month_when_active": cadence,            # how often they posted while active
+    }
+
+
 def collect(slug: str) -> dict:
     env = _load_env(slug)
     token = env.get("META_GRAPH_API_TOKEN", "")
@@ -207,6 +241,7 @@ def collect(slug: str) -> dict:
             "avg_reach": avg_reach,
             "total_saves": total_saves,
             "format_mix": fmt,
+            "activity": _activity(posts),
             "posts": posts,
         },
         "other_channels": {

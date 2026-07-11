@@ -42,7 +42,7 @@ export function BrandReportCard() {
 
   const d = bb?.data
   const status: string = d?.status ?? "none"
-  if (!slug || !["generating", "pending_review", "change_requested"].includes(status)) return null
+  if (!slug || !["generating", "pending_review", "change_requested", "error"].includes(status)) return null
 
   const summary: Summary = d?.report_summary || {}
   const revCount: number = d?.revision_count ?? 0
@@ -132,6 +132,34 @@ export function BrandReportCard() {
           >
             {busy === "regen" ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
             Rework the report
+          </button>
+        </div>
+        {err && <p className="mt-2 text-[12px] text-destructive">{err}</p>}
+      </Shell>
+    )
+  }
+
+  // ── error ─────────────────────────────────────────────────────────────────────
+  if (status === "error") {
+    return (
+      <Shell title="The report hit a snag">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          The report run didn&rsquo;t finish. Your research data is safe — this only needs a
+          re-run, and it reuses today&rsquo;s data (no new charges).
+        </p>
+        {d?.error && (
+          <p className="mt-2 rounded-lg border border-border bg-black/20 px-3 py-2 text-[11.5px] text-muted-foreground/80">
+            {String(d.error).slice(0, 200)}
+          </p>
+        )}
+        <div className="mt-3">
+          <button
+            onClick={regenerate}
+            disabled={busy === "regen"}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-transform hover:scale-[1.02] disabled:opacity-50"
+          >
+            {busy === "regen" ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            Try again
           </button>
         </div>
         {err && <p className="mt-2 text-[12px] text-destructive">{err}</p>}

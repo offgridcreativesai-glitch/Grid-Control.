@@ -404,6 +404,11 @@ BASE_DIR = Path(__file__).parent
 BRANDS_DIR = BASE_DIR / "brands"
 AGENTS_DIR = BASE_DIR / ".claude" / "agents"
 
+# Brand-book: reuse existing scrape data on regenerate if it's younger than this, instead
+# of re-hitting paid Apify. A same-day "rework the report" is presentation-only; next-day
+# reworks fall through and re-scrape. 12h keeps an onboarding session's reworks free.
+_INTEL_REUSE_MAX_AGE = 12 * 3600
+
 
 # ── Per-brand secrets (brands/<slug>/.env) ─────────────────────────────────────
 # Each brand's social/platform tokens live in its own .env, isolated from the
@@ -2805,6 +2810,7 @@ def _brand_book_status(brand_slug: str) -> dict:
             "scope_flag":     bp.get("brand_book_scope_flag", False),
             "latest_path":    bp.get("brand_book_latest_path"),
             "approved_ts":    bp.get("brand_book_approved_ts"),
+            "error":          bp.get("brand_book_error"),
         }
     except Exception:
         return {"status": "none", "revision_count": 0, "scope_flag": False, "latest_path": None}
@@ -2879,17 +2885,32 @@ def _run_brand_book_generate(brand_slug: str, mode: str = "onboarding") -> None:
         # this the assembly step crashes on a missing brand_self_v7.json. Order matters:
         # brand_self (own IG stats) → competitor_intel (writes its own file) →
         # channel_score (reads competitor_intel_v7, writes channel_scores_v7).
+        #
+        # FRESHNESS GUARD (cost): competitor_intel.run is PAID Apify. A presentation-only
+        # "rework the report" shouldn't re-scrape when today's data is still fresh. If all
+        # three intel files exist and are younger than _INTEL_REUSE_MAX_AGE, reuse them and
+        # go straight to the (cheap) Opus narrative. Re-scrape only when stale or missing.
         base = BRANDS_DIR / brand_slug
-        from agents.intel import brand_self as _bs, competitor_intel as _ci, channel_score as _cs
-        self_data = _bs.collect(brand_slug)
-        if isinstance(self_data, dict) and self_data.get("_error"):
-            raise RuntimeError(f"brand_self failed: {self_data['_error']}")
-        (base / "brand_self_v7.json").write_text(
-            json.dumps(self_data, indent=2, ensure_ascii=False), encoding="utf-8")
-        _ci.run(brand_slug)  # writes competitor_intel_v7.json (paid Apify)
-        scores = _cs.score(brand_slug)
-        (base / "channel_scores_v7.json").write_text(
-            json.dumps(scores, indent=2, ensure_ascii=False), encoding="utf-8")
+        _intel_files = [base / "brand_self_v7.json", base / "competitor_intel_v7.json",
+                        base / "channel_scores_v7.json"]
+        _now = time.time()
+        _fresh = all(f.exists() for f in _intel_files) and all(
+            (_now - f.stat().st_mtime) < _INTEL_REUSE_MAX_AGE for f in _intel_files)
+        if _fresh:
+            age_h = max((_now - f.stat().st_mtime) for f in _intel_files) / 3600
+            print(f"[brand-book] {brand_slug}: reusing fresh intel ({age_h:.1f}h old) — "
+                  f"skipping Apify re-scrape, narrative-only regenerate")
+        else:
+            from agents.intel import brand_self as _bs, competitor_intel as _ci, channel_score as _cs
+            self_data = _bs.collect(brand_slug)
+            if isinstance(self_data, dict) and self_data.get("_error"):
+                raise RuntimeError(f"brand_self failed: {self_data['_error']}")
+            (base / "brand_self_v7.json").write_text(
+                json.dumps(self_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            _ci.run(brand_slug)  # writes competitor_intel_v7.json (paid Apify)
+            scores = _cs.score(brand_slug)
+            (base / "channel_scores_v7.json").write_text(
+                json.dumps(scores, indent=2, ensure_ascii=False), encoding="utf-8")
         from agents.brand_book_v7 import generate as _generate_brand_book
         result = _generate_brand_book(brand_slug, render_pdf=True)
         # generate() returns the report DICT; the written-file path is in _output_path.

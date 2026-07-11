@@ -36,6 +36,13 @@ import requests
 APIFY_API_KEY = os.getenv("APIFY_API_KEY", "").strip()
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Scrape provider selection. apify (default) | brightdata. Bright Data replaces the
+# Apify Instagram scrape (higher reliability, richer output, pay-per-success). Meta Ads +
+# YouTube stay on Apify until their Bright Data dataset_ids are confirmed — each call
+# falls back to Apify automatically if the Bright Data path is unavailable, so there are
+# no gaps regardless of the flag.
+SCRAPE_PROVIDER = os.getenv("SCRAPE_PROVIDER", "apify").strip().lower()
+
 # Apify actor ids (REST form uses ~ instead of /)
 ACTOR_IG       = "apify~instagram-scraper"
 ACTOR_META_ADS = "brilliant_gum~facebook-ads-library-scraper"
@@ -133,8 +140,68 @@ class CompetitorIntel:
         self.api = Apify(APIFY_API_KEY)
         self.scraped_at = datetime.now(timezone.utc).isoformat()
 
+    # Bright Data path — uses the VERIFIED Instagram Profiles scraper (gd_l1vikfch901nx3by4),
+    # which returns the profile's OWN recent posts embedded in `posts[]`. Maps to the exact
+    # same shape as the Apify path (below), so everything downstream is unchanged. Returns
+    # None to signal "fall back to Apify" (not enabled / blocked / empty). Never raises.
+    def _instagram_brightdata(self, handle: str) -> dict | None:
+        try:
+            from agents._lib import paid_ops
+            _ok, _reason = paid_ops.check("brightdata:instagram")
+        except Exception as _e:
+            _ok, _reason = False, f"paid_ops unavailable ({_e})"
+        if not _ok:
+            print(f"  [brightdata] ⛔ paid-ops blocked IG — {_reason}"); return None
+        try:
+            from agents._lib._brightdata_client import get_brightdata
+            bd = get_brightdata()
+        except Exception as e:
+            print(f"  [brightdata] client import failed: {e}"); return None
+        if not bd.enabled:
+            print("  [brightdata] no BRIGHTDATA_API_TOKEN → Apify fallback"); return None
+        res = bd.instagram_profiles([handle])
+        if not res.get("ok") or not res.get("records"):
+            print(f"  [brightdata] IG @{handle}: {res.get('error') or 'no records'}"); return None
+        rec = res["records"][0] or {}
+        posts = rec.get("posts") or []
+        if not posts:
+            return None  # profile with no per-post data → let Apify try
+        likes = [int(p.get("likes") or 0) for p in posts]
+        comm = [int(p.get("comments") or 0) for p in posts]
+        fmts = {}
+        for p in posts:
+            t = p.get("content_type") or "unknown"
+            fmts[t] = fmts.get(t, 0) + 1
+        likes_hidden = sum(1 for l in likes if l == 0) > len(likes) * 0.5
+        top = sorted(posts, key=lambda p: int(p.get("likes") or 0) + int(p.get("comments") or 0),
+                     reverse=True)[:5]
+        return {
+            "status": "ok",
+            "via": "brightdata",
+            "posts_sampled": len(posts),
+            "avg_likes": _avg(likes),
+            "avg_comments": _avg(comm),
+            "avg_engagement": round(_avg(likes) + _avg(comm), 1),
+            "avg_video_views": None,   # BD profile scraper doesn't return per-post views
+            "likes_hidden": likes_hidden,
+            "format_mix": fmts,
+            "followers": rec.get("followers"),
+            "top_posts": [{
+                "url": p.get("url"), "type": p.get("content_type"),
+                "likes": int(p.get("likes") or 0), "comments": int(p.get("comments") or 0),
+                "views": None,
+                "thumbnail": p.get("image_url") or p.get("video_url"),
+                "caption": (p.get("caption") or "")[:160],
+            } for p in top],
+        }
+
     # Instagram — organic engagement + formats (hidden-likes aware)
     def instagram(self, handle: str) -> dict:
+        if SCRAPE_PROVIDER == "brightdata":
+            bd = self._instagram_brightdata(handle)
+            if bd is not None:
+                return bd
+            print("  [brightdata] IG unavailable → Apify fallback")
         items = self.api.run(ACTOR_IG, {
             "directUrls": [f"https://www.instagram.com/{handle}/"],
             "resultsType": "posts", "resultsLimit": 24,
@@ -153,6 +220,7 @@ class CompetitorIntel:
                      reverse=True)[:5]
         return {
             "status": "ok",
+            "via": "apify",
             "posts_sampled": len(posts),
             "avg_likes": _avg(likes),
             "avg_comments": _avg(comm),

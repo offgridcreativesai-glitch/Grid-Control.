@@ -152,9 +152,11 @@ def _you_vs_category(benchmark, accent):
     bars = _hbars(rows, accent=accent, highlight_brand=True)
     med = benchmark.get("category_median")
     cc = benchmark.get("competitor_ceiling") or {}
+    # Role-model clause only when a role model is actually set — else it printed "role model at —".
+    rm_clause = (f"; your long-term role model <b>{_esc(rm_handle)}</b> at <b>{_num(rm.get('engagement'))}</b> "
+                 f"shows the destination" if rm_handle else "")
     note = (f"<div class='callout'>Category median is <b>{_num(med)}</b>. Your near-term target is your top "
-            f"competitor <b>{_esc(cc.get('handle'))}</b> at <b>{_num(cc.get('engagement'))}</b>; your long-term "
-            f"role model <b>{_esc(rm_handle)}</b> at <b>{_num(rm.get('engagement'))}</b> shows the destination. "
+            f"competitor <b>{_esc(cc.get('handle'))}</b> at <b>{_num(cc.get('engagement'))}</b>{rm_clause}. "
             f"The gap is the runway — the rest of this audit is the route.</div>"
             if cc else "")
     return bars + note
@@ -186,6 +188,30 @@ def _snapshot(narrative):
                      f"<div class='sc-channel'>{_esc(s.get('channel'))}</div>"
                      f"<div class='sc-line'>{_esc(s.get('line'))}</div></div>")
     return f"<div class='statgrid'>{''.join(cards)}</div>"
+
+
+_SITUATION_LABEL = {
+    "REACTIVATION": "Reactivation audit", "LAUNCH": "Launch audit",
+    "REPOSITION": "Repositioning audit", "GROWTH": "Growth audit",
+}
+
+
+def _situation_banner(n, bi):
+    """The one-truth reframe that leads the whole report. Loud when the account is dormant —
+    a reactivation read is a different audit than a growth read, and the founder must see that first."""
+    s = n.get("situation") or {}
+    read = s.get("read")
+    if not read:
+        return ""
+    stype = (s.get("type") or "").upper()
+    label = _SITUATION_LABEL.get(stype, "The situation")
+    act = bi.get("activity") or {}
+    tag = ""
+    if act.get("status") == "dormant" and act.get("months_since_last_post"):
+        tag = f"<span class='situ-tag'>Last post {act['months_since_last_post']} months ago</span>"
+    hot = " situ-hot" if stype == "REACTIVATION" else ""
+    return (f"<div class='situ{hot}'><div class='situ-head'>{label}{tag}</div>"
+            f"<div class='situ-read'>{_esc(read)}</div></div>")
 
 
 def _exec_summary(narrative):
@@ -261,14 +287,22 @@ def _your_playbook(narrative):
 
 
 def _roadmap(narrative):
+    """Deep, stacked 90-day plan — each month is a full-width band with its goal (the why),
+    the suggested moves, and the watchable success signal. Not a cramped 3-column grid."""
     rm = narrative.get("roadmap") or {}
-    cols = []
+    bands = []
     for i, key in enumerate(("month_1", "month_2", "month_3"), 1):
         m = rm.get(key) or {}
         moves = "".join(f"<li>{_esc(x)}</li>" for x in (m.get("moves") or []))
-        cols.append(f"<div class='rmcol'><div class='rmmonth'>Month {i}</div>"
-                    f"<div class='rmtitle'>{_esc(m.get('title'))}</div><ul>{moves}</ul></div>")
-    return f"<div class='roadmapgrid'>{''.join(cols)}</div>"
+        goal = f"<div class='rmgoal'>{_esc(m.get('goal'))}</div>" if m.get("goal") else ""
+        succ = (f"<div class='rmsucc'><span class='rmsucc-l'>What success looks like</span> "
+                f"{_esc(m.get('success_metric'))}</div>" if m.get("success_metric") else "")
+        bands.append(
+            f"<div class='rmband'>"
+            f"<div class='rmband-head'><span class='rmband-month'>Month {i}</span>"
+            f"<span class='rmband-title'>{_esc(m.get('title'))}</span></div>"
+            f"{goal}<ul class='rmband-moves'>{moves}</ul>{succ}</div>")
+    return f"<div class='rmstack'>{''.join(bands)}</div>"
 
 
 def _money_section(report, intel, accent):
@@ -341,6 +375,91 @@ def _provenance(report):
             f"<td class='ml'>Detail</td></tr>{body}</table>")
 
 
+def _category_overview(report):
+    """Bird's-eye read of the whole niche BEFORE any single handle — the gap Gaurav named.
+    Prose from Opus + deterministic chips (real ₹ prices seen, who's paying for ads)."""
+    n = report["narrative"].get("category_overview") or {}
+    cat = (report.get("signals", {}) or {}).get("category_facts", {}) or {}
+    prices = cat.get("price_points_seen") or []
+    price_chips = "".join(f"<span class='fchip'>{_esc(p)}</span>" for p in prices[:10])
+    advertisers = cat.get("advertisers") or []
+    adv = ("<div class='callout'><b>Who's paying to play.</b> "
+           + (", ".join(f"<b>{_esc(a)}</b>" for a in advertisers) + " are running paid ads right now — the rest aren't."
+              if advertisers else "Nobody in your category is running paid ads right now — the paid lane is wide open.")
+           + "</div>")
+    price_block = (f"<h3>What the category charges</h3><p class='lead'>{_esc(n.get('price_landscape'))}</p>"
+                   + (f"<div class='vvocab'>{price_chips}</div>" if price_chips else ""))
+    return (f"<p class='lead'>{_esc(n.get('the_category'))}</p>"
+            f"<h3>How they all win</h3><p class='lead'>{_esc(n.get('how_they_win'))}</p>"
+            f"{price_block}{adv}"
+            f"<div class='callout'><b>The open lane.</b> {_esc(n.get('the_opening'))}</div>")
+
+
+def _your_instagram(report):
+    """Own IG as its own section (Gaurav: 'own section is what I want')."""
+    n = report["narrative"].get("your_instagram") or {}
+    bi = report["brand"]["instagram"]
+    fmt = bi.get("format_mix") or {}
+    fmt_chips = "".join(f"<span class='fchip'>{_esc(k)} · {v}</span>" for k, v in fmt.items())
+    return (f"{_hero_stats(bi)}"
+            f"<p class='lead'>{_esc(n.get('read'))}</p>"
+            + (f"<div class='vvocab'><b>What you post:</b> {fmt_chips}</div>" if fmt_chips else "")
+            + f"<h3>What's working</h3><div class='callout'>{_esc(n.get('whats_working'))}</div>"
+            f"<h3>The one fix</h3><p class='lead'>{_esc(n.get('the_fix'))}</p>")
+
+
+def _storefront(report):
+    """Own website audited on its own — the section Gaurav said was skipped."""
+    n = report["narrative"].get("storefront") or {}
+    own = ((report.get("signals", {}) or {}).get("website", {}) or {}).get("own") or {}
+    if not n.get("read") and not own:
+        return "<p class='lead muted'>No website on file to audit yet.</p>"
+    bits = []
+    if own.get("platform"):
+        bits.append(f"<span class='fchip'>Built on {_esc(own.get('platform'))}</span>")
+    for p in (own.get("price_signals") or [])[:8]:
+        bits.append(f"<span class='fchip'>{_esc(p)}</span>")
+    meta_row = f"<div class='vvocab'>{''.join(bits)}</div>" if bits else ""
+    fixes = "".join(f"<li>{_esc(x)}</li>" for x in (n.get("fixes") or []))
+    fix_block = f"<h3>Fixes for the storefront</h3><ol class='playbook'>{fixes}</ol>" if fixes else ""
+    url_line = f"<div class='bioline'>{_esc(own.get('url'))}</div>" if own.get("url") else ""
+    return (f"{url_line}<p class='lead'>{_esc(n.get('read'))}</p>{meta_row}"
+            f"<h3>Does your website match your Instagram?</h3>"
+            f"<div class='callout'>{_esc(n.get('coherence'))}</div>{fix_block}")
+
+
+def _competitor_cards(report):
+    """One tight card per competitor (Gaurav: 'tight card ... comparing our brand with our
+    competitors'). Prose from Opus; the chips (paying? price? engagement) are deterministic."""
+    cards_n = {c.get("handle"): c for c in (report["narrative"].get("competitor_cards") or [])}
+    detail = (report.get("signals", {}) or {}).get("competitors_detail", []) or []
+    out = []
+    for d in detail:
+        h = d["handle"]
+        cn = cards_n.get(h, {})
+        chips = []
+        if d.get("advertising"):
+            chips.append(f"<span class='mchip on'>Running {_num(d.get('active_ads'))} paid ads</span>")
+        else:
+            chips.append("<span class='mchip off'>Not running paid ads</span>")
+        if d.get("avg_engagement"):
+            chips.append(f"<span class='mchip'>{_num(d['avg_engagement'])} avg likes+comments</span>")
+        band = d.get("price_band") or []
+        if band:
+            chips.append(f"<span class='mchip'>Prices {_esc(band[0])}–{_esc(band[-1])}</span>")
+        if d.get("storefront_platform"):
+            chips.append(f"<span class='mchip'>{_esc(d['storefront_platform'])} store</span>")
+        out.append(
+            f"<div class='compcard'>"
+            f"<div class='comphead'><span class='compname'>{_esc(h)}</span></div>"
+            f"<div class='compone'>{_esc(cn.get('one_liner'))}</div>"
+            f"<div class='compchips'>{''.join(chips)}</div>"
+            f"<div class='complabel'>Their winning move</div><div class='compmove'>{_esc(cn.get('winning_move'))}</div>"
+            f"<div class='complabel'>Steal this</div><div class='compsteal'>{_esc(cn.get('steal_this'))}</div>"
+            f"</div>")
+    return "<div class='compgrid'>" + "".join(out) + "</div>"
+
+
 # ─────────────────────────────── CSS (premium)
 def _css(palette):
     accent = palette.get("accent", "#b23a2e")
@@ -405,6 +524,15 @@ def _css(palette):
     .sw{width:11px;height:11px;border-radius:3px;display:inline-block;}
     .callout{background:#fbeae8;border-left:4px solid %(ACCENT)s;padding:11px 13px;border-radius:7px;
         font-size:12.5px;color:#39342c;margin:9px 0;line-height:1.5;}
+    /* situation banner (the one-truth reframe that leads the report) */
+    .situ{margin:15px 0 2px;padding:14px 16px;border-radius:11px;background:#f4f1ea;
+        border:1px solid #e7e0d3;}
+    .situ-hot{background:#fbeae8;border:1px solid %(ACCENT)s;box-shadow:0 1px 0 rgba(178,58,46,.08);}
+    .situ-head{display:flex;align-items:center;gap:10px;font-family:'IBM Plus Mono',monospace;
+        font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:%(ACCENT)s;margin-bottom:6px;}
+    .situ-tag{font-family:'IBM Plus Mono',monospace;font-size:9px;letter-spacing:.08em;font-weight:600;
+        background:%(ACCENT)s;color:#fff;padding:2px 8px;border-radius:20px;text-transform:none;}
+    .situ-read{font-family:'Fraunces',serif;font-size:15px;line-height:1.5;color:%(INK)s;font-weight:500;}
     /* foundation (sign-off) */
     .vgrid{display:flex;gap:18px;margin:6px 0;}
     .vgrid>div{flex:1;}
@@ -470,6 +598,36 @@ def _css(palette):
     .rmtitle{font-family:'Fraunces',serif;font-weight:700;font-size:14px;margin:4px 0 7px;color:%(INK)s;}
     .rmcol ul{margin:0;padding-left:15px;}
     .rmcol li{font-size:11px;color:#3a362f;line-height:1.4;margin:4px 0;}
+    /* competitor cards + storefront + category */
+    .compgrid{display:flex;flex-direction:column;gap:11px;margin:10px 0;}
+    .compcard{border:1px solid #e7e0d3;border-radius:11px;padding:14px 15px;
+        background:linear-gradient(180deg,#fff,#fcfaf6);page-break-inside:avoid;}
+    .comphead{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+    .compname{font-family:'Fraunces',serif;font-weight:800;font-size:17px;color:%(INK)s;}
+    .compone{font-size:12px;color:#5a554c;margin-bottom:6px;line-height:1.45;}
+    .compchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px;}
+    .mchip{font-family:'IBM Plus Mono',monospace;font-size:9.5px;font-weight:500;padding:3px 8px;border-radius:6px;
+        background:#f1ede5;color:#4a463f;letter-spacing:.02em;}
+    .mchip.on{background:#fbeae8;color:%(ACCENT)s;font-weight:600;}
+    .mchip.off{background:#eef0ee;color:#8a8270;}
+    .complabel{font-family:'IBM Plus Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+        color:%(ACCENT)s;font-weight:600;margin-top:9px;}
+    .compmove{font-size:12px;color:#2c2820;line-height:1.5;margin-top:2px;}
+    .compsteal{font-size:12px;color:#39342c;line-height:1.5;margin-top:2px;font-style:italic;}
+    /* deep 90-day roadmap (stacked bands) */
+    .rmstack{display:flex;flex-direction:column;gap:12px;margin:12px 0;}
+    .rmband{border:1px solid #e7e0d3;border-radius:12px;padding:15px 16px;
+        background:linear-gradient(180deg,#fff,#fcfaf6);page-break-inside:avoid;}
+    .rmband-head{display:flex;align-items:baseline;gap:12px;margin-bottom:5px;}
+    .rmband-month{font-family:'IBM Plus Mono',monospace;font-size:10px;letter-spacing:.14em;
+        text-transform:uppercase;color:%(ACCENT)s;font-weight:600;}
+    .rmband-title{font-family:'Fraunces',serif;font-weight:800;font-size:17px;color:%(INK)s;}
+    .rmgoal{font-size:12.5px;color:#39342c;line-height:1.5;margin:2px 0 9px;}
+    .rmband-moves{margin:4px 0 9px;padding-left:16px;}
+    .rmband-moves li{font-size:12px;color:#2c2820;line-height:1.5;margin:6px 0;}
+    .rmsucc{font-size:11.5px;color:#4a463f;background:#f6f2ea;border-radius:8px;padding:8px 11px;margin-top:4px;}
+    .rmsucc-l{font-family:'IBM Plus Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+        color:%(ACCENT)s;font-weight:600;margin-right:7px;}
     .foot{margin-top:9mm;padding-top:5mm;border-top:1px solid #ece6da;text-align:center;
         font-family:'IBM Plus Mono',monospace;font-size:9px;color:#bcb4a4;letter-spacing:.06em;
         page-break-before:avoid;}
@@ -497,49 +655,46 @@ def _build_html(report, intel, palette):
              f"<p class='sub'>{_esc(n.get('subhead',''))}</p>"
              f"<div class='bioline'>{_esc(name)} · “{_esc((bi.get('biography') or '').splitlines()[0] if bi.get('biography') else '')}” · {_esc(report['meta'].get('date'))}</div>"
              f"{_hero_stats(bi)}"
-             f"<p class='lead'>{_esc(n.get('starting_line'))}</p></section>")
-
-    summary = _sec("00", "Executive summary", "What this audit found",
-                   _exec_summary(n) + f"<div class='verdictstrip-label'>The channel verdict, in one screen</div>{_snapshot(n)}",
-                   brk=False)
+             f"<p class='lead'>{_esc(n.get('starting_line'))}</p>"
+             f"{_situation_banner(n, bi)}</section>")
 
     sov_html = (f"<div class='callout'><b>Share of voice.</b> {_esc(n.get('share_of_voice'))}</div>"
                 if n.get("share_of_voice") else "")
     ws_html = (f"<div class='callout'><b>Your open lane.</b> {_esc(n.get('white_space'))}</div>"
                if n.get("white_space") else "")
-    where = _sec("01", "Where you stand", "You vs the category",
-                 f"<p class='lead'>{_esc(n.get('where_you_stand'))}</p>"
-                 f"{sov_html}"
-                 f"<h3>Engagement per post — you against your category</h3>{_you_vs_category(report['benchmark'], accent)}"
-                 f"{ws_html}")
-
-    identity = _sec("02", "Brand identity", "Who you are — and the gap", _identity(report), brk=False)
-
-    chan = _sec("03", "The map", "The channel map",
-                f"<div class='intro2'>{_esc(intros.get('channel_map'))}</div>"
-                f"{_channel_grid(report['scores'])}")
-
-    aud = _sec("04", "Audience", "Who you're for", _audience(report), brk=False)
-
-    how = _sec("05", "The mechanic", "How the competitors win",
-               _how_winners(report, intel, accent))
-
-    money = _sec("06", "The money signal", "Who's paying to win", _money_section(report, intel, accent), brk=False)
-
-    rolemodel = _sec("07", "The destination", "Your role model", _role_model(report), brk=False)
-
-    playbook = _sec("08", "Your move", "Your playbook",
-                    f"<div class='intro2'>{_esc(intros.get('how'))}</div>{_your_playbook(n)}")
-
-    roadmap = _sec("09", "The plan", "Your 90-day roadmap", _roadmap(n), brk=False)
-
     found_inner = _foundation(n)
-    foundation = _sec("10", "Sign-off", "Your brand foundation", found_inner, brk=True) if found_inner else ""
+    has_role_model = bool(report["benchmark"].get("role_model"))
 
-    appendix = _sec("11", "Receipts", "Provenance & methodology", _provenance(report), brk=True)
+    # Ordered sections (eyebrow, title, inner, page-break). Numbering is assigned sequentially
+    # AFTER filtering, so a skipped section (e.g. no role model) never leaves a gap like "09→11".
+    # Provenance/Receipts is intentionally NOT shown to the client (removed per request).
+    ordered = [
+        ("Executive summary", "What this audit found",
+         _exec_summary(n) + f"<div class='verdictstrip-label'>The channel verdict, in one screen</div>{_snapshot(n)}", False),
+        ("The landscape", "Your category, at a glance", _category_overview(report), True),
+        ("Where you stand", "You vs the category",
+         f"<p class='lead'>{_esc(n.get('where_you_stand'))}</p>{sov_html}"
+         f"<h3>Engagement per post — you against your category</h3>{_you_vs_category(report['benchmark'], accent)}{ws_html}", True),
+        ("Your account", "Your Instagram", _your_instagram(report), False),
+        ("Your store", "Your storefront", _storefront(report), True),
+        ("Brand identity", "Who you are — and the gap", _identity(report), False),
+        ("Audience", "Who you're for", _audience(report), False),
+        ("The map", "The channel map",
+         f"<div class='intro2'>{_esc(intros.get('channel_map'))}</div>{_channel_grid(report['scores'])}", True),
+        ("The rivals", "The competitors, one by one", _competitor_cards(report), True),
+        ("The mechanic", "The move that wins, decoded", _how_winners(report, intel, accent), True),
+    ]
+    if has_role_model:  # skip entirely when no role model is set for the brand
+        ordered.append(("The destination", "Your role model", _role_model(report), False))
+    ordered += [
+        ("Your move", "Your playbook", f"<div class='intro2'>{_esc(intros.get('how'))}</div>{_your_playbook(n)}", True),
+        ("The plan", "Your 90-day roadmap", _roadmap(n), True),
+    ]
+    if found_inner:
+        ordered.append(("Sign-off", "Your brand foundation", found_inner, True))
 
-    body = (cover + summary + where + identity + chan + aud + how + money + rolemodel + playbook + roadmap
-            + foundation + appendix
+    numbered = "".join(_sec(f"{i:02d}", eb, ti, inner, brk) for i, (eb, ti, inner, brk) in enumerate(ordered))
+    body = (cover + numbered
             + f"<div class='foot'>GRID CONTROL · real-data brand audit · prepared for @{_esc(bi.get('username'))}</div>")
     return ("<!doctype html><html><head><meta charset='utf-8'><style>"
             + _css(palette) + "</style></head><body>" + body + "</body></html>")

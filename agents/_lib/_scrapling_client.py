@@ -32,6 +32,24 @@ class ScraplingClient:
     def enabled(self) -> bool:
         return self._ok
 
+    def fetch_html(self, url: str, timeout: int = 20) -> dict:
+        """Raw stealth HTML fetch — for callers that run their own extraction (e.g.
+        website.py's platform/price/OG regex). Uses scrapling's anti-bot Fetcher so
+        sites that block plain `requests` (e.g. owr.life) still resolve. Never raises.
+        Returns {ok, status, url, html}."""
+        if not self._ok:
+            return {"ok": False, "url": url, "error": "scrapling not installed"}
+        try:
+            r = self._Fetcher.get(url, stealthy_headers=True, follow_redirects=True, timeout=timeout)
+        except Exception as e:
+            return {"ok": False, "url": url, "error": f"fetch failed: {e}"}
+        return {
+            "ok": r.status < 400,
+            "status": int(r.status),
+            "url": str(getattr(r, "url", url) or url),
+            "html": str(r.html_content or ""),
+        }
+
     def scrape_homepage(self, url: str, timeout: int = 20) -> dict:
         """Scrape a competitor homepage. Returns structured positioning signal.
         Never raises — returns {ok: False, error: ...} on failure."""
