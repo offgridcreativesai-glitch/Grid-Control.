@@ -11,6 +11,7 @@ import { ConnectionsPage } from "@/pages/ConnectionsPage"
 import { SettingsPage } from "@/pages/SettingsPage"
 import { CrewPage } from "@/pages/CrewPage"
 import { MemoryPage } from "@/pages/MemoryPage"
+import { CreativeLibraryPage } from "@/pages/CreativeLibraryPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { LandingPage } from "@/landing/LandingPage"
@@ -175,6 +176,7 @@ function GatedApp() {
                 <Route path="/review" element={<ReviewPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/creative" element={<CreativeLibraryPage />} />
                 <Route path="/memory" element={<MemoryPage />} />
                 <Route path="/connections" element={<ConnectionsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

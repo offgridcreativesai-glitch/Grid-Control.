@@ -608,3 +608,67 @@ export function useRunDailyPipeline() {
     },
   })
 }
+
+// ── Creative Library (gap #3 — unified, tagged, versioned creative assets) ───────
+
+export interface CreativeAsset {
+  id: string
+  brand_slug: string
+  filename: string
+  kind: "image" | "video" | "audio"
+  ext: string
+  source_agent: string
+  approval_state: "pending" | "approved" | "generated"
+  post_id: string | null
+  group_key: string
+  size_bytes: number
+  created: string
+  media_url: string
+  path: string
+  tags: string[]
+}
+
+export interface CreativeFacets {
+  total: number
+  kind: Record<string, number>
+  source_agent: Record<string, number>
+  approval_state: Record<string, number>
+  tags: Record<string, number>
+}
+
+export interface CreativeFilters {
+  kind?: string
+  source_agent?: string
+  approval_state?: string
+  tag?: string
+  q?: string
+}
+
+export function useCreativeLibrary(filters: CreativeFilters = {}) {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["creative-library", activeBrand.slug, filters],
+    enabled: !!activeBrand.slug,
+    queryFn: () => {
+      const p = new URLSearchParams({ brand_slug: activeBrand.slug })
+      for (const [k, v] of Object.entries(filters)) if (v) p.set(k, v)
+      return getJson<{ success: boolean; data: { assets: CreativeAsset[]; facets: CreativeFacets } }>(
+        `/api/creative-library?${p.toString()}`,
+      ).then((r) => r.data)
+    },
+    staleTime: 15_000,
+  })
+}
+
+export function useSetAssetTags() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (vars: { asset_id: string; tags: string[] }) =>
+      postJson<{ success: boolean; data: CreativeAsset }>("/api/creative-library/tags", {
+        brand_slug: activeBrand.slug,
+        ...vars,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["creative-library", activeBrand.slug] }),
+  })
+}

@@ -11,6 +11,7 @@ import {
   Bot,
   BrainCircuit,
   SlidersHorizontal,
+  ImagePlay,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
@@ -32,6 +33,7 @@ const navItems = [
   { path: "/review", icon: CheckSquare, label: "Review" },
   { path: "/calendar", icon: Calendar, label: "Calendar" },
   { path: "/insights", icon: BarChart3, label: "Insights" },
+  { path: "/creative", icon: ImagePlay, label: "Creative" },
   { path: "/memory", icon: BrainCircuit, label: "Memory" },
   { path: "/connections", icon: Plug, label: "Connections" },
   { path: "/settings", icon: SlidersHorizontal, label: "Settings" },
