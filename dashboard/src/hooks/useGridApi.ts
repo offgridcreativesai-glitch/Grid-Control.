@@ -752,3 +752,88 @@ export function useRunListening() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["listening", activeBrand.slug] }),
   })
 }
+
+// ── Reputation engine (gap #5) ────────────────────────────────────────────────
+
+export interface ReviewPlatform {
+  platform: string
+  domain: string
+  url: string
+  rating: number | null
+  reviews: number | null
+  sentiment: "positive" | "neutral" | "negative"
+  title: string
+  snippet: string
+}
+
+export interface Reputation {
+  status: "ok" | "none" | "blocked" | "no_provider" | "no_brand_identity" | "not_run"
+  note?: string
+  collected_at?: string
+  overall_rating?: number | null
+  platforms_found?: number
+  total_reviews?: number
+  platforms?: ReviewPlatform[]
+  needs_response?: ReviewPlatform[]
+}
+
+export function useReputation() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["reputation", activeBrand.slug],
+    enabled: !!activeBrand.slug,
+    queryFn: () =>
+      getJson<{ success: boolean; data: Reputation }>(
+        `/api/reputation?brand_slug=${encodeURIComponent(activeBrand.slug)}`,
+      ).then((r) => r.data),
+    staleTime: 60_000,
+  })
+}
+
+export function useRunReputation() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: () =>
+      postJson<{ success: boolean; data: Reputation }>("/api/reputation/run", {
+        brand_slug: activeBrand.slug,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reputation", activeBrand.slug] }),
+  })
+}
+
+// ── White-label branding (gap #4) ─────────────────────────────────────────────
+
+export interface WhiteLabel {
+  brand_name?: string
+  logo_url?: string
+  accent?: string
+  support_email?: string
+  custom_domain?: string
+}
+
+export function useWhiteLabel() {
+  const { activeBrand } = useBrandStore()
+  return useQuery({
+    queryKey: ["white-label", activeBrand.slug],
+    enabled: !!activeBrand.slug,
+    queryFn: () =>
+      getJson<{ success: boolean; data: WhiteLabel }>(
+        `/api/brands/${encodeURIComponent(activeBrand.slug)}/white-label`,
+      ).then((r) => r.data),
+    staleTime: 30_000,
+  })
+}
+
+export function useSetWhiteLabel() {
+  const qc = useQueryClient()
+  const { activeBrand } = useBrandStore()
+  return useMutation({
+    mutationFn: (patch: WhiteLabel) =>
+      postJson<{ success: boolean; data: WhiteLabel }>(
+        `/api/brands/${encodeURIComponent(activeBrand.slug)}/white-label`,
+        patch,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["white-label", activeBrand.slug] }),
+  })
+}

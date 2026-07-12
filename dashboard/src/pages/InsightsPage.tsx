@@ -17,7 +17,7 @@ import type { Platform } from "@/store/appStore"
 import { StatusDot } from "@/components/ui/status-dot"
 import { PlatformIcon } from "@/components/ui/platform-icon"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { usePerformanceHistory, useDigest, useLatestAnalysis, useListening, useRunListening } from "@/hooks/useGridApi"
+import { usePerformanceHistory, useDigest, useLatestAnalysis, useListening, useRunListening, useReputation, useRunReputation } from "@/hooks/useGridApi"
 import { useBrandStore } from "@/store/brandStore"
 
 const PLATFORMS: (Platform | "all")[] = ["all", "x", "instagram", "linkedin", "tiktok", "youtube"]
@@ -73,6 +73,8 @@ export function InsightsPage() {
   const { data: analysis } = useLatestAnalysis()
   const { data: listening } = useListening()
   const runListening = useRunListening()
+  const { data: reputation } = useReputation()
+  const runReputation = useRunReputation()
   const history = (perfData?.history ?? {}) as Record<string, unknown>
 
   const posts: PerfPost[] = Array.isArray(history.posts) ? (history.posts as PerfPost[]) : []
@@ -266,6 +268,60 @@ export function InsightsPage() {
             <p className="text-[12.5px] text-muted-foreground">
               {runListening.data?.data?.note ||
                 "No listening data yet. Hit Refresh to scan the web for what people are saying about your brand."}
+            </p>
+          )}
+        </Panel>
+
+        {/* Reputation — star rating + review platforms + what needs a response (gap #5) */}
+        <Panel className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[14px] font-semibold text-foreground">Reputation</h3>
+            <button
+              onClick={() => runReputation.mutate()}
+              disabled={runReputation.isPending}
+              className="rounded-full border border-border px-3 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              {runReputation.isPending ? "Checking…" : "Refresh"}
+            </button>
+          </div>
+          {reputation?.status === "ok" && (reputation.platforms_found ?? 0) > 0 ? (
+            <>
+              <div className="mb-4 flex flex-wrap items-baseline gap-3">
+                <span className="font-display text-[30px] font-semibold text-foreground">
+                  {reputation.overall_rating != null ? reputation.overall_rating.toFixed(1) : "—"}
+                  <span className="ml-0.5 text-[16px] text-muted-foreground">/5</span>
+                </span>
+                <span className="text-[12px] text-muted-foreground">
+                  {formatNumber(reputation.total_reviews ?? 0)} reviews across {reputation.platforms_found} platforms
+                </span>
+                {(reputation.needs_response?.length ?? 0) > 0 && (
+                  <span className="ml-auto rounded-full px-2.5 py-1 text-[12px]" style={{ background: "rgba(220,60,60,0.12)", color: "var(--destructive)" }}>
+                    {reputation.needs_response!.length} need a response
+                  </span>
+                )}
+              </div>
+              <ul className="divide-y divide-border">
+                {(reputation.platforms ?? []).slice(0, 8).map((p, i) => (
+                  <li key={i} className="flex items-center gap-3 py-2.5">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: p.sentiment === "positive" ? "var(--emerald)" : p.sentiment === "negative" ? "var(--destructive)" : "var(--muted-foreground)" }}
+                    />
+                    <a href={p.url} target="_blank" rel="noreferrer" className="text-[13px] text-foreground/90 hover:text-primary">
+                      {p.platform}
+                    </a>
+                    <span className="ml-auto text-[12.5px] text-muted-foreground">
+                      {p.rating != null ? <span className="text-foreground/90">★ {p.rating.toFixed(1)}</span> : "no rating"}
+                      {p.reviews != null && <span> · {formatNumber(p.reviews)} reviews</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-[12.5px] text-muted-foreground">
+              {runReputation.data?.data?.note ||
+                "No reputation data yet. Hit Refresh to pull your star rating and reviews from Trustpilot, Google and more."}
             </p>
           )}
         </Panel>

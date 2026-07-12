@@ -189,6 +189,10 @@ class BrightDataClient:
                     "snippet": (it.get("description") or it.get("snippet") or "").strip(),
                     "source": (it.get("source") or it.get("display_link") or _domain(link)),
                     "date": it.get("date") or it.get("published") or "",
+                    # rich-snippet rating fields when Google surfaces them (review pages) —
+                    # reputation.py reads these; None when absent (falls back to regex).
+                    "rating": it.get("rating") or it.get("rating_value"),
+                    "reviews_cnt": it.get("reviews_cnt") or it.get("rating_count") or it.get("reviews"),
                 })
             return out
         return {"ok": True, "results": _norm(serp.get("organic")),

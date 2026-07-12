@@ -504,6 +504,35 @@ def set_publish_policy(brand_slug: str):
     return jsonify({"success": True, "data": {"settings": settings}})
 
 
+@bp.route("/api/brands/<brand_slug>/white-label", methods=["GET"])
+@require_auth
+def get_white_label(brand_slug: str):
+    """Owner-facing white-label branding (agents/_lib/white_label.py). {} when unset →
+    the FE shows the default GRID CONTROL wordmark. Pure display config, no secrets."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    from agents._lib import white_label
+    return jsonify({"success": True, "data": white_label.get(brand_slug)})
+
+
+@bp.route("/api/brands/<brand_slug>/white-label", methods=["POST"])
+@require_auth
+def set_white_label(brand_slug: str):
+    """Body: any of { brand_name, logo_url, accent (hex), support_email, custom_domain }.
+    A field set to "" clears it. Owner-facing — a normal branding preference."""
+    _bid, err = _authorize_brand(brand_slug)   # W3.1 authz sweep
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    from agents._lib import white_label
+    try:
+        cfg = white_label.set_config(brand_slug, body)
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    return jsonify({"success": True, "data": cfg})
+
+
 @bp.route("/api/brands/<brand_slug>/cost-cap", methods=["GET"])
 @require_auth
 def get_cost_cap(brand_slug: str):

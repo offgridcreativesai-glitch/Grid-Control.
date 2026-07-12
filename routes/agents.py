@@ -408,6 +408,53 @@ def listening_run():
     }})
 
 
+@bp.route("/api/reputation", methods=["GET"])
+@require_auth
+def reputation_get():
+    """Cached reputation result (star rating + per-platform reviews + what needs a response)."""
+    brand_slug = request.args.get("brand_slug", "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    p = BRANDS_DIR / brand_slug / "reputation.json"
+    if not p.exists():
+        return jsonify({"success": True, "data": {"status": "none"}})
+    try:
+        return jsonify({"success": True, "data": json.loads(p.read_text())})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/api/reputation/run", methods=["POST"])
+@require_auth
+@require_brand_access
+def reputation_run():
+    """Run the reputation engine now (real Bright Data SERP over review sites). Cost-gated by
+    GRID_PAID_OPS inside the module. Subprocess, same pattern as listening."""
+    body = request.get_json(silent=True) or {}
+    brand_slug = (body.get("brand_slug") or "").strip()
+    if not brand_slug or not _validate_brand_slug(brand_slug):
+        return jsonify({"success": False, "error": "Valid brand_slug required"}), 400
+    script = BASE_DIR / "agents" / "intel" / "reputation.py"
+    env = os.environ.copy()
+    env["ACTIVE_BRAND"] = brand_slug
+    env.update({k: v for k, v in brand_env(brand_slug).items() if v})
+    try:
+        res = subprocess.run([sys.executable, str(script), brand_slug], env=env,
+                             capture_output=True, text=True, timeout=120, cwd=str(BASE_DIR))
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "reputation run timed out (>2min)"}), 504
+    p = BRANDS_DIR / brand_slug / "reputation.json"
+    if p.exists():
+        try:
+            return jsonify({"success": True, "data": json.loads(p.read_text())})
+        except Exception:
+            pass
+    return jsonify({"success": True, "data": {
+        "status": "not_run",
+        "note": (res.stdout or res.stderr or "").strip()[-300:],
+    }})
+
+
 # ── BUILD D — CROSS-AGENT CONTRADICTION DETECTOR ─────────────────────────────
 
 @bp.route("/api/contradictions/check", methods=["POST", "GET"])

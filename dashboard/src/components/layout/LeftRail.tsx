@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useBrandStore } from "@/store/brandStore";
 import { useAuthStore } from "@/store/authStore";
 import { useAppStore } from "@/store/appStore";
+import { useWhiteLabel } from "@/hooks/useGridApi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,8 +88,10 @@ function RailContent({
 }) {
   const { activeBrand, brands, setActiveBrand } = useBrandStore();
   const { user, signOut } = useAuthStore();
+  const { data: wl } = useWhiteLabel();
   const navigate = useNavigate();
   const isDrawer = variant === "drawer";
+  const platformName = wl?.brand_name || "GRID CONTROL";
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -205,15 +208,19 @@ function RailContent({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex h-10 w-10 items-center justify-center">
-                  <div className="grid grid-cols-2 gap-0.5">
-                    <div className="h-1.5 w-1.5 rounded-[1px] bg-primary" />
-                    <div className="h-1.5 w-1.5 rounded-[1px] bg-muted-foreground" />
-                    <div className="h-1.5 w-1.5 rounded-[1px] bg-muted-foreground" />
-                    <div className="h-1.5 w-1.5 rounded-[1px] bg-primary" />
-                  </div>
+                  {wl?.logo_url ? (
+                    <img src={wl.logo_url} alt={platformName} className="h-6 w-6 rounded object-contain" />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-0.5">
+                      <div className="h-1.5 w-1.5 rounded-[1px] bg-primary" style={wl?.accent ? { background: wl.accent } : undefined} />
+                      <div className="h-1.5 w-1.5 rounded-[1px] bg-muted-foreground" />
+                      <div className="h-1.5 w-1.5 rounded-[1px] bg-muted-foreground" />
+                      <div className="h-1.5 w-1.5 rounded-[1px] bg-primary" style={wl?.accent ? { background: wl.accent } : undefined} />
+                    </div>
+                  )}
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="right">GRID CONTROL</TooltipContent>
+              <TooltipContent side="right">{platformName}</TooltipContent>
             </Tooltip>
           )}
         </div>

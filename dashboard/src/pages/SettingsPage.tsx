@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import {
   usePublishPolicy, useSetPublishPolicy, type PublishLevel,
   useCostCap, useSetCostCap,
+  useWhiteLabel, useSetWhiteLabel, type WhiteLabel,
 } from "@/hooks/useGridApi"
 
 const PLATFORM_META: Record<string, { name: string; icon: typeof Camera }> = {
@@ -174,6 +175,73 @@ function CostCapSection() {
   )
 }
 
+const WL_FIELDS: { key: keyof WhiteLabel; label: string; placeholder: string }[] = [
+  { key: "brand_name", label: "Brand name", placeholder: "Acme Agency" },
+  { key: "logo_url", label: "Logo URL", placeholder: "https://…/logo.svg" },
+  { key: "accent", label: "Accent colour (hex)", placeholder: "#22d3ee" },
+  { key: "support_email", label: "Support email", placeholder: "team@acme.com" },
+  { key: "custom_domain", label: "Custom domain", placeholder: "app.acme.com" },
+]
+
+function WhiteLabelSection() {
+  const { data, isLoading, isError } = useWhiteLabel()
+  const save = useSetWhiteLabel()
+  const [draft, setDraft] = useState<WhiteLabel>({})
+
+  useEffect(() => {
+    if (data) setDraft(data)
+  }, [data])
+
+  const header = (
+    <>
+      <h2 className="mb-1 text-[15px] font-semibold text-foreground">White-label branding</h2>
+      <p className="mb-4 text-[12.5px] leading-relaxed text-muted-foreground">
+        Reselling this brand's workspace? Put your own name, logo and accent on it. Leave a field
+        blank to fall back to the default Grid Control branding. (Pricing and seat management are set
+        with Gaurav — this only controls what the client sees.)
+      </p>
+    </>
+  )
+
+  if (isLoading) return <div>{header}<SectionSkeleton label="branding…" /></div>
+  if (isError) return <div>{header}<SectionError label="branding" /></div>
+
+  return (
+    <div>
+      {header}
+      <div className="space-y-3 rounded-xl border border-border bg-white/[0.02] p-4">
+        {WL_FIELDS.map((f) => (
+          <label key={f.key} className="flex items-center gap-3 text-[12.5px]">
+            <span className="w-36 shrink-0 text-muted-foreground">{f.label}</span>
+            <input
+              type={f.key === "accent" ? "text" : "text"}
+              value={draft[f.key] ?? ""}
+              placeholder={f.placeholder}
+              onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+              className="flex-1 rounded-lg border border-border bg-white/[0.02] px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            />
+          </label>
+        ))}
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={() => save.mutate(draft)}
+            disabled={save.isPending}
+            className="rounded-lg bg-emerald px-3 py-1 text-[12px] font-semibold text-[#06120E] transition-[filter] hover:brightness-110 disabled:opacity-50"
+          >
+            {save.isPending ? "Saving…" : "Save branding"}
+          </button>
+          {save.isError && <span className="text-[11px] text-destructive">{(save.error as Error)?.message || "Save failed"}</span>}
+          {draft.accent && (
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="h-3.5 w-3.5 rounded-full border border-border" style={{ background: draft.accent }} /> preview
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function SettingsPage() {
   return (
     <div className="flex h-full flex-col overflow-auto bg-background/60 px-6 py-6">
@@ -184,6 +252,7 @@ export function SettingsPage() {
         </div>
         <PublishPolicySection />
         <CostCapSection />
+        <WhiteLabelSection />
       </div>
     </div>
   )
