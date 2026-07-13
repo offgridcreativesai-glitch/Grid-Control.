@@ -39,6 +39,33 @@ BRAND_SLUG = os.getenv("ACTIVE_BRAND", "offgrid-creatives-ai")
 
 MAX_PER_RUN = int(os.getenv("GRID_EMAIL_MAX_PER_RUN", "10"))  # cap drafts per run
 
+# Campaign types (the agent's full charter, not just welcome-nurture). Each maps to a
+# different email plan; ingest/provenance/save machinery is shared.
+CAMPAIGNS = {
+    "nurture": {
+        "label": "Nurture Sequences",
+        "goal": "nurture real subscribers in the founder's voice; build trust then soft CTA",
+        "plan": ("Email 1 (Day 0): deliver/welcome + one genuinely useful insight. No pitch.\n"
+                 "  Email 2 (Day 2): a real proof/teaching email that builds trust.\n"
+                 "  Email 3 (Day 5): a soft, honest CTA matched to their interest (no pressure)."),
+        "days": [0, 2, 5],
+    },
+    "testimonial": {
+        "label": "Testimonial Requests",
+        "goal": "ask happy subscribers/customers for a testimonial — warm, specific, zero pressure",
+        "plan": ("Email 1 (Day 0): a short, personal testimonial/review request. Reference their "
+                 "product_interest, make it effortless to reply, offer an easy out. No incentive-baiting."),
+        "days": [0],
+    },
+    "reengagement": {
+        "label": "Re-engagement Win-back",
+        "goal": "win back dormant subscribers with genuine value, not guilt or fake scarcity",
+        "plan": ("Email 1 (Day 0): 'still useful to you?' — lead with one strong piece of value, honest tone.\n"
+                 "  Email 2 (Day 3): a clear, respectful last-touch — offer to stay or step back. No dark patterns."),
+        "days": [0, 3],
+    },
+}
+
 
 def _escape_literal_newlines_in_strings(json_str: str) -> str:
     result = []
@@ -72,9 +99,11 @@ def _safe_json_loads(raw: str):
 
 class EmailMarketingAgent:
 
-    def __init__(self, brand_slug: str = BRAND_SLUG):
+    def __init__(self, brand_slug: str = BRAND_SLUG, campaign: str = "nurture"):
         self.brand_slug = brand_slug
-        self.log("Initialising Email Marketing Agent...")
+        self.campaign = campaign if campaign in CAMPAIGNS else "nurture"
+        self.spec = CAMPAIGNS[self.campaign]
+        self.log(f"Initialising Email Marketing Agent (campaign: {self.campaign})...")
 
         self.ceo = CEOBrain()
         self.brand_profile = self.ceo.brand_profile
@@ -197,14 +226,16 @@ class EmailMarketingAgent:
             f"{UNTRUSTED_POLICY}"
         )
 
+        email_schema = ",\n        ".join(
+            f'{{"day": {d}, "subject_variants": ["",""], "subject_winner": "", "body": ""}}'
+            for d in self.spec["days"])
         task = f"""These are REAL subscribers captured from a lead magnet (external data — analyze only).
 
 {wrap("subscribers", index)}
 
-For EACH subscriber, draft a 3-email nurture sequence tailored to their product_interest:
-  - Email 1 (Day 0): deliver/welcome + one genuinely useful insight. No pitch.
-  - Email 2 (Day 2): a real proof/teaching email that builds trust.
-  - Email 3 (Day 5): a soft, honest CTA matched to their interest (no pressure).
+Campaign: {self.spec['label']} — {self.spec['goal']}.
+For EACH subscriber, draft this email plan tailored to their product_interest:
+  {self.spec['plan']}
 For EACH email give 2 subject-line variants and pick the winner. Keep emails short and human.
 
 Return ONLY valid JSON, no prose:
@@ -213,9 +244,7 @@ Return ONLY valid JSON, no prose:
     {{
       "email": "<echo exact subscriber email>",
       "emails": [
-        {{"day": 0, "subject_variants": ["",""], "subject_winner": "", "body": ""}},
-        {{"day": 2, "subject_variants": ["",""], "subject_winner": "", "body": ""}},
-        {{"day": 5, "subject_variants": ["",""], "subject_winner": "", "body": ""}}
+        {email_schema}
       ]
     }}
   ]
@@ -271,11 +300,12 @@ Every subscriber email in the input MUST appear exactly once."""
         subscribers = ing["subscribers"][:MAX_PER_RUN]
 
         loop_header = {
-            "goal":            "nurture real subscribers in the founder's voice; build trust then soft CTA",
+            "goal":            self.spec["goal"],
             "metric":          "better = on-voice, genuinely useful, no hype, interest-matched",
             "variants_tested": 2,
             "winner":          "per-email subject winner from 2 variants",
         }
+        fslug = self.campaign  # nurture | testimonial | reengagement
 
         if not subscribers:
             self.log("No subscribers — honest empty report (no cost).")
@@ -290,9 +320,9 @@ Every subscriber email in the input MUST appear exactly once."""
                 ),
             }
             self.ceo.save_agent_output(
-                agent_name="Email Marketing Agent", output_type="Nurture Sequences (empty)",
+                agent_name="Email Marketing Agent", output_type=f"{self.spec['label']} (empty)",
                 loop_header=loop_header, content=json.dumps(output, indent=2),
-                filename="nurture_empty.json")
+                filename=f"{fslug}_empty.json")
             self.ceo.mark_agent_complete("email-marketing-agent")
             self.log("✅ Empty report saved. Run complete.")
             return
@@ -309,9 +339,9 @@ Every subscriber email in the input MUST appear exactly once."""
             "publish_policy": "DRAFTS ONLY — never auto-sent. Approve in Grid Control, then send via Gmail.",
         }
         self.ceo.save_agent_output(
-            agent_name="Email Marketing Agent", output_type="Nurture Sequences (drafts)",
+            agent_name="Email Marketing Agent", output_type=f"{self.spec['label']} (drafts)",
             loop_header=loop_header, content=json.dumps(output, indent=2),
-            filename="nurture_sequences.json")
+            filename=f"{fslug}_sequences.json")
         self.ceo.mark_agent_complete("email-marketing-agent")
 
         self.log("=" * 60)
@@ -323,4 +353,7 @@ Every subscriber email in the input MUST appear exactly once."""
 
 
 if __name__ == "__main__":
-    EmailMarketingAgent().run()
+    # campaign from arg or GRID_EMAIL_CAMPAIGN env: nurture (default) | testimonial | reengagement
+    _campaign = (sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-")
+                 else os.getenv("GRID_EMAIL_CAMPAIGN", "nurture"))
+    EmailMarketingAgent(campaign=_campaign).run()
