@@ -422,7 +422,13 @@ function LiveWorkFeed({
 
 // ── Page ────────────────────────────────────────────────────────────────────────
 
-type Msg = { id: string; role: "user" | "assistant"; text: string }
+type Dispatch = {
+  agent_name: string
+  rationale: string
+  status: "pending" | "running" | "done" | "failed"
+  note?: string
+}
+type Msg = { id: string; role: "user" | "assistant"; text: string; dispatch?: Dispatch }
 
 const QUICK = [
   { label: "Plan my week", icon: CalendarRange, send: "Plan my content for this week." },
@@ -485,13 +491,18 @@ export function CommandCenterPage() {
         }),
       })
       const j = await r.json()
-      // THE SECRET: surface only the conversational reply — never proposals/file/bash.
+      // THE SECRET: hide file/bash proposals — but DO surface an agent dispatch so the
+      // user can approve Atlas putting a specialist on the job (this is what Atlas is FOR).
+      const agentProp = (j.proposals || []).find((p: { kind: string }) => p.kind === "agent")
       setThread((t) => [
         ...t,
         {
           id: `${Date.now() + 1}`,
           role: "assistant",
           text: j.success ? j.response || "(no answer)" : `Sorry — I couldn't reach the team just now.`,
+          dispatch: agentProp
+            ? { agent_name: agentProp.payload.agent_name, rationale: agentProp.payload.rationale, status: "pending" }
+            : undefined,
         },
       ])
     } catch {
@@ -501,6 +512,28 @@ export function CommandCenterPage() {
       ])
     } finally {
       setThinking(false)
+    }
+  }
+
+  const patchDispatch = (msgId: string, patch: Partial<Dispatch>) =>
+    setThread((t) => t.map((m) => (m.id === msgId && m.dispatch ? { ...m, dispatch: { ...m.dispatch, ...patch } } : m)))
+
+  const approveDispatch = async (msgId: string, agentName: string) => {
+    patchDispatch(msgId, { status: "running" })
+    try {
+      const r = await apiFetch("/api/agents/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_name: agentName, brand_slug: activeBrand.slug }),
+      })
+      const j = await r.json()
+      if (j.success) {
+        patchDispatch(msgId, { status: "done", note: "On it — the result will show up in your approvals when it's ready." })
+      } else {
+        patchDispatch(msgId, { status: "failed", note: j.error || "Couldn't start that specialist." })
+      }
+    } catch {
+      patchDispatch(msgId, { status: "failed", note: "Couldn't reach the team just now." })
     }
   }
 
@@ -576,8 +609,36 @@ export function CommandCenterPage() {
               ) : (
                 <div key={m.id} className="mt-6 flex gap-3">
                   <PersonaAvatar slug="atlas" px={32} />
-                  <div className="max-w-[88%] whitespace-pre-wrap pt-1 text-[14px] leading-relaxed text-foreground/90">
-                    {m.text}
+                  <div className="max-w-[88%] pt-1">
+                    <div className="whitespace-pre-wrap text-[14px] leading-relaxed text-foreground/90">{m.text}</div>
+                    {m.dispatch && (
+                      <div className="mt-3 rounded-xl border border-primary/25 bg-primary/[0.05] p-3.5">
+                        <p className="text-[12px] uppercase tracking-[0.12em] text-primary/80">Put the team on it</p>
+                        <p className="mt-1 text-[13.5px] font-semibold text-foreground">{m.dispatch.agent_name}</p>
+                        <p className="mt-0.5 text-[12.5px] text-muted-foreground">{m.dispatch.rationale}</p>
+                        {m.dispatch.status === "pending" ? (
+                          <div className="mt-3 flex items-center gap-2">
+                            <button
+                              onClick={() => approveDispatch(m.id, m.dispatch!.agent_name)}
+                              className="rounded-lg bg-primary px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+                            >
+                              Approve &amp; run
+                            </button>
+                            <button
+                              onClick={() => patchDispatch(m.id, { status: "failed", note: "Dismissed." })}
+                              className="rounded-lg border border-border px-3 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              Not now
+                            </button>
+                          </div>
+                        ) : (
+                          <p className={cn("mt-2.5 text-[12.5px]",
+                            m.dispatch.status === "failed" ? "text-destructive" : "text-emerald")}>
+                            {m.dispatch.status === "running" ? "Starting…" : m.dispatch.note}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ),

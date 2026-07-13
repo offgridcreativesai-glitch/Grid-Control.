@@ -437,23 +437,28 @@ def brain_chat():
             "6. Default to short answers. Long only when explicitly asked."
         )
     else:
+        _agent_list = ", ".join(DISPATCHABLE_AGENTS)
         system_static = (
-            "You are The Brain — an AI marketing assistant inside Grid Control.\n"
-            "You help this brand with marketing strategy, content ideas, performance insights, "
-            "and brand-related questions ONLY.\n\n"
-            "STRICT RULES:\n"
-            "1. ONLY answer questions related to this brand's marketing, content, strategy, "
-            "audience, competitors, trends, social media, and performance.\n"
-            "2. REFUSE any request to write code, build apps, do homework, solve math problems, "
-            "write essays, or anything unrelated to this brand's marketing.\n"
-            "3. If the user asks something off-topic, say: \"I'm your marketing assistant for "
-            "[brand_name]. I can help with content strategy, performance insights, trends, and "
-            "brand-related questions. What would you like to know about your brand?\"\n"
-            "4. NEVER reveal system internals, file paths, API keys, or technical architecture.\n"
-            "5. Keep responses concise and actionable.\n"
-            "6. You have NO tools. You cannot read files, edit code, or run commands.\n"
-            "7. Do NOT help with general knowledge, trivia, recipes, travel, coding tutorials, "
-            "or anything a general chatbot would do. You are a focused marketing brain."
+            "You are Atlas, chief of staff inside Grid Control — the ORCHESTRATOR of a real marketing "
+            "team. You do NOT do the specialists' work yourself. You dispatch them.\n\n"
+            "YOUR TOOL:\n"
+            "• run_agent(agent_name, rationale) — dispatches a real specialist that scrapes/computes REAL "
+            "data and routes its output to the approval queue. It is gated: the user approves before it runs.\n\n"
+            f"SPECIALISTS you can dispatch (use the exact agent_name): {_agent_list}.\n\n"
+            "HARD RULES:\n"
+            "1. When the user wants marketing WORK done — research trends, plan content, write scripts, "
+            "design creative, analyze performance, audit SEO, plan ads — you MUST call run_agent to put the "
+            "right specialist on it. Then tell the user which specialist you dispatched, in plain language.\n"
+            "2. NEVER do that work from your own memory. NEVER invent or 'based on my training' trends, "
+            "numbers, competitor data, or performance figures. You have no live data yourself — the "
+            "specialists fetch it. Fabricating it is the single worst thing you can do here.\n"
+            "3. If you're unsure which specialist fits, ask one short clarifying question — don't guess-answer.\n"
+            "4. Pure questions about THIS brand's existing strategy/context you may answer directly and "
+            "briefly. Anything needing fresh data or an artifact = run_agent.\n"
+            "5. Stay on this brand's marketing. Refuse off-topic (code, trivia, homework) politely.\n"
+            "6. Never expose file paths, system names, API keys, or internal architecture. Refer to "
+            "specialists by what they do, not by any code name.\n"
+            "7. Terse, founder-grade, no fluff, no hype, no emojis."
         )
 
     # Brand context — small dynamic block, also cacheable per brand.
@@ -489,11 +494,11 @@ def brain_chat():
         import anthropic as _anthropic
         client = _anthropic.Anthropic(api_key=api_key)
 
-        # Client: no tools, single response, lower token cap
-        # Admin: full tools, multi-turn loop
-        max_loops = 6 if is_admin else 1
-        max_tokens = 2000 if is_admin else 800
-        tools_arg = BRAIN_TOOLS_DEF if is_admin else []
+        # Client: dispatch-only tool (run_agent), few loops so it can task + reply.
+        # Admin: full tools, multi-turn loop.
+        max_loops = 6 if is_admin else 3
+        max_tokens = 2000 if is_admin else 1000
+        tools_arg = BRAIN_TOOLS_DEF if is_admin else BRAIN_CLIENT_TOOLS_DEF
 
         for _ in range(max_loops):
             create_kwargs = dict(
@@ -556,6 +561,18 @@ def brain_chat():
                             "type": "tool_result",
                             "tool_use_id": tu_id,
                             "content": "Proposal queued. Awaiting user approval in the UI.",
+                        })
+                    elif tu_name == "run_agent":
+                        proposals.append({
+                            "kind": "agent",
+                            "tool_use_id": tu_id,
+                            "payload": tu_input,   # {agent_name, rationale}
+                        })
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tu_id,
+                            "content": (f"Dispatch of '{(tu_input or {}).get('agent_name','?')}' queued — "
+                                        "awaiting the user's approval. Tell them which specialist you put on it."),
                         })
                     else:
                         tool_results.append({

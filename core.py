@@ -2367,6 +2367,36 @@ BRAIN_TOOLS_DEF = [
     },
 ]
 
+# Agents Atlas (The Brain) can dispatch — only those with a real, runnable script.
+DISPATCHABLE_AGENTS = [name for name, v in AGENT_SCRIPTS.items() if isinstance(v, str) and v]
+
+# The orchestration tool. This is WHY Atlas exists: it dispatches the real specialist
+# (a subprocess that scrapes/computes REAL data → approval queue), instead of answering
+# from the model's memory. Gated proposal: returned to the UI, runs only on user approval.
+_RUN_AGENT_TOOL = {
+    "name": "run_agent",
+    "description": (
+        "Dispatch a real specialist agent to do actual work — scrape live data, generate content, "
+        "analyze real metrics. The agent runs a real pipeline and its output lands in the approval "
+        "queue. Returned to the user for approval; does NOT run until they approve. "
+        "Use this WHENEVER the user wants marketing work done (research trends, plan content, write "
+        "scripts, design creative, analyze performance, audit SEO, etc.). NEVER do that work yourself "
+        "from memory and NEVER invent trends, numbers, or competitor data — always dispatch the specialist."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "agent_name": {"type": "string", "enum": DISPATCHABLE_AGENTS,
+                           "description": "Which specialist to put on it (exact name from the list)."},
+            "rationale": {"type": "string", "description": "One line: what you're tasking them with and why."},
+        },
+        "required": ["agent_name", "rationale"],
+    },
+}
+
+BRAIN_TOOLS_DEF.append(_RUN_AGENT_TOOL)          # admin gets it too
+BRAIN_CLIENT_TOOLS_DEF = [_RUN_AGENT_TOOL]        # client gets ONLY dispatch (no file/bash — THE SECRET)
+
 
 def _brain_safe_path(rel_path: str) -> Path | None:
     """Resolve a relative path safely under BASE_DIR. Returns None if outside or hidden."""
