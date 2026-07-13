@@ -69,39 +69,37 @@ def _elevenlabs(text, out_dir, base_name, voice_id, api_key, log):
 
 
 # ── Chatterbox (local founder-voice clone) ────────────────────────────────────
-_cbx_model = None  # module-level cache — loading the model per call would be brutal
-
-
-def _load_chatterbox(device, log):
-    global _cbx_model
-    if _cbx_model is not None:
-        return _cbx_model
-    from chatterbox.tts import ChatterboxTTS
-    log(f"Loading Chatterbox model on {device} (first call only)…")
-    _cbx_model = ChatterboxTTS.from_pretrained(device=device)
-    return _cbx_model
+# Chatterbox lives in an isolated Python (its torch/transformers pins don't match the main
+# 3.14 app), so synthesis is shelled out to _voicebox_synth.py run by VOICEBOX_PYTHON rather
+# than imported in-process. ponytail: the model reloads per call (a few seconds); for the
+# 1–3 narration lines a creative run produces that's fine — swap to a persistent worker only
+# if narration volume ever makes the reload cost matter.
+_VOICEBOX_PY_DEFAULT = os.path.expanduser("~/.venvs/voicebox/bin/python")
 
 
 def _chatterbox(text, out_dir, base_name, ref_sample, log):
     if not ref_sample or not os.path.exists(ref_sample):
         log("⚠️  Chatterbox needs a founder voice sample at brands/<slug>/voice_sample.wav — none found.")
         return None
-    try:
-        import torch
-        import torchaudio as ta
-    except Exception as e:
-        log(f"⚠️  Chatterbox deps missing ({e}) — pip install chatterbox-tts torch torchaudio.")
+    py = (os.getenv("VOICEBOX_PYTHON") or _VOICEBOX_PY_DEFAULT).strip()
+    if not os.path.exists(py):
+        log(f"⚠️  Chatterbox venv Python not found at {py} — install chatterbox-tts there or set VOICEBOX_PYTHON.")
         return None
+    synth = os.path.join(os.path.dirname(__file__), "_voicebox_synth.py")
+    out = os.path.join(out_dir, base_name + ".wav")
     try:
-        device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
-        model = _load_chatterbox(device, log)
-        wav = model.generate(text, audio_prompt_path=ref_sample)
-        out = os.path.join(out_dir, base_name + ".wav")
-        ta.save(out, wav.cpu() if hasattr(wav, "cpu") else wav, model.sr)
-        log(f"✅ Chatterbox narration saved: {base_name}.wav (cloned voice, device={device})")
-        return out
+        r = subprocess.run([py, synth, "--out", out, "--ref", ref_sample, "--text", text],
+                           capture_output=True, text=True, timeout=300)
+        if r.returncode == 0 and os.path.exists(out) and os.path.getsize(out) > 0:
+            log(f"✅ Chatterbox narration saved: {base_name}.wav (cloned voice)")
+            return out
+        log(f"⚠️  Chatterbox synth failed: {((r.stderr or r.stdout) or '').strip()[-300:]}")
+        return None
+    except subprocess.TimeoutExpired:
+        log(f"⚠️  Chatterbox synth timed out (>5min) for '{base_name}'.")
+        return None
     except Exception as e:
-        log(f"⚠️  Chatterbox narration failed for '{base_name}': {e}")
+        log(f"⚠️  Chatterbox synth error for '{base_name}': {e}")
         return None
 
 
