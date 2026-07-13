@@ -33,6 +33,17 @@ Last updated: 2026-07-11
 
 ---
 
+## Voicebox — local TTS (added Jul 12 2026, VERIFIED end-to-end)
+- **What:** replaces ElevenLabs for the Creative Director's narration with a **local Chatterbox founder-voice clone** (Resemble AI, MIT, commercial-OK). Router: `agents/_lib/_tts.py` selects on `TTS_PROVIDER` (`elevenlabs` default | `chatterbox` | `say`). Set `TTS_PROVIDER=chatterbox` in global `/.env` (line present, VERIFIED read via python-dotenv → `chatterbox`).
+- **DECISION — LOCAL-ONLY (Gaurav, Jul 12):** creative generation runs from the **Mac's LOCAL GC** (local Flask); the 24×7 Railway instance keeps doing non-voice work (listening/reputation/analytics) and does NOT synthesize voice. Chatterbox needs the Mac's **MPS GPU** — it cannot run on Railway (no GPU, won't fit). So: to make founder-voiced creative, trigger it from local GC, not the deployed dashboard.
+- **Also chosen:** founder-voice CLONE (Chatterbox) over Kokoro stock voice — this REVERSES the earlier "no AI clone Month 1" stance, by explicit owner decision.
+- **Venv (isolated, one-time):** `~/.venvs/voicebox` on **Python 3.12** (main app is 3.14, which has NO chatterbox wheels). Built via `brew install python@3.12` → `python3.12 -m venv ~/.venvs/voicebox` → `pip install chatterbox-tts`. **GOTCHA (fixed): `resemble-perth` (the watermarker) imports `pkg_resources`, which setuptools≥81 removed → symptom was `PerthImplicitWatermarker = None` → `TypeError: 'NoneType' object is not callable`. Fix: `pip install "setuptools<81"` in the venv.** If the venv is ever rebuilt, re-apply that pin.
+- **Architecture:** main app (3.14) never imports chatterbox; `agents/_lib/_tts.py` shells out to `agents/_lib/_voicebox_synth.py` run by `VOICEBOX_PYTHON` (default `~/.venvs/voicebox/bin/python`, override via env). Model reloads per call (~few s) — fine at 1-3 narrations/run.
+- **STILL NEEDED to produce the real voice:** a clean ~15-22s founder sample at `brands/<slug>/voice_sample.wav`. Without it the chatterbox path logs a skip and returns None (graceful — no crash, narration just absent). Pipeline itself VERIFIED Jul 12 with a throwaway `say` reference → 4.5s cloned WAV on MPS.
+- Cost: free after setup (on-device). ElevenLabs stays as the fallback provider if `TTS_PROVIDER` is flipped back + `ELEVENLABS_API_KEY` present.
+
+---
+
 ## Instagram — 🔒 LOCKED (Jul 8 2026, confirmed on Gaurav's live screen)
 
 **THE Grid Control Instagram app = "Grid Control – TGT test", App ID `1710260696579392`** (account `gridadmin1@gmail.com`, In development / Unpublished). Its Use cases page HAS **"Manage messaging & content on Instagram"** (Instagram API — publish/stories/comments/DMs) + "Manage everything on your Page". This is the app all brand Instagram OAuth uses. (Name still says "TGT test" — rename to something like "Grid Control – Instagram" when convenient; the App ID is what matters.)
