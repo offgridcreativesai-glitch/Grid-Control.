@@ -471,38 +471,27 @@ Return ONLY valid JSON in this structure:
     # ── ElevenLabs narration ──────────────────────────────────────────────────
 
     def generate_narration(self, text: str, label: str) -> str | None:
-        """Generate audio narration via ElevenLabs. Returns file path or None."""
-        if not ELEVENLABS_API_KEY:
-            self.log(f"Skipping narration for '{label}' — no ElevenLabs key.")
+        """Generate audio narration via the TTS_PROVIDER router (voicebox). Default provider is
+        ElevenLabs (unchanged); TTS_PROVIDER=chatterbox uses a local founder-voice clone reading
+        brands/<slug>/voice_sample.wav; TTS_PROVIDER=say uses the macOS built-in. Returns a
+        brand-relative file path or None."""
+        from agents._lib import _tts
+        audio_dir = self.brand_dir / "outputs" / "pending_approval" / "Creative Director" / "audio"
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_label = label.lower().replace(" ", "_")[:40]
+        ref = self.brand_dir / "voice_sample.wav"   # founder-clone reference (chatterbox only)
+        out = _tts.synthesize(
+            text, out_dir=audio_dir, base_name=f"{ts}_{safe_label}",
+            voice_id=ELEVENLABS_VOICE_ID, api_key=ELEVENLABS_API_KEY,
+            ref_sample=str(ref) if ref.exists() else None, log=self.log,
+        )
+        if not out:
             return None
-
         try:
-            from elevenlabs import ElevenLabs
-            client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-
-            self.log(f"Generating narration via ElevenLabs: '{text[:60]}...'")
-            audio_gen = client.text_to_speech.convert(
-                voice_id=ELEVENLABS_VOICE_ID,
-                text=text,
-                model_id="eleven_multilingual_v2",
-                output_format="mp3_44100_128",
-            )
-            audio_bytes = b"".join(audio_gen)
-
-            # Save audio file
-            audio_dir = self.brand_dir / "outputs" / "pending_approval" / "Creative Director" / "audio"
-            audio_dir.mkdir(parents=True, exist_ok=True)
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_label = label.lower().replace(" ", "_")[:40]
-            audio_path = audio_dir / f"{ts}_{safe_label}.mp3"
-            audio_path.write_bytes(audio_bytes)
-
-            self.log(f"✅ Narration saved: {audio_path.name} ({len(audio_bytes):,} bytes)")
-            return str(audio_path.relative_to(self.brand_dir))
-
-        except Exception as e:
-            self.log(f"⚠️  ElevenLabs narration failed for '{label}': {e}")
-            return None
+            from pathlib import Path
+            return str(Path(out).relative_to(self.brand_dir))
+        except Exception:
+            return out
 
     # ── FAL.ai video transcription ────────────────────────────────────────────
 
