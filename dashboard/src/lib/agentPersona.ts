@@ -25,6 +25,7 @@ const PERSONAS: Record<AgentKey, Persona> = {
   lumen: { key: "lumen", name: "Lumen", role: "Creative Director", action: "is designing visuals" },
   nexus: { key: "nexus", name: "Nexus", role: "Community Manager", action: "is handling conversations" },
   forge: { key: "forge", name: "Forge", role: "Builder", action: "is building" },
+  beacon: { key: "beacon", name: "Beacon", role: "Search & Discovery", action: "is tuning search visibility" },
 }
 
 // 18 backend slugs → 8 client personas. Anything unknown falls back to Atlas.
@@ -43,7 +44,7 @@ const SLUG_TO_KEY: Record<string, AgentKey> = {
   "trend-sentinel": "spark",
   "website-agent": "forge",
   "brand-guardian": "aegis",
-  "seo-aeo-agent": "forge",
+  "seo-aeo-agent": "beacon",
   "email-marketing-agent": "forge",
   "community-manager": "nexus",
   "dm-customer-hunter": "nexus",
@@ -55,7 +56,7 @@ const SLUG_TO_KEY: Record<string, AgentKey> = {
 
 /** The 8-strong client-facing cast, in display order (Atlas leads). */
 export const CAST: Persona[] = (
-  ["atlas", "riveter", "lumen", "spark", "exactor", "aegis", "nexus", "forge"] as AgentKey[]
+  ["atlas", "riveter", "lumen", "spark", "exactor", "aegis", "nexus", "forge", "beacon"] as AgentKey[]
 ).map((k) => PERSONAS[k])
 
 export function personaForSlug(slug?: string | null): Persona {

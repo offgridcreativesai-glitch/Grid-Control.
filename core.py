@@ -502,6 +502,7 @@ AGENTS = [
     {"id": 13, "name": "Community Manager", "role": "Replies/mentions",   "model": "claude-sonnet-4-6", "agentFile": ""},
     {"id": 14, "name": "DM Customer Hunter",    "role": "Inbound + warm DMs", "model": "claude-sonnet-4-6", "agentFile": ""},
     {"id": 12, "name": "Email Marketing Agent", "role": "Nurture sequences", "model": "claude-sonnet-4-6", "agentFile": ""},
+    {"id": 11, "name": "SEO + AEO Agent",   "role": "Search + answer-engine", "model": "claude-sonnet-4-6", "agentFile": "seo-aeo-agent.md"},
 ]
 
 # Phase D — single source of truth: override the display models from the gateway

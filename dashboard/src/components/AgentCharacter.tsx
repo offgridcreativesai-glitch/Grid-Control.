@@ -11,6 +11,7 @@ export type AgentKey =
   | "lumen"
   | "nexus"
   | "forge"
+  | "beacon"
 
 type Size = "sm" | "md" | "lg" | "xl"
 
@@ -33,6 +34,7 @@ export const AGENTS: Record<AgentKey, AgentInfo> = {
   lumen: { name: "Lumen", role: "Creative Director", blurb: "Designs visuals built to stop the scroll." },
   nexus: { name: "Nexus", role: "Community Manager", blurb: "Speaks for you across every conversation." },
   forge: { name: "Forge", role: "Builder", blurb: "Ships pages, funnels and the things that go live." },
+  beacon: { name: "Beacon", role: "Search & Discovery", blurb: "Gets your brand found on Google and cited by AI." },
 }
 
 export function agentMeta(agent: AgentKey): AgentInfo {
