@@ -837,3 +837,33 @@ export function useSetWhiteLabel() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["white-label", activeBrand.slug] }),
   })
 }
+
+// Reseller economics — flat-wholesale-per-brand margin rollup (super-admin only; 403 → hidden).
+export interface ResellerBrand {
+  slug: string
+  brand_name: string
+  wholesale_inr: number | null
+  cogs_inr: number
+  margin_inr: number | null
+  underwater: boolean
+  no_plan: boolean
+}
+
+export interface ResellerSummary {
+  brands: ResellerBrand[]
+  count: number
+  total_wholesale_inr: number
+  total_cogs_inr: number
+  total_margin_inr: number
+  usd_inr: number
+}
+
+export function useResellerSummary() {
+  return useQuery({
+    queryKey: ["reseller-summary"],
+    queryFn: () =>
+      getJson<{ success: boolean; data: ResellerSummary }>("/api/reseller/summary").then((r) => r.data),
+    retry: false, // non-super-admins get 403 — don't hammer, just hide the panel
+    staleTime: 60_000,
+  })
+}

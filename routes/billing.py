@@ -212,6 +212,77 @@ def billing_usage():
         return jsonify(success=False, error=str(e)), 500
 
 
+@bp.route("/api/reseller/summary", methods=["GET"])
+@require_auth
+def reseller_summary():
+    """Platform-owner view of the flat-wholesale-per-brand reseller economics (gap #4).
+
+    For every white-labeled brand, shows the wholesale you charge (that brand's active
+    subscription plan) vs this month's real COGS (usage_logs), so you never resell a brand
+    underwater — the guardrail flat-wholesale needs because GC's cost-of-goods is variable
+    (AI + scraping), unlike GHL's fixed infra. Super-admin only: this is platform economics,
+    not a client-facing surface. Reuses existing tables — no new billing infra.
+
+    A brand counts as reseller-managed iff it has a white_label.json config. Wholesale is read
+    from its subscription's plan; COGS (USD) is converted to INR via GRID_USD_INR (default 83 —
+    a calibration knob; the real rate drifts, so it's env-tunable, not hardcoded to the paisa)."""
+    user = getattr(request, "user", None)
+    if not (_DB_AVAILABLE and user and _db.is_super_admin(user["id"])):
+        return jsonify(success=False, error="Super-admin only"), 403
+
+    from agents._lib import white_label
+    from datetime import datetime
+    usd_inr = float(os.getenv("GRID_USD_INR", "83"))
+    month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    rows = []
+    for wl_path in sorted(BRANDS_DIR.glob("*/white_label.json")):
+        slug = wl_path.parent.name
+        wl = white_label.get(slug)
+        if not wl:                       # empty/corrupt config → not a live reseller brand
+            continue
+        brand_id = _resolve_brand_id(slug)
+        wholesale_inr = None
+        cogs_usd = 0.0
+        if brand_id:
+            try:
+                sub = (_db._client.table("subscriptions")
+                       .select("status, billing_plans(amount_paise)")
+                       .eq("brand_id", brand_id).eq("status", "active").execute())
+                if sub.data and sub.data[0].get("billing_plans"):
+                    wholesale_inr = (sub.data[0]["billing_plans"].get("amount_paise") or 0) / 100.0
+            except Exception:
+                pass
+            try:
+                u = (_db._client.table("usage_logs").select("estimated_cost_usd")
+                     .eq("brand_id", brand_id).gte("created_at", month_start).execute())
+                cogs_usd = sum(float(r.get("estimated_cost_usd", 0) or 0) for r in u.data)
+            except Exception:
+                pass
+        cogs_inr = round(cogs_usd * usd_inr, 2)
+        rows.append({
+            "slug": slug,
+            "brand_name": wl.get("brand_name") or slug,
+            "wholesale_inr": wholesale_inr,
+            "cogs_inr": cogs_inr,
+            "margin_inr": round(wholesale_inr - cogs_inr, 2) if wholesale_inr is not None else None,
+            "underwater": wholesale_inr is not None and cogs_inr > wholesale_inr,
+            "no_plan": wholesale_inr is None,
+        })
+
+    total_wholesale = sum(r["wholesale_inr"] or 0 for r in rows)
+    total_cogs = sum(r["cogs_inr"] for r in rows)
+    return jsonify(success=True, data={
+        "brands": rows,
+        "count": len(rows),
+        "total_wholesale_inr": round(total_wholesale, 2),
+        "total_cogs_inr": round(total_cogs, 2),
+        "total_margin_inr": round(total_wholesale - total_cogs, 2),
+        "usd_inr": usd_inr,
+        "period_start": month_start,
+    })
+
+
 @bp.route("/api/billing/payments", methods=["GET"])
 @require_auth
 def billing_payments():

@@ -14,7 +14,11 @@ import {
   usePublishPolicy, useSetPublishPolicy, type PublishLevel,
   useCostCap, useSetCostCap,
   useWhiteLabel, useSetWhiteLabel, type WhiteLabel,
+  useResellerSummary,
 } from "@/hooks/useGridApi"
+
+const inr = (n: number | null) =>
+  n == null ? "—" : "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
 
 const PLATFORM_META: Record<string, { name: string; icon: typeof Camera }> = {
   instagram: { name: "Instagram", icon: Camera },
@@ -242,6 +246,56 @@ function WhiteLabelSection() {
   )
 }
 
+function ResellerEconomicsSection() {
+  const { data } = useResellerSummary()   // 403 for non-super-admins → data undefined → hidden
+  if (!data || data.count === 0) return null
+
+  return (
+    <div>
+      <h2 className="mb-1 text-[15px] font-semibold text-foreground">Reseller economics</h2>
+      <p className="mb-4 text-[12.5px] leading-relaxed text-muted-foreground">
+        Wholesale you charge per white-labeled brand vs its real cost this month. Margin turns red
+        if a brand is running underwater — flat-wholesale only works while wholesale &gt; cost. Wholesale
+        is each brand's active subscription plan; cost is converted at ₹{data.usd_inr}/$.
+      </p>
+      <div className="overflow-hidden rounded-xl border border-border bg-white/[0.02]">
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr className="border-b border-border text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium">Brand</th>
+              <th className="px-3 py-2 text-right font-medium">Wholesale</th>
+              <th className="px-3 py-2 text-right font-medium">Cost (mo)</th>
+              <th className="px-3 py-2 text-right font-medium">Margin</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.brands.map((b) => (
+              <tr key={b.slug} className="border-b border-border/50 last:border-0">
+                <td className="px-3 py-2 text-foreground/90">{b.brand_name}</td>
+                <td className="px-3 py-2 text-right text-muted-foreground">
+                  {b.no_plan ? <span className="text-[11px] italic">no plan set</span> : inr(b.wholesale_inr)}
+                </td>
+                <td className="px-3 py-2 text-right text-muted-foreground">{inr(b.cogs_inr)}</td>
+                <td className={cn("px-3 py-2 text-right font-medium", b.underwater ? "text-destructive" : "text-emerald")}>
+                  {inr(b.margin_inr)}
+                </td>
+              </tr>
+            ))}
+            <tr className="bg-white/[0.02] font-semibold text-foreground">
+              <td className="px-3 py-2">Total ({data.count})</td>
+              <td className="px-3 py-2 text-right">{inr(data.total_wholesale_inr)}</td>
+              <td className="px-3 py-2 text-right">{inr(data.total_cogs_inr)}</td>
+              <td className={cn("px-3 py-2 text-right", data.total_margin_inr < 0 ? "text-destructive" : "text-emerald")}>
+                {inr(data.total_margin_inr)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 export function SettingsPage() {
   return (
     <div className="flex h-full flex-col overflow-auto bg-background/60 px-6 py-6">
@@ -253,6 +307,7 @@ export function SettingsPage() {
         <PublishPolicySection />
         <CostCapSection />
         <WhiteLabelSection />
+        <ResellerEconomicsSection />
       </div>
     </div>
   )
