@@ -170,6 +170,16 @@ Production build: `cd dashboard && npm run build`.
 
 18-agent roster · Zero-assumption policy · Approval gate · Real-data mandate · `brands/{slug}/` isolation.
 
+## 🧪 Testing & CI — NON-NEGOTIABLE (added Jul 14 2026, the loop-exit rule)
+
+The SAME bugs regressed 5–6 times because there were **no tests and no CI** — memory is advice, nothing *checked* it. This is a PROCESS gap, not a model gap. Standing rule now:
+
+- **Every bug fix ships with a test.** Extract the buggy decision into a pure function; write a test that FAILS on the old logic and PASSES on the fix; wire the real code to call that function (never test a copy — that's theater).
+- **CI is the door guard** — `.github/workflows/ci.yml` runs `tsc + npm test` (frontend, **vitest**, `cd dashboard && npm test`) and `pytest` (backend). Red = the change is blocked from reaching the live app.
+- Stability track runs PARALLEL to features, never "later". Don't stack features on an untested floor.
+- Gaurav (non-technical) VERIFIES with his own eyes: GitHub → **Actions** tab → green/red. He does not have to trust a "done".
+- First net: commit `392899c` pinned the onboarding-restart bug (`dashboard/src/lib/onboardingDecision.ts`+`.test.ts`). Backend brand_slug-isolation net handed to Fable. Full context: memory `feedback_tests_ci_exit_the_loop.md`.
+
 ## Working Rule
 
 Claude Code writes every line of code. Gaurav and Claude plan only.
