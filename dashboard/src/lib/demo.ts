@@ -14,28 +14,37 @@ import { useAuthStore } from "@/store/authStore"
 
 export const DEMO_EMAIL = "demo@gridcontrol.app"
 
-export function isDemo(): boolean {
-  if (
-    !import.meta.env.DEV ||
-    typeof window === "undefined" ||
-    localStorage.getItem("gc_demo") !== "1"
-  ) {
+// Pure decision, guarded by demo.test.ts. A REAL authenticated session ALWAYS wins over a
+// stale gc_demo flag — otherwise a lingering flag hijacks a real login and shows the fictional
+// "Aurora Skincare" brand over the real brand's data. `hasRealSession` must be derivable
+// SYNCHRONOUSLY (Supabase persists `sb-<ref>-auth-token` from first render) because isDemo()
+// runs before the auth store's async init() populates the user — reading the user alone loses
+// the race and demo hijacks.
+export function demoDecision(o: { isDev: boolean; demoFlag: boolean; hasRealSession: boolean }): boolean {
+  if (!o.isDev || !o.demoFlag) return false
+  if (o.hasRealSession) return false
+  return true
+}
+
+function hasRealSession(): boolean {
+  try {
+    if (Object.keys(localStorage).some((k) => /^sb-.*-auth-token$/.test(k) && !!localStorage.getItem(k))) return true
+    const u = useAuthStore.getState().user
+    return !!u && u.email !== DEMO_EMAIL
+  } catch {
     return false
   }
-  // A REAL authenticated user (anyone who isn't the demo account) ALWAYS wins over a stale
-  // gc_demo flag. Without this, a lingering demo flag hijacks a real login and shows the
-  // fictional "Aurora Skincare" brand + seeded reports over the real brand's data. Self-heal:
-  // clear the stale flag so it can never resurface for this real session.
-  try {
-    const user = useAuthStore.getState().user
-    if (user && user.email !== DEMO_EMAIL) {
-      localStorage.removeItem("gc_demo")
-      return false
-    }
-  } catch {
-    /* auth store not ready — fall through */
-  }
-  return true
+}
+
+export function isDemo(): boolean {
+  if (typeof window === "undefined") return false
+  const real = hasRealSession()
+  if (real) localStorage.removeItem("gc_demo") // self-heal: kill the stale flag for good
+  return demoDecision({
+    isDev: import.meta.env.DEV,
+    demoFlag: localStorage.getItem("gc_demo") === "1",
+    hasRealSession: real,
+  })
 }
 
 export const DEMO_BRAND: Brand = { slug: "demo", name: "Aurora Skincare", handle: "aurora.skin", primary: true }
