@@ -1,0 +1,26 @@
+name: CI
+
+# The door guard. Runs on every push + PR to main.
+# Red here = broken change. Fix before it reaches the live app.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npx tsc -b        # types must be sound
+      - run: npm test          # every past bug's test must stay green

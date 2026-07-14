@@ -21,6 +21,7 @@ import { useBrandStore } from "@/store/brandStore"
 import { useBrands } from "@/hooks/useGridApi"
 import { useSSE } from "@/hooks/useSSE"
 import { seedDemo, isDemo } from "@/lib/demo"
+import { onboardingDecision } from "@/lib/onboardingDecision"
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -133,12 +134,20 @@ function OnboardingGuard({ children }: { children: ReactNode }) {
     }
   }, [data, setBrands, setActiveBrand])
 
+  const outcome = onboardingDecision({
+    isLoading,
+    isError,
+    brandCount: data?.brands?.length ?? 0,
+    demo,
+    pathname: location.pathname,
+  })
+
   // Don't redirect while still loading brands from API
-  if (isLoading) return null
+  if (outcome === "wait") return null
 
   // API unreachable (e.g. the Flask backend isn't running) — do NOT mistake this for
   // "no brands / needs onboarding". Show a clear backend-down state, never bounce to onboarding.
-  if (isError && !demo) {
+  if (outcome === "backend-down") {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-3 bg-background px-6 text-center">
         <p className="text-[15px] font-semibold text-foreground">Can’t reach Grid Control’s backend</p>
@@ -155,8 +164,7 @@ function OnboardingGuard({ children }: { children: ReactNode }) {
     )
   }
 
-  const hasBrands = (data?.brands?.length ?? 0) > 0
-  if (!demo && !hasBrands && location.pathname !== "/onboarding") {
+  if (outcome === "onboarding") {
     return <Navigate to="/onboarding" replace />
   }
 
