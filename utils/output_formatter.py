@@ -423,6 +423,48 @@ def format_for_notion(agent_name: str, data: Any) -> str:
                 lines.append("")
         lines.append("_Drafts only — never auto-sent; send via Gmail after approval._")
 
+    # ── Brand Book (onboarding audit deliverable) ───────────────────────────────
+    # The brand-book JSON is a big nested structure (meta/brand/scores/signals…).
+    # NEVER dump those keys — the client sees the human `narrative` block only.
+    elif ("brand" in agent_lower and "book" in agent_lower) or "onboarding" in agent_lower:
+        n = data.get("narrative") or {}
+        if not isinstance(n, dict) or not n:
+            lines.append(f"## {agent_name}\nBrand audit generated — open the PDF for the full report.")
+        else:
+            if n.get("headline"):
+                lines.append(f"# {n['headline']}")
+            if n.get("subhead"):
+                lines.append(f"_{n['subhead']}_\n")
+
+            def _para(key: str, title: str) -> None:
+                v = n.get(key)
+                if isinstance(v, str) and v.strip():
+                    lines.append(f"## {title}\n{v.strip()}\n")
+
+            def _bullets(key: str, title: str) -> None:
+                v = n.get(key)
+                if isinstance(v, list) and v:
+                    lines.append(f"## {title}")
+                    lines.extend(f"- {it.strip()}" for it in v if isinstance(it, str) and it.strip())
+                    lines.append("")
+
+            _bullets("exec_summary", "Executive Summary")
+            _para("where_you_stand", "Where You Stand")
+            _para("white_space", "White Space")
+            _bullets("your_playbook", "Your Playbook")
+
+            rm = n.get("roadmap")
+            if isinstance(rm, dict) and rm:
+                lines.append("## Roadmap")
+                for mk in ("month_1", "month_2", "month_3"):
+                    mv = rm.get(mk)
+                    if isinstance(mv, dict):
+                        title = mv.get("title") or mk.replace("_", " ").title()
+                        lines.append(f"**{mk.replace('_', ' ').title()} — {title}:** {mv.get('goal', '')}".rstrip())
+                    elif isinstance(mv, str) and mv.strip():
+                        lines.append(f"**{mk.replace('_', ' ').title()}:** {mv.strip()}")
+                lines.append("")
+
     # ── Generic fallback ───────────────────────────────────────────────────────
     else:
         lines.append(f"## {agent_name} Output\n")
