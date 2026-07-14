@@ -117,7 +117,7 @@ function SSEProvider({ children }: { children: ReactNode }) {
 
 function OnboardingGuard({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const { data, isLoading } = useBrands()
+  const { data, isLoading, isError } = useBrands()
   const { setBrands, setActiveBrand } = useBrandStore()
   const demo = import.meta.env.DEV && typeof window !== "undefined" && localStorage.getItem("gc_demo") === "1"
 
@@ -135,6 +135,25 @@ function OnboardingGuard({ children }: { children: ReactNode }) {
 
   // Don't redirect while still loading brands from API
   if (isLoading) return null
+
+  // API unreachable (e.g. the Flask backend isn't running) — do NOT mistake this for
+  // "no brands / needs onboarding". Show a clear backend-down state, never bounce to onboarding.
+  if (isError && !demo) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-background px-6 text-center">
+        <p className="text-[15px] font-semibold text-foreground">Can’t reach Grid Control’s backend</p>
+        <p className="max-w-sm text-[13px] text-muted-foreground">
+          Your data is safe — the API just isn’t responding. Make sure the backend is running, then retry.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-1 rounded-lg bg-primary px-4 py-1.5 text-[13px] font-semibold text-primary-foreground transition-[filter] hover:brightness-110"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   const hasBrands = (data?.brands?.length ?? 0) > 0
   if (!demo && !hasBrands && location.pathname !== "/onboarding") {
