@@ -469,7 +469,7 @@ def approve_output():
     # move + skill-learning + Supabase match all work. (Without this, approve no-ops.)
     filename = body.get("filename", "")
     if not filepath and filename and "/" not in filename and ".." not in filename:
-        found = _find_output(get_brand_dir(brand_slug), filename)
+        found = _find_pending_output(get_brand_dir(brand_slug), filename)
         if found:
             filepath = str(found.relative_to(BASE_DIR))
 
@@ -551,7 +551,7 @@ def reject_output():
     # Review UI sends just a filename — resolve to a real filepath (else reject no-ops).
     filename = body.get("filename", "")
     if not filepath and filename and "/" not in filename and ".." not in filename:
-        found = _find_output(get_brand_dir(brand_slug), filename)
+        found = _find_pending_output(get_brand_dir(brand_slug), filename)
         if found:
             filepath = str(found.relative_to(BASE_DIR))
 
@@ -581,10 +581,17 @@ def reject_output():
     if reason and agent_slug_key:
         _skill_on_reject(brand_slug, agent_slug_key, reason)
 
+    removed = False
     if filepath:
         src = _safe_path(BASE_DIR, filepath)
         if src and src.exists():
             src.unlink()
+            removed = True
+
+    # Honesty: if we resolved nothing and removed nothing, say so — never a false success
+    # that makes the UI think a still-present card was rejected.
+    if not removed and not output_id:
+        return jsonify({"success": False, "error": "Could not find that item to reject."}), 404
     return jsonify({"success": True, "data": {"message": "Rejected and removed."}})
 
 

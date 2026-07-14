@@ -1830,6 +1830,24 @@ def _find_output(brand_dir: Path, filename: str) -> Path | None:
     return None
 
 
+def _find_pending_output(brand_dir: Path, filename: str) -> Path | None:
+    """Locate an output file in outputs/pending_approval/ (direct match or rglob).
+    Approve/reject act on PENDING files — resolving them with _find_output (approved/
+    only) silently no-ops, and the endpoints then report a false success. This is the
+    correct resolver for the approval-gate side.
+    """
+    base = brand_dir / "outputs" / "pending_approval"
+    if not base.exists():
+        return None
+    direct = base / filename
+    if direct.exists():
+        return direct
+    for hit in base.rglob(filename):
+        if hit.is_file():
+            return hit
+    return None
+
+
 def _load_post_fields(src: Path) -> dict:
     """Parse an output file into the fields a publisher needs. Strips the LOOP HEADER."""
     data = _read_output_json(src)
