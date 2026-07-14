@@ -20,7 +20,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useBrandStore } from "@/store/brandStore"
 import { useBrands } from "@/hooks/useGridApi"
 import { useSSE } from "@/hooks/useSSE"
-import { seedDemo } from "@/lib/demo"
+import { seedDemo, isDemo } from "@/lib/demo"
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -85,7 +85,7 @@ function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, init } = useAuthStore()
   // DEV-only demo bypass: set localStorage.gc_demo="1" to preview behind the gate.
   // Gated on import.meta.env.DEV — never active in a production build.
-  const demo = import.meta.env.DEV && typeof window !== "undefined" && localStorage.getItem("gc_demo") === "1"
+  const demo = isDemo()
   useEffect(() => {
     if (demo) {
       useAuthStore.setState({
@@ -119,7 +119,7 @@ function OnboardingGuard({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { data, isLoading, isError } = useBrands()
   const { setBrands, setActiveBrand } = useBrandStore()
-  const demo = import.meta.env.DEV && typeof window !== "undefined" && localStorage.getItem("gc_demo") === "1"
+  const demo = isDemo()
 
   useEffect(() => {
     if (data?.brands && data.brands.length > 0) {

@@ -15,11 +15,27 @@ import { useAuthStore } from "@/store/authStore"
 export const DEMO_EMAIL = "demo@gridcontrol.app"
 
 export function isDemo(): boolean {
-  return (
-    import.meta.env.DEV &&
-    typeof window !== "undefined" &&
-    localStorage.getItem("gc_demo") === "1"
-  )
+  if (
+    !import.meta.env.DEV ||
+    typeof window === "undefined" ||
+    localStorage.getItem("gc_demo") !== "1"
+  ) {
+    return false
+  }
+  // A REAL authenticated user (anyone who isn't the demo account) ALWAYS wins over a stale
+  // gc_demo flag. Without this, a lingering demo flag hijacks a real login and shows the
+  // fictional "Aurora Skincare" brand + seeded reports over the real brand's data. Self-heal:
+  // clear the stale flag so it can never resurface for this real session.
+  try {
+    const user = useAuthStore.getState().user
+    if (user && user.email !== DEMO_EMAIL) {
+      localStorage.removeItem("gc_demo")
+      return false
+    }
+  } catch {
+    /* auth store not ready — fall through */
+  }
+  return true
 }
 
 export const DEMO_BRAND: Brand = { slug: "demo", name: "Aurora Skincare", handle: "aurora.skin", primary: true }
