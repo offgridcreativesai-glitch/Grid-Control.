@@ -24,3 +24,16 @@ jobs:
       - run: npm ci
       - run: npx tsc -b        # types must be sound
       - run: npm test          # every past bug's test must stay green
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      # No secrets in CI on purpose: tests exercise the DB-unavailable/disk
+      # paths — the same fallbacks the live app uses when Supabase is down.
+      - run: python3 -m pytest tests/ utils/ .claude/hooks/test_test_guard.py test_reject_resolution.py -q
