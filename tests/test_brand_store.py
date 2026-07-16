@@ -17,6 +17,17 @@ sys.path.insert(0, str(REPO / "supabase"))
 import brand_store  # noqa: E402
 
 
+def test_importable_and_noop_without_db(monkeypatch, tmp_path):
+    # Pinned CI failure (run 29497431637): db.py raises at import without
+    # SUPABASE_* env; brand_store must stay importable and no-op safely.
+    monkeypatch.setattr(brand_store, "db", None)
+    monkeypatch.setattr(brand_store, "BRANDS_DIR", tmp_path)
+    (tmp_path / "acme").mkdir()
+    (tmp_path / "acme" / "brand_profile.json").write_text("{}")
+    assert brand_store.hydrate("acme") == 0
+    assert brand_store.push("acme", "brand_profile") is False
+
+
 def test_key_filename_roundtrip():
     assert brand_store.key_to_filename("_state") == "_state.json"
     assert brand_store.filename_to_key("brand_profile.json") == "brand_profile"
@@ -53,10 +64,15 @@ class _FakeSvc:
 
 
 def _wire(monkeypatch, tmp_path, rows):
+    """Replace the db module wholesale — on CI there are no SUPABASE_* secrets,
+    so brand_store.db is None (import-tolerant); tests must not touch real db."""
     fake = _FakeSvc(rows)
+    fake_db = type("FakeDB", (), {
+        "get_brand": staticmethod(lambda slug: {"id": "b-1", "slug": slug}),
+        "_svc": staticmethod(lambda: fake),
+    })
     monkeypatch.setattr(brand_store, "BRANDS_DIR", tmp_path)
-    monkeypatch.setattr(brand_store.db, "get_brand", lambda slug: {"id": "b-1", "slug": slug})
-    monkeypatch.setattr(brand_store.db, "_svc", lambda: fake)
+    monkeypatch.setattr(brand_store, "db", fake_db)
     return fake
 
 

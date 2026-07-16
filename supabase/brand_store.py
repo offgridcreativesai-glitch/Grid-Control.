@@ -12,7 +12,13 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-import db  # local sibling module (supabase/db.py), NOT the pip package
+# Local sibling module (supabase/db.py), NOT the pip package. db raises at
+# import when SUPABASE_* env is absent (e.g. CI) — mirror core.py's tolerance:
+# store becomes a safe no-op instead of an import bomb.
+try:
+    import db
+except Exception:
+    db = None
 
 BRANDS_DIR = Path(__file__).parent.parent / "brands"
 
@@ -55,6 +61,8 @@ def push(brand_slug: str, file_key: str, updated_by: str = "system") -> bool:
     """Upsert one local brand file's JSON content up to Supabase. True on success."""
     if file_key not in STATE_KEYS:
         return False
+    if db is None:
+        return False
     path = BRANDS_DIR / brand_slug / key_to_filename(file_key)
     if not path.exists():
         return False
@@ -88,6 +96,8 @@ def hydrate(brand_slug: str) -> int:
     """Pull this brand's state from Supabase into brands/<slug>/ (cache fill).
     Only writes files that are missing or older than the DB row.
     Returns count of files written. Safe no-op on any DB failure."""
+    if db is None:
+        return 0
     brand = db.get_brand(brand_slug)
     if not brand:
         return 0
