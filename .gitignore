@@ -101,6 +101,7 @@ brands/*/website_intel_v7.json
 !.claude/skills/verification-loop
 !.claude/skills/content-engine
 !.claude/skills/graphify
+!.claude/skills/gc-verify
 !.claude/skills/strategic-compact
 .agents/
 

@@ -464,6 +464,9 @@ def approve_output():
     filepath = body.get("filepath", "")
     output_id = body.get("output_id", "")  # Supabase UUID — optional
     next_agent_slug: str | None = None
+    # Must exist before the _DB_AVAILABLE block: with the DB down (or a brand not
+    # registered in Supabase) the disk-path approve crashed 500 on this name.
+    resolved_agent_slug: str | None = None
 
     # The Review UI sends just a filename — resolve it to a real filepath so the
     # move + skill-learning + Supabase match all work. (Without this, approve no-ops.)

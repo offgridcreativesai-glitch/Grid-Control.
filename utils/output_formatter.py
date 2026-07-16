@@ -465,12 +465,164 @@ def format_for_notion(agent_name: str, data: Any) -> str:
                         lines.append(f"**{mk.replace('_', ' ').title()}:** {mv.strip()}")
                 lines.append("")
 
+    # ── Creative Director (winning variant + production notes) ─────────────────
+    elif "creative" in agent_lower or "director" in agent_lower:
+        lines.append(f"## {agent_name} — Creative Direction\n")
+        if data.get("scripts_processed"):
+            lines.append(f"*{data['scripts_processed']} script(s) processed*\n")
+        wv = data.get("winning_variant")
+        if wv:
+            lines.append("### Winning creative")
+            _human_block(wv, lines)
+        notes = data.get("production_notes")
+        if isinstance(notes, str) and notes.strip():
+            lines.append(f"### Production notes\n{notes.strip()}\n")
+        if not wv and not notes:
+            lines.append(data.get("data_quality_note") or "No creative variants in this output.")
+
+    # ── Ad Strategist (paid plan or dormant note) ───────────────────────────────
+    elif "strategist" in agent_lower:
+        lines.append(f"## {agent_name} — Paid Ads Plan\n")
+        if data.get("data_quality_note"):
+            lines.append(str(data["data_quality_note"]) + "\n")
+        for key, title in (("competitor_read", "What competitors are running"),
+                           ("ad_angles", "Ad angles"),
+                           ("targeting_brief", "Targeting"),
+                           ("ab_test_plan", "A/B test plan"),
+                           ("budget_note", "Budget"),
+                           ("ad_intel_note", "Ad intel note")):
+            v = data.get(key)
+            if v:
+                lines.append(f"### {title}")
+                _human_block(v, lines)
+
+    # ── Brand Guardian (consistency audit) ──────────────────────────────────────
+    elif "guardian" in agent_lower:
+        grade = data.get("overall_grade")
+        lines.append(f"## {agent_name} — Brand Consistency Audit" + (f": {grade}" if grade else "") + "\n")
+        if data.get("scripts_evaluated") is not None:
+            lines.append(f"*{data.get('scripts_evaluated')} script(s) evaluated across {len(data.get('agents_audited') or [])} agent(s)*\n")
+        for key, title in (("voice_findings", "Voice"),
+                           ("audience_findings", "Audience"),
+                           ("positioning_findings", "Positioning"),
+                           ("forbidden_phrase_violations", "Forbidden phrases")):
+            v = data.get(key)
+            if v:
+                lines.append(f"### {title}")
+                _human_block(v, lines)
+
+    # ── SEO + AEO Agent (audit or no-site note) ─────────────────────────────────
+    elif "seo" in agent_lower or "aeo" in agent_lower:
+        lines.append(f"## {agent_name} — SEO / AEO Audit\n")
+        if data.get("url"):
+            lines.append(f"*Site: {data['url']}*\n")
+        if data.get("data_quality_note"):
+            lines.append(str(data["data_quality_note"]) + "\n")
+        if data.get("technical_summary"):
+            score = data.get("technical_score")
+            lines.append("### Technical health" + (f" — {score}/100" if score is not None else ""))
+            _human_block(data["technical_summary"], lines)
+        if data.get("aeo"):
+            lines.append("### Answer-engine readiness")
+            _human_block(data["aeo"], lines)
+
+    # ── Carousel Designer (approval payload) ────────────────────────────────────
+    elif "carousel" in agent_lower:
+        topic = data.get("topic") or ""
+        lines.append(f"## {agent_name}" + (f" — {topic}" if topic else "") + "\n")
+        bits = []
+        if data.get("platform"):
+            bits.append(str(data["platform"]))
+        if data.get("slide_count"):
+            bits.append(f"{data['slide_count']} slides")
+        if bits:
+            lines.append(f"*{' · '.join(bits)}*\n")
+        if data.get("post_caption"):
+            lines.append(f"### Caption\n{data['post_caption']}\n")
+        if data.get("save_prompt"):
+            lines.append(f"### Save prompt\n{data['save_prompt']}\n")
+
+    # ── Performance Tracker (winning/dead patterns) ─────────────────────────────
+    elif "performance" in agent_lower or "tracker" in agent_lower:
+        lines.append(f"## {agent_name} — Winning & Dead Patterns\n")
+        if data.get("posts_total") is not None:
+            lines.append(f"*Based on {data['posts_total']} tracked post(s)*\n")
+        for key, title in (("winning_patterns", "Keep doing (winning)"),
+                           ("dead_patterns", "Stop doing (dead)")):
+            v = data.get(key)
+            lines.append(f"### {title}")
+            if v:
+                _human_block(v, lines)
+            else:
+                lines.append("_No patterns yet — needs more posts._\n")
+
+    # ── Monthly Program (mix review) ────────────────────────────────────────────
+    elif ("monthly" in agent_lower and "program" in agent_lower) or "monthly-mix" in agent_lower:
+        lines.append(f"## {agent_name} — Month in Review\n")
+        if data.get("window"):
+            lines.append(f"*{data['window']}*\n")
+        for key, title in (("scale_next_month", "Scale next month"),
+                           ("keep", "Keep"),
+                           ("cut", "Cut")):
+            v = data.get(key)
+            if v:
+                lines.append(f"### {title}")
+                _human_block(v, lines)
+        if data.get("budget_split_reason"):
+            lines.append(f"### Budget\n{data['budget_split_reason']}\n")
+
     # ── Generic fallback ───────────────────────────────────────────────────────
     else:
         lines.append(f"## {agent_name} Output\n")
         _flatten_to_markdown(data, lines, depth=0)
 
     return "\n".join(lines).strip()
+
+
+_SKIP_KEYS = {
+    "agent", "brand", "brand_slug", "generated_at", "timestamp", "run_at",
+    "loop_header", "data_provenance", "provenance_validation", "decision_engine",
+    "spec_path", "slide_image_paths", "elevenlabs_key_used", "fal_key_used",
+}
+
+
+def _human_block(value: Any, lines: list) -> None:
+    """Render one human-facing field (str | list | dict) as readable markdown.
+    Skips machine scaffolding keys — this is NOT the generic key-dump."""
+    if isinstance(value, str):
+        if value.strip():
+            lines.append(value.strip())
+    elif isinstance(value, list):
+        for item in value:
+            if isinstance(item, dict):
+                head = item.get("pattern") or item.get("finding") or item.get("angle") \
+                    or item.get("name") or item.get("title") or item.get("value") or ""
+                why = item.get("why") or item.get("reason") or item.get("fix") \
+                    or item.get("evidence") or item.get("description") or ""
+                if head and why:
+                    lines.append(f"- **{head}** — {why}")
+                elif head or why:
+                    lines.append(f"- {head or why}")
+                else:
+                    sub: list = []
+                    _human_block(item, sub)
+                    lines.extend(sub)
+            elif isinstance(item, str) and item.strip():
+                lines.append(f"- {item.strip()}")
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            if k in _SKIP_KEYS or v in (None, "", [], {}):
+                continue
+            label = str(k).replace("_", " ").capitalize()
+            if isinstance(v, str):
+                lines.append(f"**{label}:** {v}")
+            elif isinstance(v, (int, float, bool)):
+                lines.append(f"**{label}:** {v}")
+            elif isinstance(v, list):
+                lines.append(f"**{label}:**")
+                _human_block(v, lines)
+            # nested dicts beyond one level stay out of the human view
+    lines.append("")
 
 
 def _flatten_to_markdown(obj: Any, lines: list, depth: int = 0, max_depth: int = 4) -> None:
