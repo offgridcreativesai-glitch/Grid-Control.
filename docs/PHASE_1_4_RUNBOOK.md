@@ -28,7 +28,7 @@ one repo/main only · no raw JSON to humans.
 
 ## PHASE 1 — Supabase data home (brand state off the laptop)
 Reference: `~/GC-ref-repos/SaaS-Boilerplate` (tenancy patterns only — no replatforming).
-- [ ] 1.1 Inventory: what per-brand state exists on disk (`brands/<slug>/*`), what's already in Supabase (list tables), and which code paths read/write each file. Output: `docs/DATA_HOME_DESIGN.md` (plain-English section for Gaurav).
+- [x] 1.1 Inventory DONE (Jul 16): docs/DATA_HOME_DESIGN.md — reader/writer map grep-verified; design = Supabase authoritative, disk = rehydratable cache via ONE brand_store module (30+ file readers stay untouched). Supabase already has brands/agent_outputs/brand_connections tables + RLS.
 - [ ] 1.2 Schema: `brand_files` table (or storage buckets) design — structured JSON state (brand_profile, voice_profile, calendars, trends, history) in tables/JSONB; binary (carousel PNGs, voice samples) in Supabase Storage. RLS by brand membership. Migration via Supabase MCP `apply_migration`.
 - [ ] 1.3 Data access layer: one module (e.g. `supabase/brand_store.py`) with read/write functions mirroring today's file API; feature-flagged dual-write (disk + Supabase) so nothing breaks mid-migration. Tests.
 - [ ] 1.4 Swap readers: agents/routes read via the store (Supabase-first, disk fallback). Tests: brand state round-trips; missing brand → honest 404.
