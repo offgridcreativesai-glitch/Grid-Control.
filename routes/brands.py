@@ -455,6 +455,7 @@ def set_trust_dial(brand_slug: str):
     if not trust_dial.is_valid_level(level):
         return jsonify({"success": False, "error": f"level must be one of {trust_dial.LEVELS}"}), 400
     settings = trust_dial.set_level(brand_slug, agent_slug, level)
+    _brand_store_push(brand_slug, "agent_trust_settings")  # Phase 1.4 write-back
     return jsonify({"success": True, "data": {"settings": settings}})
 
 
@@ -795,6 +796,7 @@ def create_brand():
         "has_existing_pipeline": has_existing_pipeline,
     }
     _atomic_write_json(profile_file, profile)
+    _brand_store_push(slug, "brand_profile")  # Phase 1.4 write-back (onboarding)
 
     # Bootstrap brand memory + market intelligence folders (all brands get this)
     _bootstrap_brand_memory(brand_dir, profile)
@@ -1005,6 +1007,7 @@ def save_brand_profile():
     if _DB_AVAILABLE:
         brand_name = body.get("brand_name", brand_slug)
         _db.upsert_brand(brand_slug, brand_name, body)
+    _brand_store_push(brand_slug, "brand_profile")  # Phase 1.4 write-back
     return jsonify({"success": True, "data": {"message": "Brand profile saved."}})
 
 
@@ -1815,6 +1818,9 @@ def approve_brand_book(brand_slug: str):
         narr_path.write_text(json.dumps(narr, indent=2))
     except Exception:
         pass
+    # Phase 1.4 write-back: the Foundation write is the single most important
+    # brand-state change — push everything it touched up to Supabase.
+    _brand_store_push(brand_slug, "brand_profile", "voice_profile", "brand_narrative")
     return jsonify(success=True, data={
         "message": "Brand Foundation approved. brand_profile.json + voice_profile.json updated. Strategy Agent is now unlocked.",
         "approved_ts": ts,

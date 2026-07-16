@@ -309,6 +309,47 @@ except Exception as _db_err:
     _DB_AVAILABLE = False
     print(f"[GRID CONTROL] ⚠️  Supabase db.py not loaded: {_db_err}")
 
+# ── brand_store (Phase 1.4) — Supabase-authoritative brand state, disk = cache ─
+try:
+    import brand_store as _brand_store
+except Exception as _bs_err:
+    _brand_store = None
+    print(f"[GRID CONTROL] ⚠️  brand_store not loaded: {_bs_err}")
+
+_HYDRATE_TTL_S = 60
+_last_hydrate: dict = {}
+
+
+def _hydrate_if_enabled(brand_slug: str) -> None:
+    """Cache-fill brands/<slug>/ from Supabase on brand access (TTL-gated so
+    hot request paths don't hit the DB every call). No-op unless
+    GRID_BRAND_STORE=on. See docs/DATA_HOME_DESIGN.md."""
+    if _brand_store is None or not _brand_store.enabled():
+        return
+    now = time.time()
+    if now - _last_hydrate.get(brand_slug, 0.0) < _HYDRATE_TTL_S:
+        return
+    _last_hydrate[brand_slug] = now
+    try:
+        _brand_store.hydrate(brand_slug)
+    except Exception as e:
+        print(f"[brand_store] hydrate {brand_slug} failed: {e}")
+
+
+def _brand_store_push(brand_slug: str, *file_keys: str) -> None:
+    """Write-back brand state to Supabase after a known write. No keys = all.
+    Never raises — a failed push must not break the user-facing action."""
+    if _brand_store is None or not _brand_store.enabled():
+        return
+    try:
+        if file_keys:
+            for k in file_keys:
+                _brand_store.push(brand_slug, k)
+        else:
+            _brand_store.push_all(brand_slug)
+    except Exception as e:
+        print(f"[brand_store] push {brand_slug} failed: {e}")
+
 # ── Phase 1 — role model, Brain guardrails, cost governance, agent config ──────
 import dashboard_roles as _roles  # noqa: E402
 
@@ -1220,6 +1261,10 @@ def _run_agent_subprocess(script_path: str, brand_slug: str, agent_name: str, db
                     _auto_advance_output(brand_slug, agent_slug_key, agent_name)
             except Exception as _trust_err:
                 print(f"[GRID CONTROL] trust-dial check skipped: {_trust_err}")
+            # Phase 1.4 — agents write brand files in their subprocess; push the
+            # brand's state up to Supabase now that the run succeeded (no-op
+            # unless GRID_BRAND_STORE=on; never blocks the run result).
+            _brand_store_push(brand_slug)
         # Phase L — fire approval-needed notification (best-effort, never blocks)
         try:
             _maybe_notify_pending(brand_slug)
@@ -1301,7 +1346,12 @@ def _auto_advance_output(brand_slug: str, agent_slug_key: str, agent_name: str) 
 def get_brand_dir(brand_slug: str) -> Path:
     brand_dir = BRANDS_DIR / brand_slug
     if not brand_dir.exists():
+        # Phase 1.4: a missing dir may just be a cold cache (fresh server) —
+        # hydrate from Supabase BEFORE declaring the brand nonexistent.
+        _hydrate_if_enabled(brand_slug)
+    if not brand_dir.exists():
         abort(404, description=f"Brand '{brand_slug}' not found")
+    _hydrate_if_enabled(brand_slug)  # TTL-gated freshness on warm hits
     return brand_dir
 
 
