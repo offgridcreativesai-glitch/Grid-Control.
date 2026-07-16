@@ -66,6 +66,23 @@ def _safe_json_loads(raw: str):
         return json.loads(_escape_literal_newlines_in_strings(raw))
 
 
+def no_data_halt_reason(live_insights: dict, inventory: dict) -> str | None:
+    """Rule-1 gate, checked BEFORE any LLM call. With no live account data AND
+    no system outputs there is NOTHING real to analyze — running the model here
+    produced fabricated metrics (Jul 1: invented '16 followers / 460 reach' on
+    an empty brand). Returns the honest halt reason, or None when a grounded
+    report is possible (live insights connected, or real output files exist)."""
+    if (live_insights or {}).get("connected"):
+        return None
+    if (inventory or {}).get("total_files", 0) > 0:
+        return None  # inventory-only report is grounded in real files on disk
+    return (
+        "No live platform data (Instagram/LinkedIn not connected) and no agent "
+        "outputs to analyze yet. Nothing real to report — connect platforms on "
+        "the Connections page or run the content agents first."
+    )
+
+
 class DataAnalyst:
 
     def __init__(self, brand_slug: str = BRAND_SLUG):
@@ -203,6 +220,12 @@ IMPORTANT CONTEXT:
 - Notion cards pending: {len([c for c in data_package['session'].get('notion_cards', []) if c.get('status') == 'pending_approval'])}
 - Notion cards approved: {len([c for c in data_package['session'].get('notion_cards', []) if c.get('status') == 'approved'])}
 
+HARD RULE — ZERO FABRICATION: account metrics (followers, reach, impressions,
+engagement, sales, revenue) may come ONLY from `live_insights` in SYSTEM STATE
+above. If a metric is not present there, write "not available — API not
+connected". NEVER estimate, extrapolate, or invent numbers, and never reference
+products or facts not present in the BRAND lines / SYSTEM STATE above.
+
 Generate 3 analysis variants for this week's performance report.
 
 VARIANT A — Raw metrics summary:
@@ -316,6 +339,38 @@ Return ONLY valid JSON:
             "script_sample":    scripts,
             "report_generated": datetime.now().isoformat(),
         }
+
+        # Rule-1 gate: with nothing real to analyze, halt honestly — no LLM call.
+        halt = no_data_halt_reason(live_insights, inventory)
+        if halt:
+            self.log(f"HALT (zero-fabrication) — {halt}")
+            output = {
+                "agent": "Data Analyst",
+                "brand": self.brand_slug,
+                "generated_at": datetime.now().isoformat(),
+                "status": "no_data",
+                "executive_summary": halt,
+                "data_quality_note": (
+                    "Zero-fabrication rule: no model call was made because there "
+                    "was no real data to analyze. This report cost $0."
+                ),
+                "raw_data_snapshot": {"api_status": api_status, "output_inventory": inventory},
+            }
+            output_dir = self.brand_dir / "outputs" / "pending_approval" / "Data Analyst"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_weekly_report_no_data.json"
+            (output_dir / filename).write_text(json.dumps(output, indent=2))
+            self.ceo.save_agent_output(
+                agent_name="Data Analyst",
+                output_type="Weekly Report (no data)",
+                loop_header={"goal": "honest no-data report", "metric": "zero fabrication",
+                             "variants_tested": 0, "winner": "none — no model call"},
+                content=json.dumps(output, indent=2),
+                filename=filename,
+            )
+            self.ceo.mark_agent_complete("data-analyst")
+            self.log("DATA ANALYST — Run complete (no-data halt, $0)")
+            return
 
         # Run AutoResearch Loop
         loop_result = self.run_autoresearch_loop(data_package)
