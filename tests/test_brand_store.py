@@ -31,7 +31,11 @@ def test_importable_and_noop_without_db(monkeypatch, tmp_path):
 def test_key_filename_roundtrip():
     assert brand_store.key_to_filename("_state") == "_state.json"
     assert brand_store.filename_to_key("brand_profile.json") == "brand_profile"
-    assert brand_store.filename_to_key("evil.json") is None  # unknown keys rejected
+    # any path-safe root json syncs (brand-book v7 artifacts etc.)
+    assert brand_store.filename_to_key("brand_self_v7.json") == "brand_self_v7"
+    # traversal / unsafe names rejected
+    assert brand_store.filename_to_key("../etc.json") is None
+    assert brand_store.filename_to_key("a/b.json") is None
 
 
 def test_needs_hydration_decision():
@@ -80,10 +84,10 @@ def test_hydrate_fills_empty_cache(monkeypatch, tmp_path):
     _wire(monkeypatch, tmp_path, [
         {"file_key": "brand_profile", "content": {"brand_name": "Acme"},
          "updated_at": "2026-07-16T00:00:00Z"},
-        {"file_key": "evil_key", "content": {"x": 1}, "updated_at": "2026-07-16T00:00:00Z"},
+        {"file_key": "../../etc/passwd", "content": {"x": 1}, "updated_at": "2026-07-16T00:00:00Z"},
     ])
     written = brand_store.hydrate("acme")
-    assert written == 1  # unknown file_key skipped
+    assert written == 1  # traversal file_key skipped
     saved = json.loads((tmp_path / "acme" / "brand_profile.json").read_text())
     assert saved == {"brand_name": "Acme"}
 
@@ -133,5 +137,5 @@ def test_push_refuses_corrupt_unknown_missing(monkeypatch, tmp_path):
     d = tmp_path / "acme"; d.mkdir()
     (d / "trends_live.json").write_text("{not json")
     assert not brand_store.push("acme", "trends_live")   # corrupt cache never overwrites DB
-    assert not brand_store.push("acme", "evil_key")      # unknown key
+    assert not brand_store.push("acme", "../evil")       # unsafe key
     assert not brand_store.push("acme", "brand_profile") # missing file

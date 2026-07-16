@@ -9,6 +9,7 @@ on sys.path, so `import brand_store` next to `import db`.
 """
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,12 +23,22 @@ except Exception:
 
 BRANDS_DIR = Path(__file__).parent.parent / "brands"
 
-# The per-brand JSON files that live in brand_state (docs/DATA_HOME_DESIGN.md map).
+# Core per-brand JSON files (docs/DATA_HOME_DESIGN.md map) — documentation of
+# the known set. Any path-safe root-level *.json syncs (e.g. brand-book v7
+# artifacts like brand_self_v7 / channel_scores_v7 / memory_doc), so new brand
+# files never silently miss the durable home.
 STATE_KEYS = (
     "brand_profile", "voice_profile", "content_calendar", "trends_live",
     "competitors_db", "performance_history", "contradictions", "session_state",
     "_state", "brand_narrative", "pivot_decision", "agent_trust_settings",
 )
+
+_KEY_RE = re.compile(r"^[a-z0-9_][a-z0-9_-]*$")
+
+
+def _valid_key(file_key: str) -> bool:
+    """Path-safe file key: bare name, no slashes/dots — blocks traversal."""
+    return bool(_KEY_RE.match(file_key or ""))
 
 
 def enabled() -> bool:
@@ -40,7 +51,7 @@ def key_to_filename(file_key: str) -> str:
 
 def filename_to_key(filename: str) -> str | None:
     key = filename[:-5] if filename.endswith(".json") else filename
-    return key if key in STATE_KEYS else None
+    return key if _valid_key(key) else None
 
 
 def needs_hydration(db_updated_at_iso: str | None, local_mtime_epoch: float | None) -> bool:
@@ -59,7 +70,7 @@ def needs_hydration(db_updated_at_iso: str | None, local_mtime_epoch: float | No
 
 def push(brand_slug: str, file_key: str, updated_by: str = "system") -> bool:
     """Upsert one local brand file's JSON content up to Supabase. True on success."""
-    if file_key not in STATE_KEYS:
+    if not _valid_key(file_key):
         return False
     if db is None:
         return False
@@ -88,8 +99,12 @@ def push(brand_slug: str, file_key: str, updated_by: str = "system") -> bool:
 
 
 def push_all(brand_slug: str, updated_by: str = "system") -> int:
-    """Push every present local state file. Returns count pushed."""
-    return sum(push(brand_slug, k, updated_by) for k in STATE_KEYS)
+    """Push every root-level *.json in the brand dir. Returns count pushed."""
+    brand_dir = BRANDS_DIR / brand_slug
+    if not brand_dir.is_dir():
+        return 0
+    keys = {filename_to_key(p.name) for p in brand_dir.glob("*.json")}
+    return sum(push(brand_slug, k, updated_by) for k in sorted(k for k in keys if k))
 
 
 def hydrate_vault(brand_slug: str) -> int:
@@ -144,7 +159,7 @@ def hydrate(brand_slug: str) -> int:
     written = 0
     for row in rows:
         key = row.get("file_key")
-        if key not in STATE_KEYS:
+        if not key or not _valid_key(key):
             continue
         path = brand_dir / key_to_filename(key)
         local_mtime = path.stat().st_mtime if path.exists() else None
