@@ -92,6 +92,38 @@ def push_all(brand_slug: str, updated_by: str = "system") -> int:
     return sum(push(brand_slug, k, updated_by) for k in STATE_KEYS)
 
 
+def hydrate_vault(brand_slug: str) -> int:
+    """Cache-fill pending-vault files from agent_outputs rows (DB = truth).
+    Filenames match the FE's synthesized `{agent_slug}_{id8}.json` (see
+    routes/content.py get_pending_outputs DB path) so filename-based
+    approve/reject resolve on a fresh server. Never overwrites existing files."""
+    if db is None:
+        return 0
+    brand = db.get_brand(brand_slug)
+    if not brand:
+        return 0
+    try:
+        rows = db.get_pending_outputs(brand["id"])
+    except Exception as e:
+        print(f"[brand_store] hydrate_vault {brand_slug} failed: {e}")
+        return 0
+    pending_root = BRANDS_DIR / brand_slug / "outputs" / "pending_approval"
+    written = 0
+    for row in rows:
+        slug_key = row.get("agent_slug") or ""
+        rid = (row.get("id") or "")[:8]
+        raw = row.get("raw_output")
+        if not slug_key or not rid or not raw:
+            continue
+        path = pending_root / slug_key / f"{slug_key}_{rid}.json"
+        if path.exists():
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(raw if isinstance(raw, str) else json.dumps(raw, indent=2))
+        written += 1
+    return written
+
+
 def hydrate(brand_slug: str) -> int:
     """Pull this brand's state from Supabase into brands/<slug>/ (cache fill).
     Only writes files that are missing or older than the DB row.

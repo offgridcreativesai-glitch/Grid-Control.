@@ -32,6 +32,10 @@ class _FakeStore:
         (self.brands_dir / slug).mkdir(parents=True, exist_ok=True)
         return 1
 
+    def hydrate_vault(self, slug):
+        self.vault_calls = getattr(self, "vault_calls", 0) + 1
+        return 0
+
     def push(self, slug, key):
         self.pushed.append((slug, key))
         return True
@@ -64,6 +68,7 @@ def test_cold_cache_hydrates_instead_of_404(wired):
     fake = wired(on=True)
     d = core.get_brand_dir("cloud-brand")
     assert d.exists() and fake.hydrate_calls == 1
+    assert getattr(fake, "vault_calls", 0) == 1  # Phase 1.5: vault cache-fills too
     # warm hit within TTL: no second DB trip
     core.get_brand_dir("cloud-brand")
     assert fake.hydrate_calls == 1

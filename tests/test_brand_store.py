@@ -99,6 +99,26 @@ def test_hydrate_never_clobbers_newer_local(monkeypatch, tmp_path):
     assert "NEWER-LOCAL" in (d / "brand_profile.json").read_text()
 
 
+def test_hydrate_vault_fills_pending_files(monkeypatch, tmp_path):
+    # Slice 1.5: fresh server, DB has pending outputs -> files appear with the
+    # FE's synthesized names so filename approve/reject resolve. Fail-on-old:
+    # hydrate() alone never touched outputs/, so the vault stayed empty.
+    fake = _wire(monkeypatch, tmp_path, [])
+    fake_db = brand_store.db
+    fake_db.get_pending_outputs = staticmethod(lambda bid: [
+        {"id": "abcd1234-ffff", "agent_slug": "script-writer",
+         "raw_output": {"scripts": [{"hook": "h"}]}},
+        {"id": "ee990011-aaaa", "agent_slug": "", "raw_output": {"x": 1}},  # no slug -> skip
+        {"id": "77665544-bbbb", "agent_slug": "data-analyst", "raw_output": None},  # no content -> skip
+    ])
+    written = brand_store.hydrate_vault("acme")
+    assert written == 1
+    f = tmp_path / "acme" / "outputs" / "pending_approval" / "script-writer" / "script-writer_abcd1234.json"
+    assert f.exists() and "scripts" in f.read_text()
+    # idempotent: existing file never overwritten
+    assert brand_store.hydrate_vault("acme") == 0
+
+
 def test_push_uploads_local_file(monkeypatch, tmp_path):
     fake = _wire(monkeypatch, tmp_path, [])
     d = tmp_path / "acme"; d.mkdir()

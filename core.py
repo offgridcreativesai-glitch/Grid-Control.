@@ -332,6 +332,7 @@ def _hydrate_if_enabled(brand_slug: str) -> None:
     _last_hydrate[brand_slug] = now
     try:
         _brand_store.hydrate(brand_slug)
+        _brand_store.hydrate_vault(brand_slug)  # Phase 1.5: vault rows -> cache files
     except Exception as e:
         print(f"[brand_store] hydrate {brand_slug} failed: {e}")
 
