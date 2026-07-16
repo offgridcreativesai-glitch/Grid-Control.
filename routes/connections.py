@@ -421,7 +421,7 @@ def voice_get_profile():
 @bp.route("/api/notion/cards", methods=["GET"])
 @require_auth
 def get_notion_cards():
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
     session_file = brand_dir / "session_state.json"
     if not session_file.exists():
@@ -437,7 +437,7 @@ def get_notion_cards():
 def approve_notion_card():
     body = request.get_json() or {}
     page_id = body.get("page_id", "")
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     if not page_id:
         return jsonify({"success": False, "error": "page_id required"}), 400
@@ -457,7 +457,7 @@ def approve_notion_card():
 def reject_notion_card():
     body = request.get_json() or {}
     page_id = body.get("page_id", "")
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     if not page_id:
         return jsonify({"success": False, "error": "page_id required"}), 400
@@ -480,7 +480,7 @@ def sync_notion_approvals():
     For each pending output with a notion_page_id, fetches its Notion status.
     If approved, calls db.approve_output() and _unlock_next_agent().
     """
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     if not _NOTION_KEY:
         return jsonify({"success": False, "error": "NOTION_API_KEY not configured"}), 400

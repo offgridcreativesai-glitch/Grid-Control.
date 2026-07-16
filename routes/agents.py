@@ -12,7 +12,7 @@ bp = Blueprint("agents", __name__)
 @require_auth
 def get_agents_status():
     # DB-WIRED Step 5
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     session: dict = {}
 
     # Try Supabase first
@@ -53,7 +53,7 @@ def get_agents_list():
 def run_agent():
     body = request.get_json() or {}
     agent_name = body.get("agentName", "").strip()
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     # Accept agent_slug too — the cockpit UI and Brain send kebab slugs
     # (e.g. "script-writer"), not the human name. Resolve slug → name.
     if not agent_name:
@@ -549,7 +549,7 @@ def performance_inbox():
 @require_auth
 def get_conversation():
     """Return persisted conversation history for a brand+agent pair."""
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     agent_slug = request.args.get("agent_slug", "")
     if not agent_slug:
         return jsonify({"success": False, "error": "agent_slug required"}), 400
@@ -565,7 +565,7 @@ def agent_chat():
     body = request.get_json() or {}
     agent_name  = body.get("agentName", "").strip()
     user_msg    = body.get("message", "").strip()
-    brand_slug  = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug  = require_brand_slug()
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
     # agent_slug used as key for conversation persistence
@@ -707,7 +707,7 @@ def agent_group_chat():
 
     body       = request.get_json() or {}
     user_msg   = body.get("message", "").strip()
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
 
@@ -982,7 +982,7 @@ def agent_group_chat():
 def agent_request_changes():
     """Save feedback for an agent, reset its status to idle so it can be re-run."""
     body = request.get_json() or {}
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     agent_slug = body.get("agent_slug", "")
     feedback   = body.get("feedback", "").strip()
 
@@ -1038,7 +1038,7 @@ def agent_train():
     body = request.get_json() or {}
     agent_name  = body.get("agentName", "unknown").strip()
     note        = body.get("note", "").strip()
-    brand_slug  = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug  = require_brand_slug()
 
     if not note:
         return jsonify({"success": False, "error": "note is required"}), 400
@@ -1064,7 +1064,7 @@ def agent_train():
 @require_auth
 def get_agent_output_history():
     """Return version history for an agent's outputs. Phase 1 Step 3."""
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     agent_slug = request.args.get("agent_slug", "")
     if not agent_slug:
         return jsonify({"success": False, "error": "agent_slug required"}), 400
@@ -1083,7 +1083,7 @@ def get_agent_output_history():
 def get_agent_output():
     # DB-WIRED Step 5 + Phase 1 Step 3
     from utils.output_formatter import format_for_notion, format_scripts, format_calendar, format_strategy
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     agent_slug = request.args.get("agent_slug", "")
     output_id  = request.args.get("output_id", "").strip()  # Phase 1 Step 3 — specific version
 
@@ -1209,7 +1209,7 @@ def get_agent_output():
 @bp.route("/api/agents/log", methods=["GET"])
 @require_auth
 def get_agent_log():
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
     session_file = brand_dir / "session_state.json"
     if not session_file.exists():

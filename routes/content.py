@@ -212,7 +212,7 @@ def daily_pipeline_run():
 @require_auth
 def get_pending_outputs():
     from utils.output_formatter import format_for_notion
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     # DB-WIRED Step 7 — Supabase primary, but only return if it has rows
     if _DB_AVAILABLE:
@@ -351,7 +351,7 @@ def get_published():
     scheduled_for, posted_at, status (scheduled|published), and engagement
     (likes/comments/shares/impressions/saves) once posted.
     """
-    brand_slug = request.args.get("brand_slug", "askgauravai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
     approved_dir = brand_dir / "outputs" / "approved"
 
@@ -430,7 +430,7 @@ def get_published():
 @bp.route("/api/outputs/all", methods=["GET"])
 @require_auth
 def get_all_outputs():
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
     items = []
     folders = [
@@ -460,7 +460,7 @@ def get_all_outputs():
 def approve_output():
     # DB-WIRED Step 5 + Phase 1 Step 4
     body = request.get_json()
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     filepath = body.get("filepath", "")
     output_id = body.get("output_id", "")  # Supabase UUID — optional
     next_agent_slug: str | None = None
@@ -545,7 +545,7 @@ def approve_output():
 def reject_output():
     # DB-WIRED Step 5
     body = request.get_json()
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     filepath = body.get("filepath", "")
     output_id = body.get("output_id", "")  # Supabase UUID — optional
     reason = body.get("reason", "")
@@ -641,7 +641,7 @@ def serve_media(filepath):
 def get_dashboard_output():
     from utils.output_formatter import format_scripts, format_calendar, format_strategy
 
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     # Try brand-specific output first, fall back to legacy global file
     brand_output_path = BRANDS_DIR / brand_slug / "data" / "dashboard_output.json"

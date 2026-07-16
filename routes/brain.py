@@ -116,7 +116,7 @@ def ceo_next_agent():
     Return CEO Brain's recommended next agent and reason.
     Phase 1 Step 2.
     """
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     state: dict = {}
 
     if _DB_AVAILABLE:
@@ -761,7 +761,7 @@ def team_standup():
     import anthropic as _anthropic
 
     body = request.get_json() or {}
-    brand_slug = body.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
 
     # Gather agent status context
     status_context = ""

@@ -118,6 +118,23 @@ def _validate_brand_slug(slug: str) -> bool:
     return bool(re.match(r'^[a-z0-9][a-z0-9-]{0,79}$', slug))
 
 
+def require_brand_slug() -> str:
+    """The ONLY sanctioned way a route reads brand_slug. Missing/invalid -> 400.
+
+    Replaces 25 endpoints that silently defaulted to "offgrid-creatives-ai" —
+    any FE call that omitted the slug read/wrote ANOTHER BRAND'S data without
+    error. A loud 400 is always better than a silent wrong-brand hit."""
+    slug = (request.args.get("brand_slug") or "").strip()
+    if not slug:
+        body = request.get_json(silent=True) or {}
+        slug = (body.get("brand_slug") or "").strip() if isinstance(body, dict) else ""
+    if not slug:
+        abort(400, description="brand_slug is required — there is no default brand")
+    if not _validate_brand_slug(slug):
+        abort(400, description="invalid brand_slug")
+    return slug
+
+
 def _get_current_user() -> dict | None:
     """Extract and verify user from Authorization header (Bearer <JWT>).
     Returns {"id": ..., "email": ...} or None."""
@@ -2693,7 +2710,13 @@ def _write_env_token(env_key: str, value: str) -> None:
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    """Return standard error envelope for any unhandled exception."""
+    """Return standard error envelope for any unhandled exception.
+
+    HTTPExceptions (abort(400/403/...)) must keep their real status code —
+    this handler used to flatten every deliberate abort into a 500."""
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({"success": False, "error": e.description or e.name}), e.code
     print(f"[GRID CONTROL] Unhandled exception: {e}")
     return jsonify({"success": False, "error": str(e)}), 500
 

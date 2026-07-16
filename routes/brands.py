@@ -975,7 +975,7 @@ def set_brand_goal(brand_slug: str):
 @require_auth
 def get_brand_profile():
     # DB-WIRED Step 5
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     if _DB_AVAILABLE:
         row = _db.get_brand(brand_slug)
         if row and row.get("profile"):
@@ -995,7 +995,8 @@ def get_brand_profile():
 def save_brand_profile():
     # DB-WIRED Step 5
     body = request.get_json()
-    brand_slug = body.pop("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
+    body.pop("brand_slug", None)
     brand_dir = get_brand_dir(brand_slug)
     profile_file = brand_dir / "brand_profile.json"
     with open(profile_file, "w") as f:
@@ -1010,7 +1011,7 @@ def save_brand_profile():
 @bp.route("/api/brand/dashboard", methods=["GET"])
 @require_auth
 def get_brand_dashboard():
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
     data = {}
     for fname in ["brand_profile.json", "trends_live.json", "session_state.json"]:
@@ -1030,7 +1031,7 @@ def get_brand_summary():
     Returns a flat summary card for the Brand Dashboard screen:
     brand_profile fields + computed key metrics from session_state.
     """
-    brand_slug = request.args.get("brand_slug", "offgrid-creatives-ai")
+    brand_slug = require_brand_slug()
     brand_dir = get_brand_dir(brand_slug)
 
     # Load brand_profile
