@@ -29,7 +29,7 @@ one repo/main only · no raw JSON to humans.
 ## PHASE 1 — Supabase data home (brand state off the laptop)
 Reference: `~/GC-ref-repos/SaaS-Boilerplate` (tenancy patterns only — no replatforming).
 - [x] 1.1 Inventory DONE (Jul 16): docs/DATA_HOME_DESIGN.md — reader/writer map grep-verified; design = Supabase authoritative, disk = rehydratable cache via ONE brand_store module (30+ file readers stay untouched). Supabase already has brands/agent_outputs/brand_connections tables + RLS.
-- [ ] 1.2 Schema: `brand_files` table (or storage buckets) design — structured JSON state (brand_profile, voice_profile, calendars, trends, history) in tables/JSONB; binary (carousel PNGs, voice samples) in Supabase Storage. RLS by brand membership. Migration via Supabase MCP `apply_migration`.
+- [x] 1.2 Schema DONE (Jul 16): `brand_state` table (brand_id+file_key PK, jsonb content, RLS member-read/service-write) + private `brand-assets` storage bucket. Applied live via MCP; SQL copy: supabase/migrations/20260716_brand_state.sql. Advisor pre-existing warns (SECURITY DEFINER anon-exec, brands_insert always-true, leaked-pw protection off) → folded into 4.3.
 - [ ] 1.3 Data access layer: one module (e.g. `supabase/brand_store.py`) with read/write functions mirroring today's file API; feature-flagged dual-write (disk + Supabase) so nothing breaks mid-migration. Tests.
 - [ ] 1.4 Swap readers: agents/routes read via the store (Supabase-first, disk fallback). Tests: brand state round-trips; missing brand → honest 404.
 - [ ] 1.5 Vault (outputs pending/approved) moves: pending_approval/approved records in Supabase (rows exist already — `agent_outputs`); make DB the source of truth, disk the cache. Approve/reject/smoke tests updated.
@@ -52,7 +52,7 @@ Mine: `~/GC-ref-repos/Socioboard-5.0` (working LI/YT/TW publish flows) — patte
 ## PHASE 4 — Ops-auditor + first-client checklist
 - [ ] 4.1 `agents/ops_auditor.py` — platform-level scheduled worker ($0 pattern like weekly_review_composer): checks API health (local+Railway), CI status (gh), paid ledger vs caps, Supabase advisors (security/performance), token expiries, disk/DB drift → weekly plain-English "Production Health" card. Registered `tier: none`. Tests.
 - [ ] 4.2 Scheduler job (DISABLED by default; Gaurav enables).
-- [ ] 4.3 First-client checklist doc: token encryption at rest, CORS restriction, ToS/Privacy/DPA status (legal/ has drafts), domain, backups. Verify what's code-checkable; GAURAV_TODO.md the rest.
+- [ ] 4.3 First-client checklist doc: token encryption at rest, CORS restriction, ToS/Privacy/DPA status (legal/ has drafts), domain, backups. PLUS Supabase advisor fixes (Jul 16 scan): revoke anon/authenticated EXECUTE on SECURITY DEFINER fns (handle_new_user, is_brand_member/admin, mem_search_*, rls_auto_enable), fix `brands_insert`/`brain_usage` always-true policies, set function search_path, move vector ext out of public, enable leaked-password protection (Gaurav toggle). Verify what's code-checkable; ask Gaurav the rest.
 - [ ] 4.4 Jun-24 security read + legal risk register review (GRIDLOCK-WIRE-24JUN memory) — fold unresolved items into the checklist.
 
 ## Done means
