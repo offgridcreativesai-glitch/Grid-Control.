@@ -1,6 +1,8 @@
 import { useEffect, useCallback, useRef } from "react"
 import { useAppStore } from "@/store/appStore"
 import { isDemo } from "@/lib/demo"
+import { supabase } from "@/lib/supabase"
+import { sseUrl } from "@/lib/sse"
 
 export interface SSEEvent {
   type: string
@@ -14,9 +16,16 @@ export interface SSEEvent {
 export function useSSE() {
   const sourceRef = useRef<EventSource | null>(null)
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (sourceRef.current || isDemo()) return
-    const es = new EventSource("/api/events")
+    const { data } = await supabase.auth.getSession()
+    const url = sseUrl(data.session?.access_token)
+    if (!url) {
+      // Logged out: retry later instead of hammering a guaranteed 401.
+      setTimeout(connect, 15000)
+      return
+    }
+    const es = new EventSource(url)
     sourceRef.current = es
 
     es.onmessage = (event) => {
