@@ -33,11 +33,11 @@ Reference: `~/GC-ref-repos/SaaS-Boilerplate` (tenancy patterns only — no repla
 - [x] 1.3 DONE (Jul 16): `supabase/brand_store.py` — hydrate(slug) fills cache from DB (freshness-guarded, never clobbers newer local), push(slug,key)/push_all upsert to brand_state (refuses corrupt/unknown). Flag GRID_BRAND_STORE=on (default off). 6 tests: tests/test_brand_store.py.
 - [x] 1.4 DONE (Jul 16): hydrate wired into get_brand_dir (cold cache miss → DB fill before 404, 60s TTL memo); write-backs at create_brand, save_brand_profile, approve_brand_book (profile+voice+narrative), set_trust_dial, and _run_agent_subprocess success (push_all — agents write in subprocesses). All flag-gated GRID_BRAND_STORE (default off). Tests: tests/test_brand_store_wiring.py. Flask restarted healthy, flag-off behavior unchanged.
 - [x] 1.5 DONE (Jul 16): `hydrate_vault()` cache-fills pending files from agent_outputs rows (names match FE's `{slug}_{id8}.json` so filename approve/reject resolve on a fresh server; never overwrites). Wired into the same TTL-gated hydrate path. Rows already carry full raw_output — DB was already written on every save; now it's readable-back. Tests extended (11 store tests).
-- [~] 1.6 LOCAL HALF DONE (Jul 16): key rule generalized to any path-safe root *.json (v7 artifacts included); sample brand's 8 files pushed to brand_state (verified via SQL); ROUND-TRIP PROVEN — dir wiped, 8 files rehydrated JSON-identical. Backup at /tmp/tgt-preseed-backup until deployed check. REMAINING: Railway env (SUPABASE keys + GRID_BRAND_STORE=on) = Gaurav question, then deployed verify (→2.2).
+- [x] 1.6 DONE (Jul 16): local round-trip proven (dir wiped → 8 files rehydrated JSON-identical) AND deployed proof: Gaurav confirmed Railway env keys, added GRID_BRAND_STORE=on, logged into the deployed dashboard → "Dashboard with Third Gen Tribe data". Along the way: fixed + test-pinned the blank-screen-after-login bug (auth boot threw on stale session → loading hung; commit 48b01d3). **PHASE 1 COMPLETE.**
 
 ## PHASE 2 — Sample brand through the DEPLOYED spine
-- [ ] 2.1 Verify deployed env vars/secrets needed by the new store (Railway) — list anything missing in GAURAV_TODO.md (RULE ZERO: no guessing his Railway config).
-- [ ] 2.2 Deploy → smoke the deployed API (health, brands, pending) read-only.
+- [x] 2.1 DONE (Jul 16): Gaurav confirmed SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY on Railway; added GRID_BRAND_STORE=on; redeployed.
+- [x] 2.2 DONE (Jul 16): deployed /api/health 200, auth gate 401s unauthenticated, and Gaurav's real login rendered TGT data (hydrated from Supabase).
 - [ ] 2.3 **GAURAV**: full click-through on production — login → brand loads → Atlas dispatch → output card → approve → (no publish yet). Write him a plain-words checklist in GAURAV_TODO.md.
 - [ ] 2.4 Fix whatever his click-through surfaces (each fix ships with a test).
 
