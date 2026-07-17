@@ -15,6 +15,7 @@ import { CreativeLibraryPage } from "@/pages/CreativeLibraryPage"
 import { AuthPage } from "@/pages/AuthPage"
 import { OnboardingPage } from "@/pages/OnboardingPage"
 import { LandingPage } from "@/landing/LandingPage"
+import { authReturnPath } from "@/lib/authReturn"
 import { useAppStore } from "@/store/appStore"
 import { useAuthStore } from "@/store/authStore"
 import { useBrandStore } from "@/store/brandStore"
@@ -177,9 +178,9 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingOrAuthReturn />} />
             <Route path="/signin" element={<AuthPage />} />
-            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/landing" element={<LandingOrAuthReturn />} />
             <Route path="/onboarding" element={<AuthGate><OnboardingPage /></AuthGate>} />
             <Route path="/*" element={<GatedApp />} />
           </Routes>
@@ -187,6 +188,16 @@ export default function App() {
       </QueryClientProvider>
     </ErrorBoundary>
   )
+}
+
+function LandingOrAuthReturn() {
+  // A fresh sign-in returning to the site root must never be swallowed by the
+  // landing page (it renders outside AuthGate) — forward auth params into the
+  // app so the session gets established. See lib/authReturn.ts.
+  const location = useLocation()
+  const target = authReturnPath(location.search, location.hash)
+  if (target) return <Navigate to={target} replace />
+  return <LandingPage />
 }
 
 function GatedApp() {
