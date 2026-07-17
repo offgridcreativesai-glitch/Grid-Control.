@@ -40,21 +40,35 @@ export const useAuthStore = create<AuthState>((set) => ({
   setViewMode: (mode) => set({ viewMode: mode }),
 
   init: async () => {
-    const { data } = await supabase.auth.getSession()
-    const user = data.session?.user ?? null
-
+    // A throwing auth boot (e.g. AuthApiError: Invalid Refresh Token from a
+    // stale stored session) must resolve to SIGNED OUT — never leave
+    // loading:true, which renders as a permanently blank screen (Jul 16 bug,
+    // deployed /command after login).
+    let session: Session | null = null
+    let user: User | null = null
     let isAdmin = false
-    if (user) {
-      isAdmin = await checkSuperAdmin()
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      if (!error) {
+        session = data.session
+        user = session?.user ?? null
+      }
+      if (user) {
+        isAdmin = await checkSuperAdmin()
+      }
+    } catch {
+      session = null
+      user = null
+      isAdmin = false
+    } finally {
+      set({
+        session,
+        user,
+        loading: false,
+        isSuperAdmin: isAdmin,
+        viewMode: isAdmin ? "admin" : "client",
+      })
     }
-
-    set({
-      session: data.session,
-      user,
-      loading: false,
-      isSuperAdmin: isAdmin,
-      viewMode: isAdmin ? "admin" : "client",
-    })
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       const newUser = session?.user ?? null
