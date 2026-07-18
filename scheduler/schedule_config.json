@@ -1,4 +1,13 @@
 {
   "_comment": "Phase E1 scheduler jobs. Times are in SCHEDULER_TZ (default Asia/Kolkata). cron supports hour, minute, and optional day_of_week (mon-sun or 0-6). Set enabled=false to pause a brand without removing it. pipeline: daily | weekly | monthly | quarterly (GRIDLOCK-PROGRAM-01JUL Stage 4). monthly/quarterly jobs still need a day_of_week (the cron fires weekly) PLUS week_of_month (1-5, which week-of-month to actually fire on — worker.py's _should_fire gates the other weeks). quarterly jobs also take quarter_months (default [1,4,7,10]). Reset to empty on 2026-07-02 (clean-slate reset) — no brands exist yet.",
-  "jobs": []
+  "jobs": [
+    {
+      "_comment": "Phase 4.2 ops-auditor — weekly Production Health card ($0, platform-level, no brand). DISABLED until Gaurav enables.",
+      "name": "ops-health-weekly",
+      "enabled": false,
+      "pipeline": "ops",
+      "brand_slug": "platform",
+      "cron": {"day_of_week": "mon", "hour": 9, "minute": 0}
+    }
+  ]
 }

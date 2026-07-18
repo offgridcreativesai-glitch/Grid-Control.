@@ -50,8 +50,8 @@ Mine: `~/GC-ref-repos/Socioboard-5.0` (working LI/YT/TW publish flows) — patte
 - [ ] 3.5 **GAURAV**: platform prerequisites → GAURAV_TODO.md (Meta/LinkedIn App Review, Google OAuth app "Publish app", real tokens per brand). Live publish test is HIS click, one platform at a time.
 
 ## PHASE 4 — Ops-auditor + first-client checklist
-- [ ] 4.1 `agents/ops_auditor.py` — platform-level scheduled worker ($0 pattern like weekly_review_composer): checks API health (local+Railway), CI status (gh), paid ledger vs caps, Supabase advisors (security/performance), token expiries, disk/DB drift → weekly plain-English "Production Health" card. Registered `tier: none`. Tests.
-- [ ] 4.2 Scheduler job (DISABLED by default; Gaurav enables).
+- [x] 4.1 DONE (Jul 18): agents/ops_auditor.py — $0 checks (Railway/Vercel/local health, CI via gh, spend-vs-cap ledger math, brand_state cloud sync) → plain-English card at .grid_state/ops_health_latest.md, served by GET /api/ops/health (super-admin, 401 verified). Registered tier none. 4 tests. First real run: ALL CLEAR 5/6, honest ◻️ on unset spend cap. (Supabase advisors + token expiry = via Claude sessions, noted unavailable honestly.)
+- [x] 4.2 DONE (Jul 18): 'ops' pipeline in scheduler_trigger + disabled weekly job (mon 9:00) in schedule_config.json. Gaurav enables when wanted.
 - [ ] 4.3 First-client checklist doc: token encryption at rest, CORS restriction, ToS/Privacy/DPA status (legal/ has drafts), domain, backups. PLUS Supabase advisor fixes (Jul 16 scan): revoke anon/authenticated EXECUTE on SECURITY DEFINER fns (handle_new_user, is_brand_member/admin, mem_search_*, rls_auto_enable), fix `brands_insert`/`brain_usage` always-true policies, set function search_path, move vector ext out of public, enable leaked-password protection (Gaurav toggle). Verify what's code-checkable; ask Gaurav the rest.
 - [ ] 4.4 Jun-24 security read + legal risk register review (GRIDLOCK-WIRE-24JUN memory) — fold unresolved items into the checklist.
 

@@ -80,6 +80,7 @@ AGENT_ROUTING: dict[str, tuple[str, str]] = {
     "cost-tracker":          ("none",   "none"),
     "weekly-program":        ("none",   "none"),  # run_weekly_program's own lock/skeleton (Stage 0)
     "weekly-review-composer": ("none",  "none"),  # aggregation-only glue (Stage 2) — no LLM call
+    "ops-auditor":           ("none",   "none"),  # platform health checks (Phase 4.1) — no LLM call
 }
 
 # effort → extended-thinking budget tokens (Anthropic API). 0 = thinking off.

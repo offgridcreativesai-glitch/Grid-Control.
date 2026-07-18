@@ -66,6 +66,12 @@ def scheduler_trigger():
     data = request.get_json(silent=True) or {}
     brand_slug = (data.get("brand_slug") or "").strip()
     pipeline = (data.get("pipeline") or "daily").strip().lower()
+    if pipeline == "ops":
+        # Platform-level production-health audit — no brand, $0, no model.
+        from agents.ops_auditor import run_audit
+        threading.Thread(target=run_audit, daemon=True).start()
+        return jsonify({"success": True, "data": {"message": "ops audit started",
+                        "pipeline": "ops"}})
     if not brand_slug:
         return jsonify({"success": False, "error": "brand_slug required"}), 400
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", brand_slug):
@@ -90,6 +96,20 @@ def scheduler_trigger():
         "pipeline": pipeline,
         "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }})
+
+
+@bp.route("/api/ops/health", methods=["GET"])
+@require_auth
+@require_super_admin
+def ops_health():
+    """Latest Production Health card (markdown) — super-admin only."""
+    md = Path(BASE_DIR) / ".grid_state" / "ops_health_latest.md"
+    if not md.exists():
+        return jsonify({"success": True, "data": {
+            "markdown": None,
+            "note": "No audit has run yet — trigger the ops pipeline or run agents/ops_auditor.py.",
+        }})
+    return jsonify({"success": True, "data": {"markdown": md.read_text()}})
 
 
 # ── n8n Webhook Receiver ───────────────────────────────────────────────────────
