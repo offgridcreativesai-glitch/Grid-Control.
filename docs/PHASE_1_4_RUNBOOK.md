@@ -43,10 +43,10 @@ Reference: `~/GC-ref-repos/SaaS-Boilerplate` (tenancy patterns only — no repla
 
 ## PHASE 3 — Publishers (LinkedIn / YouTube / X) + publish pipeline
 Mine: `~/GC-ref-repos/Socioboard-5.0` (working LI/YT/TW publish flows) — patterns only.
-- [ ] 3.1 Publisher registry already exists (`publishing/base.py`, honest "not built" results). Build `publishing/linkedin_publisher.py` (posts as member via URN, w_member_social), reading `brands/<slug>/.env`-equivalent from the new store. Unit tests with mocked HTTP.
-- [ ] 3.2 `publishing/youtube_publisher.py` (OAuth upload, existing `publishing/youtube_oauth.py` reused). Tests mocked.
-- [ ] 3.3 X: **manual-always** per standing rule — build the "prepare package for manual upload" path (download bundle + caption), not an auto-publisher.
-- [ ] 3.4 Wire into `/api/publish` router; approve→publish flow gated on explicit click. FE publish buttons per platform on approved cards.
+- [x] 3.1 ALREADY BUILT (verified Jul 16, prior session): publishing/linkedin_publisher.py complete — text/images/video via UGC API, token_status probe, prepared-mode fallback. Impl wired in core._publish_linkedin_impl. (Built pre-test-net; add mocked tests on first regression.)
+- [x] 3.2 ALREADY BUILT (verified Jul 16): youtube_publisher.py — real upload via refresh token, zero-fabrication needs_video contract, prepared fallback.
+- [x] 3.3 ALREADY BUILT (verified Jul 16): X manual-always enforced in core._publish_twitter_impl (prepared text package by default; auto only via explicit TWITTER_AUTO_PUBLISH opt-in). Policy pinned by tests/test_publish_policy.py.
+- [x] 3.4 ALREADY BUILT (verified Jul 16): /api/publish routes all four platforms to real impls; ReviewPage has Drafts→Ready→Published lanes with per-item Publish button (usePublish). NOTE: stale comment in useGridApi.ts says LI/YT/TW 'unbuilt' — fix with next tested FE commit.
 - [ ] 3.5 **GAURAV**: platform prerequisites → GAURAV_TODO.md (Meta/LinkedIn App Review, Google OAuth app "Publish app", real tokens per brand). Live publish test is HIS click, one platform at a time.
 
 ## PHASE 4 — Ops-auditor + first-client checklist

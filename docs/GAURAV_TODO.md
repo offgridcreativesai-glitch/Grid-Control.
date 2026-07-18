@@ -34,3 +34,45 @@ Vercel redeploys (~2 min): hard-refresh the page (Cmd+Shift+R), log in again.
 **Answered:** Logged in (Google screen skipped = normal remembered session) →
 **"Dashboard with Third Gen Tribe data."** PHASE 1 PROVEN: the deployed server
 served brand data hydrated from Supabase — nothing came from the laptop.
+
+## Jul 16 — Q5: fresh Chrome login bounced to landing (localhost)
+**Reported:** Fresh Google login in Gaurav's Chrome on localhost:5280 → dumped
+back on the landing page, signed out. (Closed tab by accident — harmless.)
+**Root cause found:** the landing page lives outside the auth system; when a
+sign-in returns to the site root (Supabase Site-URL fallback), the login code
+in the URL was silently dropped. Fixed (commit d418836) + 5 tests + verified
+live: a login code on "/" now forwards into the app.
+**Also caught:** the live site's address was MISSING from Supabase Redirect
+URLs → Gaurav asked to add `https://v0-grid-control-dashboard.vercel.app/command`
+and Save. **Answered:** (pending)
+**Retry for Gaurav:** open http://localhost:5280 in Chrome → sign in with
+Google (tgtstoress) → should land on the Third Gen Tribe dashboard, not landing.
+**Answered (Jul 16):** "Was able to sign in into my account." FIXED, Gaurav-verified.
+**Still open from Q5:** confirm the Vercel line was added to Supabase Redirect
+URLs (needed before fresh logins on the LIVE site — ask again before 2.3).
+
+## READY WHEN YOU ARE — the production dress rehearsal (runbook 2.3)
+Whenever you have ~10 minutes, on https://v0-grid-control-dashboard.vercel.app:
+1. Log in (tgtstoress account) → Third Gen Tribe dashboard loads.
+2. In Atlas chat, type: "What should we track this week? Run the trend check."
+   → Atlas should DISPATCH a real specialist (you'll see it working, not
+   instant fake text). The trend check costs $0 (pure math, no AI credits).
+3. When its card appears in Review → open it → the text reads like a human
+   wrote it (no raw data dumps) → click Approve → the card moves to Ready.
+4. Tell me what happened at each step — anything odd, I fix with a test.
+Before this: confirm the Supabase Redirect URLs line from Q5 was added
+(`https://v0-grid-control-dashboard.vercel.app/command`) — fresh logins on the
+live site need it.
+
+## FOR LATER — publishing prerequisites (runbook 3.5, your accounts only)
+The publish buttons exist and are honest: without live tokens they produce a
+"prepared" package instead of posting. To make them post for real, per brand:
+- **Instagram/Meta**: the Meta app (1710260696579392) needs App Review → Live
+  (one-time, all brands benefit). Until then: connect via Connections page works
+  for testers only.
+- **LinkedIn**: connect the brand's LinkedIn on the Connections page (token +
+  URN saved per brand).
+- **YouTube**: Google OAuth app is in "Testing" — tokens die every 7 days.
+  One-time fix: Google Cloud Console → OAuth consent screen → "Publish app".
+- **X**: manual by standing rule — GC prepares the text; you post it.
+No rush — tell me which platform first and I'll walk that one with you.
