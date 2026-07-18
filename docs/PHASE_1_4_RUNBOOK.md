@@ -52,8 +52,8 @@ Mine: `~/GC-ref-repos/Socioboard-5.0` (working LI/YT/TW publish flows) — patte
 ## PHASE 4 — Ops-auditor + first-client checklist
 - [x] 4.1 DONE (Jul 18): agents/ops_auditor.py — $0 checks (Railway/Vercel/local health, CI via gh, spend-vs-cap ledger math, brand_state cloud sync) → plain-English card at .grid_state/ops_health_latest.md, served by GET /api/ops/health (super-admin, 401 verified). Registered tier none. 4 tests. First real run: ALL CLEAR 5/6, honest ◻️ on unset spend cap. (Supabase advisors + token expiry = via Claude sessions, noted unavailable honestly.)
 - [x] 4.2 DONE (Jul 18): 'ops' pipeline in scheduler_trigger + disabled weekly job (mon 9:00) in schedule_config.json. Gaurav enables when wanted.
-- [ ] 4.3 First-client checklist doc: token encryption at rest, CORS restriction, ToS/Privacy/DPA status (legal/ has drafts), domain, backups. PLUS Supabase advisor fixes (Jul 16 scan): revoke anon/authenticated EXECUTE on SECURITY DEFINER fns (handle_new_user, is_brand_member/admin, mem_search_*, rls_auto_enable), fix `brands_insert`/`brain_usage` always-true policies, set function search_path, move vector ext out of public, enable leaked-password protection (Gaurav toggle). Verify what's code-checkable; ask Gaurav the rest.
-- [ ] 4.4 Jun-24 security read + legal risk register review (GRIDLOCK-WIRE-24JUN memory) — fold unresolved items into the checklist.
+- [x] 4.3 DONE (Jul 18): SQL hardening applied+recorded (mem_search leak closed, always-true policies dropped, search_path pinned — supabase/migrations/20260718_security_hardening.sql; RLS member-read verified after). docs/FIRST_CLIENT_CHECKLIST.md written with verified state. Gaurav items: leaked-pw toggle (asked), cost cap, backups check.
+- [x] 4.4 DONE (Jul 18): register folded into FIRST_CLIENT_CHECKLIST.md — 4 of 4 Jun-24 engineering findings already fixed since (CORS allowlist, token encryption+tests, secret retired, + this week's isolation/hardening); legal drafts exist, lawyer review = Gaurav's gate.
 
 ## Done means
 Runbook fully checked, CI green, GAURAV_TODO.md is the only remaining list,
