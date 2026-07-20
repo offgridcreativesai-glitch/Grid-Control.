@@ -449,6 +449,10 @@ def brain_chat():
             "1. When the user wants marketing WORK done — research trends, plan content, write scripts, "
             "design creative, analyze performance, audit SEO, plan ads — you MUST call run_agent to put the "
             "right specialist on it. Then tell the user which specialist you dispatched, in plain language.\n"
+            "1a. NEVER say a specialist is 'queued', 'dispatched', 'running', 'scraping', 'on it', or "
+            "'waiting on your approval' UNLESS you actually called run_agent in THIS reply. Claiming work "
+            "you did not dispatch is a lie the user cannot see through — it is forbidden. No tool call = say "
+            "plainly you haven't started yet.\n"
             "2. NEVER do that work from your own memory. NEVER invent or 'based on my training' trends, "
             "numbers, competitor data, or performance figures. You have no live data yourself — the "
             "specialists fetch it. Fabricating it is the single worst thing you can do here.\n"
@@ -618,10 +622,41 @@ def brain_chat():
                     except Exception as e:
                         print(f"[brain] cost tracking failed: {e}")
 
+            # Anti-fabrication guard (client only): if Atlas talked like it
+            # dispatched a specialist but produced no agent proposal, force ONE
+            # real, gated run_agent so a card actually appears. Nothing runs
+            # without the user's approval, so a spurious force is harmless.
+            # See utils/atlas_guard — the "Atlas dispatches, never narrates" rule.
+            if not is_admin:
+                from utils.atlas_guard import needs_forced_dispatch
+                has_agent = any(p.get("kind") == "agent" for p in proposals)
+                if needs_forced_dispatch(text, has_agent):
+                    try:
+                        forced = client.messages.create(
+                            model=model, max_tokens=400, system=system_blocks,
+                            messages=api_messages, tools=tools_arg,
+                            tool_choice={"type": "tool", "name": "run_agent"},
+                        )
+                        for b in getattr(forced, "content", []):
+                            if getattr(b, "type", None) == "tool_use" and getattr(b, "name", "") == "run_agent":
+                                proposals.append({"kind": "agent", "tool_use_id": b.id, "payload": b.input})
+                        if any(p.get("kind") == "agent" for p in proposals):
+                            an = proposals[-1]["payload"].get("agent_name", "a specialist")
+                            text = (f"I've put {an} on it — approve it below to actually start. "
+                                    "Nothing runs until you approve.")
+                        else:
+                            text = "Let me actually start that — one moment, then approve it below."
+                    except Exception:
+                        text = ("I got ahead of myself — nothing's started yet. Tell me again "
+                                "what you want done and I'll put the right specialist on it.")
+
+            # Clients see AGENT dispatch cards (that's what Atlas is FOR) but never
+            # file/bash proposals (THE SECRET). Admin sees everything.
+            client_proposals = [p for p in proposals if p.get("kind") == "agent"]
             return jsonify({
                 "success": True,
                 "response": text,
-                "proposals": proposals if is_admin else [],  # clients don't see proposals
+                "proposals": proposals if is_admin else client_proposals,
                 "model": model,
                 "usage": usage_dict if is_admin else {},  # clients don't see token counts
             })
