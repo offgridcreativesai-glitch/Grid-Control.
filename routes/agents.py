@@ -47,21 +47,28 @@ def get_agents_list():
     return jsonify({"success": True, "data": AGENTS_ENRICHED})
 
 
+def _resolve_agent_name(body: dict) -> str:
+    """Resolve the human agent name from a run request. Callers disagree on the
+    field: the legacy cockpit sends `agentName` (camel), Atlas's approve button
+    and snake-case clients send `agent_name`, the kebab UI sends `agent_slug`.
+    Reading only `agentName` silently dropped Atlas dispatches → empty name →
+    "No script built yet for ''" even for a real, valid specialist (Jul 20)."""
+    name = (body.get("agentName") or body.get("agent_name") or "").strip()
+    if name:
+        return name
+    slug_in = (body.get("agent_slug") or "").strip().lower()
+    if slug_in:
+        return next((n for n in AGENT_SCRIPTS if _agent_name_to_slug(n) == slug_in), "")
+    return ""
+
+
 @bp.route("/api/agents/run", methods=["POST"])
 @rate_limit(max_requests=5, window_seconds=60)
 @require_auth
 def run_agent():
     body = request.get_json() or {}
-    agent_name = body.get("agentName", "").strip()
+    agent_name = _resolve_agent_name(body)
     brand_slug = require_brand_slug()
-    # Accept agent_slug too — the cockpit UI and Brain send kebab slugs
-    # (e.g. "script-writer"), not the human name. Resolve slug → name.
-    if not agent_name:
-        slug_in = (body.get("agent_slug") or "").strip().lower()
-        if slug_in:
-            agent_name = next(
-                (n for n in AGENT_SCRIPTS if _agent_name_to_slug(n) == slug_in), ""
-            )
     if not _validate_brand_slug(brand_slug):
         return jsonify({"success": False, "error": "Invalid brand_slug"}), 400
 
