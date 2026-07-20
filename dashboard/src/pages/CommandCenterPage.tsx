@@ -10,6 +10,7 @@
  * useApproveOutput + useRequestRevision · activity → live agent status + SSE stream.
  */
 import { useEffect, useMemo, useRef, useState } from "react"
+import { loadThread, saveThread } from "@/lib/chatPersist"
 import { ArrowUp, Check, RefreshCw, CalendarRange, Sparkles, LineChart, Inbox } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -449,9 +450,23 @@ export function CommandCenterPage() {
     [pendingData],
   )
 
-  const [thread, setThread] = useState<Msg[]>([])
+  // Persist the chat per-brand so navigating away and back doesn't wipe what
+  // the user typed (Jul 20 vanish bug). See lib/chatPersist.
+  const [thread, setThread] = useState<Msg[]>(() => loadThread(activeBrand.slug))
   const [draft, setDraft] = useState("")
   const [thinking, setThinking] = useState(false)
+
+  // The slug the current thread belongs to. Save keys on [thread] ONLY (not
+  // slug), so on a brand switch the reload effect replaces the thread first and
+  // the save that follows writes under the right brand — never clobbering.
+  const threadSlug = useRef(activeBrand.slug)
+  useEffect(() => {
+    threadSlug.current = activeBrand.slug
+    setThread(loadThread(activeBrand.slug))
+  }, [activeBrand.slug])
+  useEffect(() => {
+    saveThread(threadSlug.current, thread)
+  }, [thread])
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const approvalsRef = useRef<HTMLDivElement>(null)
